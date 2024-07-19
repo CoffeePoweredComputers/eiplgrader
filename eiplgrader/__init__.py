@@ -1,3 +1,3 @@
-from .generator import SystemPrompt, TestCaseGenerator
+from .code_generator import CodeGenerator
 from .tester import CodeTester
 
