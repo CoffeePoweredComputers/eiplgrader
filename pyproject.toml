@@ -1,0 +1,28 @@
+[tool.poetry]
+name = "eiplgrader"
+version = "0.1.0"
+description = "A collection of autograders for the grading of Explain in Plain Language (EiPL) questions."
+authors = ["David H. Smith IV <dhsmith2@illinois.edu>"]
+license = "GPL-3.0"
+
+readme = "README.md"
+
+repository = "https://github.com/CoffeePoweredComputers/eiplgrader"
+
+keywords = [
+  "autograder",
+  "eipl",
+  "explain-in-plain-language",
+  "eipe",
+  "explain-in-plain-english"
+ ]
+
+
+[tool.poetry.dependencies]
+python = "^3.10"
+openai = "^1.37.0"
+importlib = "^1.0.4"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
