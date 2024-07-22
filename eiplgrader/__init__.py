@@ -1,3 +1,3 @@
-from .code_generator import CodeGenerator
+from .codegen import CodeGenerator
 from .tester import CodeTester
 

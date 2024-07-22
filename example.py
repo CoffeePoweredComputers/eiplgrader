@@ -1,27 +1,17 @@
-from eipecgbg.code_generator import CodeGenerator
-from eipecgbg.tester import CodeTester
+from eiplgrader.codegen import CodeGenerator
+from eiplgrader.tester import CodeTester
 
-# Specify a system prompt and generate code
 code_generator = CodeGenerator(
-        "that adds two numbers.",
         "YOUR API KEY HERE"
         )
-generated_code = code_generator.generate_code()
+generated_code = code_generator.generate_code("that adds two numbers.")
 
-# Provide test cases as functions
-def test_foo_function_1():
-    assert foo(1, 2) == 3
-
-def test_foo_function_2():
-    assert foo(0, 0) == 0
-
-def test_foo_function_3():
-    assert foo(-1, 1) == 0
+# define your tests
 
 test_cases = [
-    test_foo_function_1,
-    test_foo_function_2,
-    test_foo_function_3
+    [[1, 2], 3],
+    [[-1, 1], 0],
+    [[-1, -1], -2]
 ]
 
 # Test the generated code
