@@ -40,4 +40,4 @@ This autograder has been evaluated and used in the following research:
 
 - [Code Generation Based Grading: Evaluating an Auto-grading Mechanism for "Explain-in-Plain-English" Questions](https://doi.org/10.1145/3649217.3653582)
 - [Explaining Code with a Purpose: An Integrated Approach for Developing Code Comprehension and Prompting Skills](https://doi.org/10.1145/3649217.3653587)
-- [Prompting for Comprehension: Exploring the Intersection of Explain in Plain English Questions and Prompt Writing]()
+- [Prompting for Comprehension: Exploring the Intersection of Explain in Plain English Questions and Prompt Writing](https://doi.org/10.1145/3657604.3662039)
