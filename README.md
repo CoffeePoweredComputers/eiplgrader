@@ -1,5 +1,5 @@
 
-# ``Explain in Plain Language'' Autograder
+# "Explain in Plain Language" (EiPL) Autograder
 
 [![Version](https://img.shields.io/pypi/v/eiplgrader.svg)](https://pypi.python.org/pypi/eiplgrader)
 [![License](https://img.shields.io/pypi/l/eiplgrader.svg)](https://pypi.python.org/pypi/eiplgrader)
