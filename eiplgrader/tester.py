@@ -7,7 +7,6 @@ class CodeTester:
 
     def __init__(self, code, test_cases):
         self.code = code
-        print(self.code)
         self.test_cases = test_cases
 
     def test_user_function(self, args, expected_output):
