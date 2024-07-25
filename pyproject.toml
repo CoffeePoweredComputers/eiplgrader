@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "eiplgrader"
-version = "0.1.1"
+version = "0.1.2"
 description = "A collection of autograders for the grading of Explain in Plain Language (EiPL) questions."
 authors = ["David H. Smith IV <dhsmith2@illinois.edu>"]
 license = "GPL-3.0"
