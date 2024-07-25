@@ -14,7 +14,7 @@ class CodeTester:
         global foo
         assert foo(*args) == expected_output
 
-    def run_tests(self):
+    def run_tests(self, verbosity=2, suppress_output=False):
 
         with tempfile.NamedTemporaryFile(delete=False, suffix='.py') as temp_file:
             temp_file.write(self.code.encode('utf-8'))
@@ -35,7 +35,13 @@ class CodeTester:
                     lambda: self.test_user_function(*test_case),
                 )
             )
-        
-        runner = unittest.TextTestRunner()
+
+        stream = open(os.devnull, 'w') if suppress_output else None
+       
+        runner = unittest.TextTestRunner(verbosity=verbosity, stream=stream)
         result = runner.run(test_suite)
+
+        if suppress_output:
+            stream.close()
+
         return result

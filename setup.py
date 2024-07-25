@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='eiplgrader',
-    version='0.1.0',
+    version='0.1.1',
     description='An extension of the unittest with the capability to generate code based on a prompt and test the generated code for the purpose of grading Explain in Plain Language (EiPL) Questions',
     author='David H. Smith IV',
     author_email='dhsmith2@illinois.edu',
