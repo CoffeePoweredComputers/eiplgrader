@@ -23,18 +23,21 @@ class CodeGenerator:
     def __init__(self, 
                  api_key,
                  model="gpt-4o-mini", 
-                 temperature=0):
+                 temperature=0,
+                 system_prompt=SYSTEM_PROMPT
+                 ):
 
         self.model = model
         self.temperature = temperature
         self.client = openai.OpenAI(api_key=api_key)
+        self.system_prompt = system_prompt
 
     def generate_code(self, prompt):
 
         prompt = [
             {
                 "role": "user", 
-                "content": f"{SYSTEM_PROMPT.format(student_prompt=prompt, assumptions='None')}"
+                "content": f"{self.system_prompt.format(student_prompt=prompt, assumptions='None')}"
             }
         ]
 
