@@ -33,7 +33,8 @@ twitter_username: jekyllrb
 github_username:  jekyll
 
 # Build settings
-theme: "just-the-docs"
+remote_theme: pmarsceill/just-the-docs@v0.3.3
+color_scheme: dark
 plugins:
   - jekyll-feed
 
