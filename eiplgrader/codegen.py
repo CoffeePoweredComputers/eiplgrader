@@ -6,10 +6,7 @@ very first time. Your have a rudementary understanding of functions,
 loops, variables, and conditionals.  Create a function, called foo,
 according to the following prompt:
 
-Create a function foo that {student_prompt}
-
-Additional information on the code the students prompt refers to:
-{assumptions}
+Create a function foo that {}
 
 Include only the function and no additional test cases or code.
 Respond with the code for the function foo in the following format:
@@ -32,12 +29,12 @@ class CodeGenerator:
         self.client = openai.OpenAI(api_key=api_key)
         self.system_prompt = system_prompt
 
-    def generate_code(self, prompt):
+    def generate_code(self, student_response):
 
         prompt = [
             {
                 "role": "user", 
-                "content": f"{self.system_prompt.format(student_prompt=prompt, assumptions='None')}"
+                "content": f"{self.system_prompt.format(student_response)}"
             }
         ]
 
