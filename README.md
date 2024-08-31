@@ -1,17 +1,84 @@
+<div style="text-align: center; margin-top: 40px;">
+    <img src="./eipllogo.png" alt="Explain in Plain Language Autograder" style="width: 300px; border-radius: 8px; margin-bottom: 20px;">
+    <h1 style="font-size: 2.5em; margin: 10px 0; color: #333;">Explain in Plain Language Autograder</h1>
+    <h5 style="font-size: 1.1em; color: #777; margin-bottom: 20px;">An automatic grading suite for "Explain in Plain Language" questions.</h5>
+    
+    <div style="display: flex; justify-content: center; gap: 15px;">
+        <a href="https://pypi.python.org/pypi/eiplgrader" style="text-decoration: none;">
+            <img src="https://img.shields.io/pypi/v/eiplgrader.svg" alt="Version" style="border-radius: 5px;">
+        </a>
+        <a href="https://pypi.python.org/pypi/eiplgrader" style="text-decoration: none;">
+            <img src="https://img.shields.io/pypi/l/eiplgrader.svg" alt="License" style="border-radius: 5px;">
+        </a>
+        <a href="https://pypi.python.org/pypi/eiplgrader" style="text-decoration: none;">
+            <img src="https://img.shields.io/pypi/pyversions/eiplgrader.svg" alt="Supported Python versions" style="border-radius: 5px;">
+        </a>
+    </div>
+</div>
 
-# "Explain in Plain Language" (EiPL) Autograder
+<hr style="margin-top: 15px; margin-bottom: 50px; border: none; border-top: 2px solid #eee;">
 
-[![Version](https://img.shields.io/pypi/v/eiplgrader.svg)](https://pypi.python.org/pypi/eiplgrader)
-[![License](https://img.shields.io/pypi/l/eiplgrader.svg)](https://pypi.python.org/pypi/eiplgrader)
-[![Supported Python versions](https://img.shields.io/pypi/pyversions/eiplgrader.svg)](https://pypi.python.org/pypi/eiplgrader)
 
-An automatic grading tool suite for the "Explain in Plain Language" questions.
+## Installation and Usage
 
-## Installation
+
+## Usage
+
+Detailed used can be found in the [eiplgrader documentation](https://hamiltonfour.tech/eiplgrader/).
+
+#### RECOMMENDED: Docker Usage
+
+Given that, at its core, an `eiplquestion` asks students to prompt a model
+which then generates arbitrary code it is **_highly recommended_** that this
+code only be run in a sandboxed environment. To aid in this, this package 
+is also published on [dockerhub](). Its usage is as follows:
+```bash
+# under development
+```
+
+#### Python Usage
+
+In the event you are already running this code in a sandboxed environment you
+may opt instead to simply use the python package to develop autograders
+independently of the provided docker image. The package is published on 
+[pypi](https://pypi.org/project/eiplgrader/) and can be installed using pip.
 
 ```bash
 pip install eiplgrader
 ```
+
+An example script is provided in
+the
+[example.py](https://github.com/CoffeePoweredComputers/eiplgrader/blob/master/example.py)
+script in the repository.
+
+
+```
+#
+# example.py
+#
+
+from eiplgrader.codegen import CodeGenerator
+from eiplgrader.tester import CodeTester
+
+code_generator = CodeGenerator(
+        "YOUR API KEY HERE"
+        )
+generated_code = code_generator.generate_code("that adds two numbers.")
+
+# define your tests
+
+test_cases = [
+    [[1, 2], 3],
+    [[-1, 1], 0],
+    [[-1, -1], -2]
+]
+
+# Test the generated code
+code_tester = CodeTester(generated_code, test_cases)
+test_result = code_tester.run_tests()
+```
+
 
 ## Cite
 When using this tool, please cite the following paper:

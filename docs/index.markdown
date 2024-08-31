@@ -1,6 +1,9 @@
 ---
-# Feel free to add content and custom Front Matter to this file.
-# To modify the layout, see https://jekyllrb.com/docs/themes/#overriding-theme-defaults
-
 layout: home
+title: CS 105 
+nav_exclude: true
+seo:
+  type: Course
+  name: Just the Class
 ---
+
