@@ -1,23 +1,21 @@
-<div style="text-align: center; margin-top: 40px;">
+<div align="center" style="margin-top: 40px;">
     <img src="./eipllogo.png" alt="Explain in Plain Language Autograder" style="width: 300px; border-radius: 8px; margin-bottom: 20px;">
     <h1 style="font-size: 2.5em; margin: 10px 0; color: #333;">Explain in Plain Language Autograder</h1>
     <h5 style="font-size: 1.1em; color: #777; margin-bottom: 20px;">An automatic grading suite for "Explain in Plain Language" questions.</h5>
-    
-    <div style="display: flex; justify-content: center; gap: 15px;">
-        <a href="https://pypi.python.org/pypi/eiplgrader" style="text-decoration: none;">
-            <img src="https://img.shields.io/pypi/v/eiplgrader.svg" alt="Version" style="border-radius: 5px;">
-        </a>
-        <a href="https://pypi.python.org/pypi/eiplgrader" style="text-decoration: none;">
-            <img src="https://img.shields.io/pypi/l/eiplgrader.svg" alt="License" style="border-radius: 5px;">
-        </a>
-        <a href="https://pypi.python.org/pypi/eiplgrader" style="text-decoration: none;">
-            <img src="https://img.shields.io/pypi/pyversions/eiplgrader.svg" alt="Supported Python versions" style="border-radius: 5px;">
-        </a>
-    </div>
+
+  <a href="https://pypi.python.org/pypi/eiplgrader">
+    <img src="https://img.shields.io/pypi/v/eiplgrader.svg" alt="Version">
+  </a>
+  <a href="https://pypi.python.org/pypi/eiplgrader">
+    <img src="https://img.shields.io/pypi/l/eiplgrader.svg" alt="License">
+  </a>
+  <a href="https://pypi.python.org/pypi/eiplgrader">
+    <img src="https://img.shields.io/pypi/pyversions/eiplgrader.svg" alt="Supported Python versions">
+  </a>
 </div>
 
-<hr style="margin-top: 15px; margin-bottom: 50px; border: none; border-top: 2px solid #eee;">
 
+---
 
 ## Installation and Usage
 
