@@ -1,6 +1,5 @@
 <div align="center" style="margin-top: 40px;">
     <img src="./eipllogo.png" alt="Explain in Plain Language Autograder" style="width: 300px; border-radius: 8px; margin-bottom: 20px;">
-    <h1 style="font-size: 2.5em; margin: 10px 0; color: #333;">Explain in Plain Language Autograder</h1>
     <h5 style="font-size: 1.1em; color: #777; margin-bottom: 20px;">An automatic grading suite for "Explain in Plain Language" questions.</h5>
 
   <a href="https://pypi.python.org/pypi/eiplgrader">
