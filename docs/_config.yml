@@ -15,11 +15,11 @@ baseurl: "" # Set the subpath for your site, e.g., /blog (leave blank if root).
 url: "http://hamiltonfour.tech" # Base URL for your site.
 
 # Build settings
-theme: just-the-docs
+# theme: just-the-docs
+remote_theme: just-the-docs/just-the-docs
 search_enabled: false
 heading_anchors: true
 color_scheme: "dark"
-live_reload: true
 
 aux_links:
   David H Smith IV: 'https://hamiltonfour.tech'
