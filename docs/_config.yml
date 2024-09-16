@@ -1,59 +1,54 @@
 # Welcome to Jekyll!
 #
-# This config file is meant for settings that affect your whole blog, values
-# which you are expected to set up once and rarely edit after that. If you find
-# yourself editing this file very often, consider using Jekyll's data files
-# feature for the data you need to update frequently.
-#
-# For technical reasons, this file is *NOT* reloaded automatically when you use
-# 'bundle exec jekyll serve'. If you change this file, please restart the server process.
-#
-# If you need help with YAML syntax, here are some quick references for you:
-# https://learn-the-web.algonquindesign.ca/topics/markdown-yaml-cheat-sheet/#yaml
-# https://learnxinyminutes.com/docs/yaml/
-#
 # Site settings
-# These are used to personalize your new site. If you look in the HTML files,
-# you will see them accessed via {{ site.title }}, {{ site.email }}, and so on.
-# You can create any custom variable you would like, and they will be accessible
-# in the templates via {{ site.myvariable }}.
+# Personalize your new site. Variables like {{ site.title }}, {{ site.email }},
+# and others will be available throughout your templates.
 
-title: An Autograder for "Explain in Plain Language" Questions
+#title: eiplgrader
+#make title an image
+title: eiplgrader
+logo: "/assets/images/eiplgrader.png"
 email: dhsmith2@illinois.edu
-description: >- # this means to ignore newlines until "baseurl:"
-  Write an awesome description for your new site here. You can edit this
-  line in _config.yml. It will appear in your document head meta (for
-  Google search results) and in your feed.xml site description.
-baseurl: "" # the subpath of your site, e.g. /blog
-url: "" # the base hostname & protocol for your site, e.g. http://example.com
+description: >- # Ignore newlines until "baseurl:"
+  This is a project to create an autograder for "Explain in Plain Language" questions. The goal is to provide students with immediate feedback on their answers to these questions, which are often used in computer science courses to assess students' understanding of complex topics.
+baseurl: "" # Set the subpath for your site, e.g., /blog (leave blank if root).
+url: "http://hamiltonfour.tech" # Base URL for your site.
 
 # Build settings
-remote_theme: pmarsceill/just-the-docs@v0.3.3
-color_scheme: dark
-search_enabled: true
+theme: just-the-docs
+search_enabled: false
 heading_anchors: true
-permalink: pretty
-aux_links:
-  David H Smith IV:
-    - 'https://hamiltonfour.tech'
-footer_content:
+color_scheme: "dark"
+live_reload: true
 
-# Exclude from processing.
-# The following items will not be processed, by default.
-# Any item listed under the `exclude:` key here will be automatically added to
-# the internal "default list".
-#
-# Excluded items can be processed by explicitly listing the directories or
-# their entries' file path in the `include:` list.
-#
-# exclude:
-#   - .sass-cache/
-#   - .jekyll-cache/
-#   - gemfiles/
-#   - Gemfile
-#   - Gemfile.lock
-#   - node_modules/
-#   - vendor/bundle/
-#   - vendor/cache/
-#   - vendor/gems/
-#   - vendor/ruby/
+aux_links:
+  David H Smith IV: 'https://hamiltonfour.tech'
+
+footer_content: "Powered by Jekyll and just-the-docs theme."
+
+# Exclude these files and directories from the site build
+exclude:
+  - .sass-cache/
+  - .jekyll-cache/
+  - gemfiles/
+  - Gemfile
+  - Gemfile.lock
+  - node_modules/
+  - vendor/bundle/
+  - vendor/cache/
+  - vendor/gems/
+  - vendor/ruby/
+  - bin/
+  - lib/
+  - "*.gemspec"
+  - "*.gem"
+  - LICENSE.txt
+  - package.json
+  - package-lock.json
+  - Rakefile
+  - README.md
+  - CODE_OF_CONDUCT.md
+  - docker-compose.yml
+  - Dockerfile
+  - fixtures/
+
