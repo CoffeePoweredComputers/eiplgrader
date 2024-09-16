@@ -11,13 +11,12 @@ logo: "/assets/images/eiplgrader.png"
 email: dhsmith2@illinois.edu
 description: >- # Ignore newlines until "baseurl:"
   This is a project to create an autograder for "Explain in Plain Language" questions. The goal is to provide students with immediate feedback on their answers to these questions, which are often used in computer science courses to assess students' understanding of complex topics.
-baseurl: "" # Set the subpath for your site, e.g., /blog (leave blank if root).
-url: "http://hamiltonfour.tech" # Base URL for your site.
+exclude: ["Gemfile", "Gemfile.lock", "LICENSE", "README.md"]
 
 # Build settings
 # theme: just-the-docs
-remote_theme: just-the-docs/just-the-docs
-search_enabled: false
+remote_theme: pmarsceill/just-the-docs@v0.3.3
+search_enabled: true
 heading_anchors: true
 color_scheme: "dark"
 
@@ -52,3 +51,10 @@ exclude:
   - Dockerfile
   - fixtures/
 
+compress_html:
+  clippings: all
+  comments: all
+  endings: all
+  startings: []
+  blanklines: false
+  profile: false
