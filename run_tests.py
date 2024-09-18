@@ -29,13 +29,7 @@ def main():
         raise ValueError("Either USER_CODE or both API_KEY and PROMPT must be provided")
 
     code_tester = CodeTester(generated_code, test_cases)
-    test_result = code_tester.run_tests(suppress_output=True)
-
-    if test_result.wasSuccessful():
-        print("All tests passed successfully!")
-    else:
-        print("Some tests failed.")
-        print(test_result)
+    test_result = code_tester.run_tests()
 
 if __name__ == "__main__":
     main()

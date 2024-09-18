@@ -108,20 +108,7 @@ class CodeTester:
         runner = CodeRunner()
         result = runner.run(test_suite)
 
-        test_results = []
-        for test_result in result.test_results:
-            test_results.append({
-                'function_call': test_result['function_call'],
-                'expected_output': test_result['expected_output'],
-                'actual_output': test_result['actual_output'],
-                'pass': test_result['pass']
-            })
-
-
         if suppress_output:
             stream.close()
 
-        print(json.dumps(test_results, indent=4))
-
         return result
-
