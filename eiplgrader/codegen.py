@@ -10,16 +10,18 @@ Create a function foo that {}
 
 Include only the function and no additional test cases or code.
 Respond with the code for the function foo in the following format:
+
 ```python
 <code here>
 ```
+
 """
 
 class CodeGenerator:
 
     def __init__(self, 
                  api_key,
-                 model="gpt-4o-mini", 
+                 model="gpt-4o", 
                  temperature=0,
                  system_prompt=SYSTEM_PROMPT
                  ):
@@ -34,7 +36,7 @@ class CodeGenerator:
         prompt = [
             {
                 "role": "user", 
-                "content": f"{self.system_prompt.format(student_response)}"
+                "content": self.system_prompt.format(student_response)
             }
         ]
 
