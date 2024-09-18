@@ -1,5 +1,6 @@
 import os
 import json
+
 from eiplgrader.codegen import CodeGenerator
 from eiplgrader.tester import CodeTester
 
@@ -21,11 +22,9 @@ def main():
 
     if user_code:
         generated_code = user_code
-        print("Using user-provided code")
     elif api_key and prompt:
         code_generator = CodeGenerator(api_key)
         generated_code = code_generator.generate_code(prompt)
-        print("Code generated from the prompt")
     else:
         raise ValueError("Either USER_CODE or both API_KEY and PROMPT must be provided")
 
