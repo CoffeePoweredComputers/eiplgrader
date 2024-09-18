@@ -48,7 +48,20 @@ For example, to grade a question with the following prompt and test cases from t
 docker run -e API_KEY="<YOUR-API-KEY-HERE>" -e PROMPT="adds two numbers" -e TEST_CASES_FILE="example_test_cases.json" -v $(pwd)/example_test_cases.json:/app/example_test_cases.json eiplgrader
 ```
 
+If you already have code generated and want to test it, you can run the following command:
+```bash
+docker run -e USER_CODE="<YOUR-CODE-HERE>" -e TEST_CASES_FILE="example_test_cases.json" -v $(pwd)/example_test_cases.json:/app/example_test_cases.json eiplgrader
+```
 
+From the previous example, if you have the following code generated:
+```python
+def foo(a, b):
+    return a + b
+```
+Then it can be tested using the following command:
+```bash
+docker run -e USER_CODE="def foo(a, b): return a + b" -e TEST_CASES_FILE="example_test_cases.json" -v $(pwd)/example_test_cases.json:/app/example_test_cases.json eiplgrader
+```
 
 ## Package Usage (⚠️ UNSAFE ⚠️)
 
