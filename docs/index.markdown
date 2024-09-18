@@ -21,7 +21,36 @@ To install the `eiplgrader` tool, you can use `pip`:
 pip install eiplgrader
 ```
 
-## Usage
+## Docker Usage (Recommended)
+
+Given this tool generates and executes arbitrary code, it is recommended to run
+it in a sandboxed environment such as a Docker container. 
+
+The package is available as a Docker image on Docker Hub. You can pull the image using the following command:
+
+```bash
+docker pull coffeepwrdcomputers/eiplgrader
+```
+For each question you will need to construct a `tests.json` file that 
+contains the inputs and expected outputs for the test cases. An example
+is provided in `example_test_cases.json`.`
+
+To run the tool in a Docker container, you will need to provide an api key, the
+prompt, and the test cases file as environment variables. You can run the tool
+using the following command:
+```bash
+docker run -e API_KEY="<YOUR-API-KEY-HERE>" -e PROMPT="<PROMPT-HERE>" -e TEST_CASES_FILE="tests.json" -v $/path/to/tests.json:/app/<TEST-CASES-FILE> eiplgrader
+```
+
+For example, to grade a question with the following prompt and test cases from the provided example:
+
+```bash
+docker run -e API_KEY="<YOUR-API-KEY-HERE>" -e PROMPT="adds two numbers" -e TEST_CASES_FILE="example_test_cases.json" -v $(pwd)/example_test_cases.json:/app/example_test_cases.json eiplgrader
+```
+
+
+
+## Package Usage (⚠️ UNSAFE ⚠️)
 
 To use the `eiplgrader` tool, you need to provide an API key for OpenAI's GPT model. You can get an API key by signing up on the [OpenAI website](https://platform.openai.com/).
 
