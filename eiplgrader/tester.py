@@ -93,7 +93,7 @@ class CodeTester:
         for test_case in self.test_cases:
 
             args, expected_output = test_case
-            function_call = f"foo({', '.join(map(str, args))})"
+            function_call = f"foo({', '.join(map(repr, args))})"
 
             cf_test = CodeFunctionTest(
                 function_call=function_call,
