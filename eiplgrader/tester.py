@@ -49,7 +49,19 @@ class CodeFunctionTest(unittest.FunctionTestCase):
     """
     A test case class that runs a single test for a function
     """
-    def __init__(self, function_call, args, expected_output, inplace=False):
+    def __init__(self, function_call, args, expected_output, inplace="0"):
+        """
+        Args:
+            function_call (str): The function call to be tested
+            args (list): The arguments to be passed to the function
+            expected_output (any): The expected output of the function
+            inplace_mode (str): The mode of the inplace operation
+                - "0": The function does not perform an inplace operation
+                - "1": The function performs an inplace
+                - "2": The function performs an inplace and returns a value
+        """
+
+
         super().__init__(self.test_user_function)
         self.function_call = function_call
         self.args = args
@@ -59,13 +71,22 @@ class CodeFunctionTest(unittest.FunctionTestCase):
 
     def test_user_function(self):
         global foo
-        if not self.inplace:
+
+        if self.inplace == "0":
             self.actual_output = foo(*self.args)
-        else:
+
+        elif self.inplace == "1":
             self.actual_output = self.args[0].copy()
             foo(self.actual_output)
-        assert self.actual_output == self.expected_output
 
+        elif self.inplace == "2":
+            actual_output_original = self.args[0].copy()
+            actual_output_returned = foo(*self.args)
+            self.actual_output = actual_output_returned if actual_output_returned is not None else actual_output_original
+        else:
+            raise ValueError(f"Invalid inplace mode: {self.inplace}. Must be one of '0', '1', or '2'")
+
+        assert self.actual_output == self.expected_output
 
 class CodeTester:
     """
@@ -73,7 +94,7 @@ class CodeTester:
     and returns the results of the tests in json format
     """
 
-    def __init__(self, code, test_cases, inplace=False):
+    def __init__(self, code, test_cases, inplace="0"):
         self.code = code
         self.test_cases = test_cases
         self.current_test = None
