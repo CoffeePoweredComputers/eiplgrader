@@ -107,7 +107,6 @@ class CodeTester:
                 expected_output=expected_output,
                 inplace=self.inplace
             )
-            print(cf_test)
 
             test_suite.addTest(cf_test)
 
