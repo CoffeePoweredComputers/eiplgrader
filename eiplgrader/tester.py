@@ -2,6 +2,7 @@ import unittest
 import tempfile
 import importlib
 import os, json
+import copy
 
 class CodeTestResult(unittest.TestResult):
     """
@@ -48,18 +49,22 @@ class CodeFunctionTest(unittest.FunctionTestCase):
     """
     A test case class that runs a single test for a function
     """
-
-    def test_user_function(self):
-        global foo
-        self.actual_output = foo(*self.args)
-        assert self.actual_output == self.expected_output
-
-    def __init__(self, function_call, args, expected_output):
+    def __init__(self, function_call, args, expected_output, inplace=False):
         super().__init__(self.test_user_function)
         self.function_call = function_call
         self.args = args
         self.expected_output = expected_output
         self.actual_output = None
+        self.inplace = inplace
+
+    def test_user_function(self):
+        global foo
+        if not self.inplace:
+            self.actual_output = foo(*self.args)
+        else:
+            self.actual_output = self.args[0].copy()
+            foo(self.actual_output)
+        assert self.actual_output == self.expected_output
 
 
 class CodeTester:
@@ -68,10 +73,11 @@ class CodeTester:
     and returns the results of the tests in json format
     """
 
-    def __init__(self, code, test_cases):
+    def __init__(self, code, test_cases, inplace=False):
         self.code = code
         self.test_cases = test_cases
         self.current_test = None
+        self.inplace = inplace
 
 
     def run_tests(self, verbosity=2, suppress_output=False):
@@ -89,7 +95,7 @@ class CodeTester:
         globals()['foo'] = temp_module.foo
 
         test_suite = unittest.TestSuite()
-        
+
         for test_case in self.test_cases:
 
             args, expected_output = test_case
@@ -98,13 +104,15 @@ class CodeTester:
             cf_test = CodeFunctionTest(
                 function_call=function_call,
                 args=args,
-                expected_output=expected_output
+                expected_output=expected_output,
+                inplace=self.inplace
             )
+            print(cf_test)
 
             test_suite.addTest(cf_test)
 
         stream = open(os.devnull, 'w') if suppress_output else None
-        
+
         runner = CodeRunner()
         result = runner.run(test_suite)
 

@@ -23,13 +23,14 @@ class CodeGenerator:
                  api_key,
                  model="gpt-4o", 
                  temperature=0,
-                 system_prompt=SYSTEM_PROMPT
-                 ):
+                 system_prompt=SYSTEM_PROMPT,
+                 num_to_generate=1):
 
         self.model = model
         self.temperature = temperature
         self.client = openai.OpenAI(api_key=api_key)
         self.system_prompt = system_prompt
+        self.num_to_generate = num_to_generate
 
     def generate_code(self, student_response):
 
@@ -46,6 +47,9 @@ class CodeGenerator:
               temperature=self.temperature,
         )
 
-        generated_code = response.choices[0].message.content.replace("```python", "").replace("```", "").strip()
+        if self.num_to_generate > 1:
+            generated_code = [response.choices[i].message.content.replace("```python", "").replace("```", "").strip() for i in range(self.num_to_generate)]
+        else:
+            generated_code = response.choices[0].message.content.replace("```python", "").replace("```", "").strip()
         return generated_code
 

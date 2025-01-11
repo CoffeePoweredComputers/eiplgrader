@@ -31,6 +31,9 @@ def main():
     code_tester = CodeTester(generated_code, test_cases)
     test_result = code_tester.run_tests()
 
+    print(json.dumps(test_result.test_results, indent=4))
+    return test_result
+
 if __name__ == "__main__":
     main()
 
