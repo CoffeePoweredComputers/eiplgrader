@@ -18,6 +18,9 @@
 
 ## Installation and Usage
 
+Upcommming features --- To be released April 15th:
+* (Prompt Segmentation)[https://doi.org/10.48550/arXiv.2503.12216]
+* (Function Redefinition Exercises](https://doi.org/10.48550/arXiv.2503.12207)
 
 ## Usage
 
