@@ -17,11 +17,12 @@ Respond with the code for the function foo in the following format:
 
 """
 
+
 class CodeGenerator:
 
-    def __init__(self, 
+    def __init__(self,
                  api_key,
-                 model="gpt-4o", 
+                 model="gpt-4o",
                  temperature=0,
                  system_prompt=SYSTEM_PROMPT,
                  num_to_generate=1):
@@ -36,7 +37,7 @@ class CodeGenerator:
 
         prompt = [
             {
-                "role": "user", 
+                "role": "user",
                 "content": self.system_prompt.format(student_response)
             }
         ]
@@ -51,7 +52,7 @@ class CodeGenerator:
             generated_code = [
                     response.choices[i].message.content.replace("```python", "")
                                                        .replace("```", "")
-                                                       .strip() 
+                                                       .strip()
                     for i in range(self.num_to_generate)
                 ]
         else:
@@ -59,4 +60,3 @@ class CodeGenerator:
                                                                  .replace("```", "")
                                                                  .strip())
         return generated_code
-

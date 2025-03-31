@@ -102,6 +102,9 @@ When using this tool, please cite the following paper:
 }
 ```
 
+## Python Version
+This package supports Python 3.10, 3.11, 3.12, 3.13, and 3.14.
+
 ## Research
 This autograder has been evaluated and used in the following research:
 
