@@ -48,8 +48,15 @@ class CodeGenerator:
         )
 
         if self.num_to_generate > 1:
-            generated_code = [response.choices[i].message.content.replace("```python", "").replace("```", "").strip() for i in range(self.num_to_generate)]
+            generated_code = [
+                    response.choices[i].message.content.replace("```python", "")
+                                                       .replace("```", "")
+                                                       .strip() 
+                    for i in range(self.num_to_generate)
+                ]
         else:
-            generated_code = response.choices[0].message.content.replace("```python", "").replace("```", "").strip()
+            generated_code = response.choices[0].message.content.replace("```python", "")
+                                                                .replace("```", "")
+                                                                .strip()
         return generated_code
 
