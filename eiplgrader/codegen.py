@@ -55,8 +55,8 @@ class CodeGenerator:
                     for i in range(self.num_to_generate)
                 ]
         else:
-            generated_code = response.choices[0].message.content.replace("```python", "")
-                                                                .replace("```", "")
-                                                                .strip()
+            generated_code = (response.choices[0].message.content.replace("```python", "")
+                                                                 .replace("```", "")
+                                                                 .strip())
         return generated_code
 

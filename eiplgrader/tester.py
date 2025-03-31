@@ -1,8 +1,9 @@
 import unittest
 import tempfile
 import importlib
-import os, json
-import copy
+import os
+import json
+from copy import deepcopy
 
 class CodeTestResult(unittest.TestResult):
     """
@@ -30,7 +31,7 @@ class CodeTestResult(unittest.TestResult):
 
     def addError(self, test, err):
         self.test_results.append({
-            'function_call': self.function_call,
+            'function_call': test.function_call,
             'expected_output': 'N/A',
             'actual_output': str(err),  # used to include the error traceback
             'pass': False
@@ -70,19 +71,22 @@ class CodeFunctionTest(unittest.FunctionTestCase):
         self.inplace = inplace
 
     def test_user_function(self):
-        global foo
+        # Using module's foo function
+        foo_func = globals().get('foo')
 
         if self.inplace == "0":
-            self.actual_output = foo(*self.args)
+            self.actual_output = foo_func(*self.args)
 
         elif self.inplace == "1":
-            self.actual_output = self.args[0].copy()
-            foo(self.actual_output)
+            self.actual_output = deepcopy(self.args[0])
+            foo_func(self.actual_output)
 
         elif self.inplace == "2":
-            actual_output_original = self.args[0].copy()
-            actual_output_returned = foo(*self.args)
-            self.actual_output = actual_output_returned if actual_output_returned is not None else actual_output_original
+            actual_output_original = deepcopy(self.args[0])
+            actual_output_returned = foo_func(*self.args)
+            # Use shorter variable names to keep line length under 100 chars
+            result = actual_output_returned
+            self.actual_output = result if result is not None else actual_output_original
         else:
             raise ValueError(f"Invalid inplace mode: {self.inplace}. Must be one of '0', '1', or '2'")
 
@@ -101,7 +105,7 @@ class CodeTester:
         self.inplace = inplace
 
 
-    def run_tests(self, verbosity=2, suppress_output=False):
+    def run_tests(self, suppress_output=False):
 
         with tempfile.NamedTemporaryFile(delete=False, suffix='.py') as temp_file:
             temp_file.write(self.code.encode('utf-8'))
@@ -131,12 +135,11 @@ class CodeTester:
 
             test_suite.addTest(cf_test)
 
-        stream = open(os.devnull, 'w') if suppress_output else None
-
         runner = CodeRunner()
         result = runner.run(test_suite)
 
         if suppress_output:
-            stream.close()
+            with open(os.devnull, 'w', encoding='utf-8') as _:
+                pass  # Use with block for safety
 
         return result
