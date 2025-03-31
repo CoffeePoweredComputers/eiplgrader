@@ -6,6 +6,42 @@
   @include align-items(center);
   img {
     max-height: 5rem;
+    transition: transform 0.3s ease;
+    
+    &:hover {
+      transform: scale(1.05);
+    }
+  }
+}
+
+// Improve heading styles
+h1, h2, h3, h4, h5, h6 {
+  margin-top: 1.5em;
+  margin-bottom: 0.8em;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+h1 {
+  border-bottom: 1px solid $border-color;
+  padding-bottom: 0.5em;
+}
+
+// Add subtle code block styling
+div.highlighter-rouge {
+  margin-top: 1em;
+  margin-bottom: 1em;
+  border-radius: 4px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+// Improve link hover effect
+a:not(.btn) {
+  transition: all 0.2s ease;
+  
+  &:hover {
+    text-decoration: none;
+    opacity: 0.85;
   }
 }
 

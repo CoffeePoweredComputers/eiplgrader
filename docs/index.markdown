@@ -2,16 +2,20 @@
 title: "Home"
 layout: home
 nav_order: 1
-description: "eiplgrader - A tool to grade the EIPL questions."
+description: "eiplgrader - A modern tool for grading Explain in Plain Language (EIPL) questions"
 permalink: /
 ---
 
 # Welcome to eiplgrader
 
-This is the documentation for the `eiplgrader` tool, which is used to grade the EIPL questions. The tool consists of two main modules:
+This is the documentation for the `eiplgrader` tool, which is used to grade Explain in Plain Language (EIPL) questions in computer science education. The tool leverages AI to provide immediate, accurate feedback on student responses.
 
-- [Code Generation Module](/docs/codegen): This module generates Python code using OpenAI's GPT models
-- [Tester Module](docs/tester): This module tests the generated code using test cases.
+## Core Components
+
+The tool consists of two main modules:
+
+- [Code Generation Module](/docs/codegen): Transforms natural language descriptions into executable Python code using OpenAI's GPT models
+- [Tester Module](docs/tester): Evaluates the generated code against predefined test cases to assess correctness
 
 ## Installation
 
@@ -98,4 +102,8 @@ If you would like to contribute to the `eiplgrader` tool, please check out the [
 ## License
 
 This project is licensed under the [GNU General Public License v3.0](https://www.gnu.org/licenses/gpl-3.0.en.html). You are free to use, modify, and distribute this software under the terms of the license.
+
+## Learn More
+
+To understand the research and educational theory behind eiplgrader, visit our [Research](/docs/research) section.
 
