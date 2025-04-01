@@ -6,15 +6,11 @@ class TestCodeTester(unittest.TestCase):
 
     def test_run_tests(self):
         generated_code = """
-def add(a, b):
+def foo(a, b):
     return a + b
 """
         test_cases = [
-            [
-                "class TestAddFunction(unittest.TestCase):",
-                "    def test_add(self):",
-                "        self.assertEqual(add(1, 2), 3)",
-            ]
+            [[1, 2], 3]
         ]
         tester = CodeTester(generated_code, test_cases)
         result = tester.run_tests()
