@@ -9,9 +9,7 @@ class TestCodeTester(unittest.TestCase):
 def foo(a, b):
     return a + b
 """
-        test_cases = [
-            [[1, 2], 3]
-        ]
+        test_cases = [[[1, 2], 3]]
         tester = CodeTester(generated_code, test_cases)
         result = tester.run_tests()
         self.assertTrue(result.wasSuccessful())
