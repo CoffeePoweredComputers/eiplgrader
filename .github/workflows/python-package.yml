@@ -37,6 +37,8 @@ jobs:
         pip install poetry
         poetry install --with dev
         pip install pytest pytest-cov pylint black mypy
+        # Explicitly install openai to ensure it's available
+        pip install openai
 
     - name: Lint with pylint
       run: |
