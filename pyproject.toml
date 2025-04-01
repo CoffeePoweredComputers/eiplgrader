@@ -43,8 +43,8 @@ disable = [
   "too-few-public-methods",
   "invalid-name",
   "import-error",              # E0401
-  "too-many-arguments",        # R0913
-  "too-many-positional",       # R0917
+  "too-many-arguments"         # R0913
+  # R0917 doesn't exist in pylint
 ]
 
 [tool.pytest.ini_options]
