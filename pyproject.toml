@@ -41,7 +41,10 @@ disable = [
   "missing-class-docstring",
   "missing-function-docstring",
   "too-few-public-methods",
-  "invalid-name"
+  "invalid-name",
+  "import-error",              # E0401
+  "too-many-arguments",        # R0913
+  "too-many-positional",       # R0917
 ]
 
 [tool.pytest.ini_options]
