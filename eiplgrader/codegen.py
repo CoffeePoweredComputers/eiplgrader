@@ -36,27 +36,32 @@ class CodeGenerator:
     def generate_code(self, student_response):
 
         prompt = [
-            {
-                "role": "user",
-                "content": self.system_prompt.format(student_response)
-            }
-        ]
+                {
+                    "role": "user",
+                    "content": self.system_prompt.format(student_response)
+                    }
+                ]
 
         response = self.client.chat.completions.create(
-              model=self.model,
-              messages=prompt,
-              temperature=self.temperature,
-        )
+                model=self.model,
+                messages=prompt,
+                temperature=self.temperature,
+                )
 
         if self.num_to_generate > 1:
             generated_code = [
-                    response.choices[i].message.content.replace("```python", "")
-                                                       .replace("```", "")
-                                                       .strip()
-                    for i in range(self.num_to_generate)
-                ]
+                response.choices[i].message.content
+                       .replace("```python", "")
+                       .replace("```", "")
+                       .strip()
+                for i in range(self.num_to_generate)
+            ]
         else:
-            generated_code = (response.choices[0].message.content.replace("```python", "")
-                                                                 .replace("```", "")
-                                                                 .strip())
+            generated_code = (
+                response.choices[0].message.content
+                       .replace("```python", "")
+                       .replace("```", "")
+                       .strip()
+            )
+
         return generated_code

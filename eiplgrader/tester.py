@@ -2,8 +2,8 @@ import unittest
 import tempfile
 import importlib
 import os
-import json
 from copy import deepcopy
+
 
 class CodeTestResult(unittest.TestResult):
     """
@@ -37,6 +37,7 @@ class CodeTestResult(unittest.TestResult):
             'pass': False
         })
 
+
 class CodeRunner:
     """
     A test runner class that returns the results of the tests in a dictionary
@@ -45,6 +46,7 @@ class CodeRunner:
         result = CodeTestResult()
         test_suite.run(result)
         return result
+
 
 class CodeFunctionTest(unittest.FunctionTestCase):
     """
@@ -62,7 +64,6 @@ class CodeFunctionTest(unittest.FunctionTestCase):
                 - "2": The function performs an inplace and returns a value
         """
 
-
         super().__init__(self.test_user_function)
         self.function_call = function_call
         self.args = args
@@ -71,7 +72,7 @@ class CodeFunctionTest(unittest.FunctionTestCase):
         self.inplace = inplace
 
     def test_user_function(self):
-        # Using module's foo function
+
         foo_func = globals().get('foo')
 
         if self.inplace == "0":
@@ -84,13 +85,17 @@ class CodeFunctionTest(unittest.FunctionTestCase):
         elif self.inplace == "2":
             actual_output_original = deepcopy(self.args[0])
             actual_output_returned = foo_func(*self.args)
-            # Use shorter variable names to keep line length under 100 chars
             result = actual_output_returned
-            self.actual_output = result if result is not None else actual_output_original
+            if result is not None:
+                self.actual_output = result
+            else:
+                self.actual_output = actual_output_original
         else:
-            raise ValueError(f"Invalid inplace mode: {self.inplace}. Must be one of '0', '1', or '2'")
+            raise ValueError(f"Invalid inplace mode: {self.inplace}."
+                             "Must be one of '0', '1', or '2'")
 
         assert self.actual_output == self.expected_output
+
 
 class CodeTester:
     """
@@ -104,14 +109,20 @@ class CodeTester:
         self.current_test = None
         self.inplace = inplace
 
-
     def run_tests(self, suppress_output=False):
 
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.py') as temp_file:
-            temp_file.write(self.code.encode('utf-8'))
+        with tempfile.NamedTemporaryFile(
+            delete=False,
+            suffix=".py"
+        ) as temp_file:
+            temp_file.write(self.code.encode("utf-8"))
             temp_file_path = temp_file.name
 
-        spec = importlib.util.spec_from_file_location("temp_module", temp_file_path)
+        spec = importlib.util.spec_from_file_location(
+            "temp_module",
+            temp_file_path,
+        )
+
         temp_module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(temp_module)
 
