@@ -9,39 +9,47 @@ class CodeTestResult(unittest.TestResult):
     """
     A test result class that stores the results of the tests
     """
+
     def __init__(self):
         super().__init__()
         self.test_results = []
 
     def addSuccess(self, test):
-        self.test_results.append({
-            'function_call': test.function_call,
-            'expected_output': test.expected_output,
-            'actual_output': test.actual_output,
-            'pass': True
-        })
+        self.test_results.append(
+            {
+                "function_call": test.function_call,
+                "expected_output": test.expected_output,
+                "actual_output": test.actual_output,
+                "pass": True,
+            }
+        )
 
     def addFailure(self, test, err):
-        self.test_results.append({
-            'function_call': test.function_call,
-            'expected_output': test.expected_output,
-            'actual_output': test.actual_output,
-            'pass': False
-        })
+        self.test_results.append(
+            {
+                "function_call": test.function_call,
+                "expected_output": test.expected_output,
+                "actual_output": test.actual_output,
+                "pass": False,
+            }
+        )
 
     def addError(self, test, err):
-        self.test_results.append({
-            'function_call': test.function_call,
-            'expected_output': 'N/A',
-            'actual_output': str(err),  # used to include the error traceback
-            'pass': False
-        })
+        self.test_results.append(
+            {
+                "function_call": test.function_call,
+                "expected_output": "N/A",
+                "actual_output": str(err),  # used to include the error traceback
+                "pass": False,
+            }
+        )
 
 
 class CodeRunner:
     """
     A test runner class that returns the results of the tests in a dictionary
     """
+
     def run(self, test_suite):
         result = CodeTestResult()
         test_suite.run(result)
@@ -52,6 +60,7 @@ class CodeFunctionTest(unittest.FunctionTestCase):
     """
     A test case class that runs a single test for a function
     """
+
     def __init__(self, function_call, args, expected_output, inplace="0"):
         """
         Args:
@@ -73,7 +82,7 @@ class CodeFunctionTest(unittest.FunctionTestCase):
 
     def test_user_function(self):
 
-        foo_func = globals().get('foo')
+        foo_func = globals().get("foo")
 
         if self.inplace == "0":
             self.actual_output = foo_func(*self.args)
@@ -91,8 +100,10 @@ class CodeFunctionTest(unittest.FunctionTestCase):
             else:
                 self.actual_output = actual_output_original
         else:
-            raise ValueError(f"Invalid inplace mode: {self.inplace}."
-                             "Must be one of '0', '1', or '2'")
+            raise ValueError(
+                f"Invalid inplace mode: {self.inplace}."
+                "Must be one of '0', '1', or '2'"
+            )
 
         assert self.actual_output == self.expected_output
 
@@ -111,10 +122,7 @@ class CodeTester:
 
     def run_tests(self, suppress_output=False):
 
-        with tempfile.NamedTemporaryFile(
-            delete=False,
-            suffix=".py"
-        ) as temp_file:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".py") as temp_file:
             temp_file.write(self.code.encode("utf-8"))
             temp_file_path = temp_file.name
 
@@ -128,7 +136,7 @@ class CodeTester:
 
         os.remove(temp_file_path)
 
-        globals()['foo'] = temp_module.foo
+        globals()["foo"] = temp_module.foo
 
         test_suite = unittest.TestSuite()
 
@@ -141,7 +149,7 @@ class CodeTester:
                 function_call=function_call,
                 args=args,
                 expected_output=expected_output,
-                inplace=self.inplace
+                inplace=self.inplace,
             )
 
             test_suite.addTest(cf_test)
@@ -150,7 +158,7 @@ class CodeTester:
         result = runner.run(test_suite)
 
         if suppress_output:
-            with open(os.devnull, 'w', encoding='utf-8') as _:
+            with open(os.devnull, "w", encoding="utf-8") as _:
                 pass  # Use with block for safety
 
         return result
