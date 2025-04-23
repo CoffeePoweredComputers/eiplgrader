@@ -9,9 +9,9 @@ code_generator = CodeGenerator("YOUR API KEY HERE")
 
 generated_code = code_generator.generate_code("that adds two numbers.")
 test_cases = [
-    {"parameters:": {"a": 1, "b": 2}, "expected": 3},
-    {"parameters:": {"a": 5, "b": 7}, "expected": 12},
-    {"parameters:": {"a": -1, "b": 1}, "expected": 0},
+    {"parameters": {"a": 1, "b": 2}, "expected": 3},
+    {"parameters": {"a": 5, "b": 7}, "expected": 12},
+    {"parameters": {"a": -1, "b": 1}, "expected": 0},
 ]
 
 # Test the generated code
@@ -25,7 +25,7 @@ test_result = code_tester.run_tests()
 
 generated_code = code_generator.generate_code("sum_two_numbers", gen_type="redef")
 test_cases = [
-    {"parameters:": {"a": 1, "b": 2}, "expected": 3},
+    {"parameters:": {"a": 1, "b": 2}, "expected": 4},
     {"parameters:": {"a": 5, "b": 7}, "expected": 12},
     {"parameters:": {"a": -1, "b": 1}, "expected": 0},
 ]
@@ -59,9 +59,9 @@ generated_code = code_generator.generate_code(
 )
 
 test_cases = [
-    {"parameters:": {"a": 1, "b": 2}, "expected": 3},
-    {"parameters:": {"a": 5, "b": 7}, "expected": 12},
-    {"parameters:": {"a": -1, "b": 1}, "expected": 0},
+    {"parameters": {"a": 1, "b": 2}, "expected": 3},
+    {"parameters": {"a": 5, "b": 7}, "expected": 12},
+    {"parameters": {"a": -1, "b": 1}, "expected": 0},
 ]
 
 # Test the generated code
@@ -80,9 +80,9 @@ generated_code = code_generator.generate_code(
 )
 
 test_cases = [
-    {"parameters:": {"lst": [1, 2, 3]}, "expected": 6},
-    {"parameters:": {"lst": [5, 7, 8]}, "expected": 20},
-    {"parameters:": {"lst": [-1, 1, 0]}, "expected": 0},
+    {"parameters": {"lst": [1, 2, 3]}, "expected": 6},
+    {"parameters": {"lst": [5, 7, 8]}, "expected": 20},
+    {"parameters": {"lst": [-1, 1, 0]}, "expected": 0},
 ]
 
 # Test the generated code
@@ -100,9 +100,9 @@ generated_code = code_generator.generate_code(
 )
 
 test_cases = [
-    {"parameters:": {"a": 1, "b": 2}, "expected": 3},
-    {"parameters:": {"a": 5, "b": 7}, "expected": 12},
-    {"parameters:": {"a": -1, "b": 1}, "expected": 0},
+    {"parameters": {"a": 1, "b": 2}, "expected": 3},
+    {"parameters": {"a": 5, "b": 7}, "expected": 12},
+    {"parameters": {"a": -1, "b": 1}, "expected": 0},
 ]
 
 # Test the generated code

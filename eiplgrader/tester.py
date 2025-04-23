@@ -15,6 +15,7 @@ class CodeTestResult(unittest.TestResult):
         self.test_results = []
 
     def addSuccess(self, test):
+        super().addSuccess(test)
         self.test_results.append(
             {
                 "function_call": test.function_call,
@@ -25,6 +26,7 @@ class CodeTestResult(unittest.TestResult):
         )
 
     def addFailure(self, test, err):
+        super().addFailure(test, err)
         self.test_results.append(
             {
                 "function_call": test.function_call,
@@ -35,11 +37,12 @@ class CodeTestResult(unittest.TestResult):
         )
 
     def addError(self, test, err):
+        super().addError(test, err)
         self.test_results.append(
             {
                 "function_call": test.function_call,
                 "expected_output": "N/A",
-                "actual_output": str(err),  # used to include the error traceback
+                "actual_output": str(err),
                 "pass": False,
             }
         )
@@ -61,7 +64,7 @@ class CodeFunctionTest(unittest.FunctionTestCase):
     A test case class that runs a single test for a function
     """
 
-    def __init__(self, function_call, args, expected_output, inplace="0"):
+    def __init__(self, function_call, args, expected_output, inplace="0", function_name="foo"):
         """
         Args:
             function_call (str): The function call to be tested
@@ -71,6 +74,7 @@ class CodeFunctionTest(unittest.FunctionTestCase):
                 - "0": The function does not perform an inplace operation
                 - "1": The function performs an inplace
                 - "2": The function performs an inplace and returns a value
+            function_name (str): The name of the function to test (default: "foo")
         """
 
         super().__init__(self.test_user_function)
@@ -79,21 +83,22 @@ class CodeFunctionTest(unittest.FunctionTestCase):
         self.expected_output = expected_output
         self.actual_output = None
         self.inplace = inplace
+        self.function_name = function_name
 
     def test_user_function(self):
-
-        foo_func = globals().get("foo")
+        # Get the function from globals using the specified function name
+        user_func = globals().get(self.function_name)
 
         if self.inplace == "0":
-            self.actual_output = foo_func(*self.args)
+            self.actual_output = user_func(*self.args)
 
         elif self.inplace == "1":
             self.actual_output = deepcopy(self.args[0])
-            foo_func(self.actual_output)
+            user_func(self.actual_output)
 
         elif self.inplace == "2":
             actual_output_original = deepcopy(self.args[0])
-            actual_output_returned = foo_func(*self.args)
+            actual_output_returned = user_func(*self.args)
             result = actual_output_returned
             if result is not None:
                 self.actual_output = result
@@ -105,7 +110,8 @@ class CodeFunctionTest(unittest.FunctionTestCase):
                 "Must be one of '0', '1', or '2'"
             )
 
-        assert self.actual_output == self.expected_output
+        # Use unittest's assertEqual method to properly track failures
+        self.assertEqual(self.actual_output, self.expected_output)
 
 
 class CodeTester:
@@ -114,16 +120,29 @@ class CodeTester:
     and returns the results of the tests in json format
     """
 
-    def __init__(self, code, test_cases, inplace="0"):
+    def __init__(self, code, test_cases, inplace="0", function_name="foo"):
         self.code = code
         self.test_cases = test_cases
         self.current_test = None
         self.inplace = inplace
+        self.function_name = function_name
 
     def run_tests(self, suppress_output=False):
 
+        if isinstance(self.code, list):
+            return list(map(lambda x: self._run_test(x, suppress_output), self.code))
+        elif isinstance(self.code, str):
+            return self._run_test(self.code, suppress_output)
+        else:
+            raise ValueError(
+                "Code must be a string or a list of strings"
+            )
+
+
+    def _run_test(self, code, suppress_output=False):
+
         with tempfile.NamedTemporaryFile(delete=False, suffix=".py") as temp_file:
-            temp_file.write(self.code.encode("utf-8"))
+            temp_file.write(code.encode("utf-8"))
             temp_file_path = temp_file.name
 
         spec = importlib.util.spec_from_file_location(
@@ -136,20 +155,37 @@ class CodeTester:
 
         os.remove(temp_file_path)
 
-        globals()["foo"] = temp_module.foo
+        # Get the function from the module using the specified function name
+        if not hasattr(temp_module, self.function_name):
+            raise AttributeError(f"Function '{self.function_name}' not found in the code")
+
+        globals()[self.function_name] = getattr(temp_module, self.function_name)
 
         test_suite = unittest.TestSuite()
 
         for test_case in self.test_cases:
 
-            args, expected_output = test_case
-            function_call = f"foo({', '.join(map(repr, args))})"
+            if not isinstance(test_case, dict):
+                raise ValueError("Test case must be a dictionary")
+
+            if "parameters" not in test_case:
+                raise ValueError("Test case must contain 'parameters' key")
+
+            if "expected" not in test_case:
+                raise ValueError("Test case must contain 'expected' key")
+
+            params = test_case["parameters"]
+            args = list(params.values())
+            expected_output = test_case["expected"]
+
+            function_call = f"{self.function_name}({', '.join(map(repr, args))})"
 
             cf_test = CodeFunctionTest(
                 function_call=function_call,
                 args=args,
                 expected_output=expected_output,
                 inplace=self.inplace,
+                function_name=self.function_name,
             )
 
             test_suite.addTest(cf_test)
