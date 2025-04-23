@@ -43,10 +43,7 @@ ALLOWED_MODELS_META = []
 
 class CodeGenerator:
 
-    def __init__(
-        self,
-        api_key
-    ):
+    def __init__(self, api_key):
 
         self.client = openai.OpenAI(api_key=api_key)
 
