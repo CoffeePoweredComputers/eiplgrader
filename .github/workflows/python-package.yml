@@ -83,7 +83,7 @@ jobs:
         poetry build
     
     - name: Upload build artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: dist
         path: dist/
@@ -108,7 +108,7 @@ jobs:
         bundle exec jekyll build
     
     - name: Upload docs artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: site
         path: docs/_site/
@@ -149,7 +149,7 @@ jobs:
       
       - name: Download built package
         if: steps.check_tag_branch.outputs.on_master == 'true'
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: dist
           path: dist/
