@@ -1,3 +1,6 @@
+
+### ⚠️ 🧪 RESEARCH TOOL: Breaking changes between versions are to be expected! 🧪 ⚠️
+
 <div align="center" style="margin-top: 40px;">
     <img src="./eipllogo.png" alt="Explain in Plain Language Autograder" style="width: 300px; border-radius: 8px; margin-bottom: 20px;">
     <h5 style="font-size: 1.1em; color: #777; margin-bottom: 20px;">An automatic grading suite for "Explain in Plain Language" questions.</h5>
@@ -101,6 +104,9 @@ When using this tool, please cite the following paper:
     series = {ITiCSE 2024}
 }
 ```
+
+## Python Version
+This package supports Python 3.10, 3.11, 3.12, and 3.13.
 
 ## Research
 This autograder has been evaluated and used in the following research:

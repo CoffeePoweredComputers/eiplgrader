@@ -10,7 +10,7 @@ title: eiplgrader
 logo: "/assets/images/eiplgrader.png"
 email: dhsmith2@illinois.edu
 description: >- # Ignore newlines until "baseurl:"
-  This is a project to create an autograder for "Explain in Plain Language" questions. The goal is to provide students with immediate feedback on their answers to these questions, which are often used in computer science courses to assess students' understanding of complex topics.
+  An AI-powered autograder for "Explain in Plain Language" questions in computer science education. Providing immediate, accurate feedback on natural language descriptions of algorithms and concepts.
 exclude: ["Gemfile", "Gemfile.lock", "LICENSE", "README.md"]
 
 # Build settings
@@ -21,9 +21,10 @@ heading_anchors: true
 color_scheme: "dark"
 
 aux_links:
+  GitHub: 'https://github.com/CoffeePoweredComputers/eiplgrader'
   David H Smith IV: 'https://hamiltonfour.tech'
 
-footer_content: "Powered by Jekyll and just-the-docs theme."
+footer_content: "Copyright © 2023-2025 eiplgrader. Powered by Jekyll and just-the-docs theme."
 
 # Exclude these files and directories from the site build
 exclude:

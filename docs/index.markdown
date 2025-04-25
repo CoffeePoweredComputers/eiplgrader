@@ -2,16 +2,28 @@
 title: "Home"
 layout: home
 nav_order: 1
-description: "eiplgrader - A tool to grade the EIPL questions."
+description: "eiplgrader - A modern tool for grading Explain in Plain Language (EIPL) questions"
 permalink: /
 ---
 
 # Welcome to eiplgrader
 
-This is the documentation for the `eiplgrader` tool, which is used to grade the EIPL questions. The tool consists of two main modules:
+This is the documentation for the `eiplgrader` tool, which is used to grade Explain in Plain Language (EIPL) questions in computer science education. The tool leverages AI to provide immediate, accurate feedback on student responses.
 
-- [Code Generation Module](/docs/codegen): This module generates Python code using OpenAI's GPT models
-- [Tester Module](docs/tester): This module tests the generated code using test cases.
+## Core Components
+
+The tool consists of two main modules:
+
+- [Code Generation Module](/docs/codegen): Transforms natural language descriptions into executable Python code using OpenAI's GPT models (with planned support for Anthropic and Meta models)
+- [Tester Module](docs/tester): Evaluates the generated code against predefined test cases to assess correctness
+
+## Key Features
+
+- Multiple generation strategies (standard and function redefinition)
+- Support for generating multiple function variants
+- Code segmentation analysis to map explanations to code segments
+- Testing support for standard functions, in-place operations, and hybrid functions
+- Support for testing multiple function variants simultaneously
 
 ## Installation
 
@@ -67,29 +79,65 @@ docker run -e USER_CODE="def foo(a, b): return a + b" -e TEST_CASES_FILE="exampl
 
 To use the `eiplgrader` tool, you need to provide an API key for OpenAI's GPT model. You can get an API key by signing up on the [OpenAI website](https://platform.openai.com/).
 
-Here is an example of how to use the `eiplgrader` tool:
+Here is a basic example of how to use the `eiplgrader` tool:
 
 ```python
 from eiplgrader import CodeGenerator, CodeTester
 
-# Initialize the code generator
-code_generator = CodeGenerator("YOUR API KEY HERE")
+# Initialize the code generator with your API key
+code_generator = CodeGenerator("YOUR_API_KEY_HERE")
 
-# Generate code based on the student's response
-# For example, for the following code:
-# def add(a, b):
-#     return a + b
-# The student's response could be:
-# a function that adds two numbers.
-# The following line generates the code based on the student's response.
-generated_code = code_generator.generate_code("that adds two numbers.")
+# Generate code based on a natural language description
+result = code_generator.generate_code("that adds two numbers.")
+generated_code = result["code"]
 
-# Initialize the code tester
+# Define test cases
+test_cases = [
+    {"parameters": {"a": 1, "b": 2}, "expected": 3},
+    {"parameters": {"a": 5, "b": 7}, "expected": 12},
+    {"parameters": {"a": -1, "b": 1}, "expected": 0}
+]
+
+# Initialize the code tester with the generated code and test cases
 code_tester = CodeTester(generated_code, test_cases)
 
 # Run the tests
 test_result = code_tester.run_tests()
 ```
+
+### Advanced Usage Examples
+
+The package supports many advanced use cases:
+
+1. **Function Redefinition**
+```python
+result = code_generator.generate_code(
+    "sum_two_numbers",  # The function name
+    gen_type="redef",   # Use redefinition mode
+    params="a, b",      # Function parameters
+    assumptions="a and b are integers"
+)
+```
+
+2. **Multiple Function Variants**
+```python
+result = code_generator.generate_code(
+    "that adds two numbers.",
+    num_to_gen=5  # Generate 5 different implementations
+)
+```
+
+3. **Code Segmentation**
+```python
+result = code_generator.generate_code(
+    "iterates through a list and returns the sum",
+    segmentation_few_shot_file="segmentation_few_shot.json"
+)
+# Access segmentation results
+segmentation_data = result["segmentation"]
+```
+
+For complete documentation on all available options, refer to the [Code Generation](docs/codegen) and [Tester](docs/tester) module documentation.
 
 ## Contributing
 
@@ -98,4 +146,8 @@ If you would like to contribute to the `eiplgrader` tool, please check out the [
 ## License
 
 This project is licensed under the [GNU General Public License v3.0](https://www.gnu.org/licenses/gpl-3.0.en.html). You are free to use, modify, and distribute this software under the terms of the license.
+
+## Learn More
+
+To understand the research and educational theory behind eiplgrader, visit our [Research](/docs/research) section.
 

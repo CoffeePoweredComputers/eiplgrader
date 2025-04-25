@@ -4,16 +4,18 @@ import json
 from eiplgrader.codegen import CodeGenerator
 from eiplgrader.tester import CodeTester
 
+
 def load_test_cases(file_path):
-    with open(file_path, 'r') as f:
+    with open(file_path, "r") as f:
         test_cases = json.load(f)
     return test_cases
 
+
 def main():
-    api_key = os.getenv('API_KEY')
-    prompt = os.getenv('PROMPT')
-    user_code = os.getenv('USER_CODE')
-    test_cases_file = os.getenv('TEST_CASES_FILE')
+    api_key = os.getenv("API_KEY")
+    prompt = os.getenv("PROMPT")
+    user_code = os.getenv("USER_CODE")
+    test_cases_file = os.getenv("TEST_CASES_FILE")
 
     if not test_cases_file:
         raise ValueError("TEST_CASES_FILE must be provided")
@@ -34,6 +36,6 @@ def main():
     print(json.dumps(test_result.test_results, indent=4))
     return test_result
 
+
 if __name__ == "__main__":
     main()
-
