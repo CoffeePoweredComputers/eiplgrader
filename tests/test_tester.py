@@ -43,18 +43,20 @@ def foo(a, b):
     return a + b
 """,
             """
-def foo(a, b):
-    return a * b
+def foo(num1, num2):
+    result = num1 + num2
+    return result
 """,
         ]
         test_cases = [
             {"parameters": {"a": 2, "b": 3}, "expected": 5},
-            {"parameters": {"a": 4, "b": 5}, "expected": 20},
+            {"parameters": {"a": 4, "b": 5}, "expected": 9},
         ]
         tester = CodeTester(codes, test_cases, function_name="foo")
         results = tester.run_tests()
         self.assertIsInstance(results, list)
         self.assertEqual(len(results), 2)
+        print(results)
         self.assertTrue(results[0].wasSuccessful())
         self.assertTrue(results[1].wasSuccessful())
 
