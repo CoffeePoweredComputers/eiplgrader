@@ -3,11 +3,16 @@ import tempfile
 import importlib
 import os
 from copy import deepcopy
+from typing import List, Dict, Any, Union
 
 
 class CodeTestResult(unittest.TestResult):
     """
-    A test result class that stores the results of the tests
+    A test result class that stores the results of the tests.
+
+    This class extends unittest.TestResult to store detailed information
+    about test executions, including function calls, expected outputs,
+    actual outputs, and pass/fail status for each test.
     """
 
     def __init__(self):
@@ -50,7 +55,10 @@ class CodeTestResult(unittest.TestResult):
 
 class CodeRunner:
     """
-    A test runner class that returns the results of the tests in a dictionary
+    A test runner class that returns the results of the tests in a structured format.
+
+    This class runs test suites and collects results using the CodeTestResult class,
+    making it easy to programmatically examine test outcomes.
     """
 
     def run(self, test_suite):
@@ -61,10 +69,15 @@ class CodeRunner:
 
 class CodeFunctionTest(unittest.FunctionTestCase):
     """
-    A test case class that runs a single test for a function
+    A test case class that runs a single test for a function.
+
+    This class handles different testing scenarios including normal function calls,
+    in-place operations, and functions that both modify in-place and return values.
     """
 
-    def __init__(self, function_call, args, expected_output, inplace="0", function_name="foo"):
+    def __init__(
+        self, function_call, args, expected_output, inplace="0", function_name="foo"
+    ):
         """
         Args:
             function_call (str): The function call to be tested
@@ -120,26 +133,32 @@ class CodeTester:
     and returns the results of the tests in json format
     """
 
-    def __init__(self, code, test_cases, inplace="0", function_name="foo"):
+    def __init__(
+        self,
+        code: Union[str, List[str]],
+        test_cases: List[Dict[str, Any]],
+        inplace: str = "0",
+        function_name: str = "foo",
+    ):
         self.code = code
         self.test_cases = test_cases
         self.current_test = None
         self.inplace = inplace
         self.function_name = function_name
 
-    def run_tests(self, suppress_output=False):
-
+    def run_tests(
+        self, suppress_output: bool = False
+    ) -> Union[CodeTestResult, List[CodeTestResult]]:
+        """Run tests on the provided code and return results."""
         if isinstance(self.code, list):
             return list(map(lambda x: self._run_test(x, suppress_output), self.code))
-        elif isinstance(self.code, str):
+
+        if isinstance(self.code, str):
             return self._run_test(self.code, suppress_output)
-        else:
-            raise ValueError(
-                "Code must be a string or a list of strings"
-            )
 
+        raise ValueError("Code must be a string or a list of strings")
 
-    def _run_test(self, code, suppress_output=False):
+    def _run_test(self, code: str, suppress_output: bool = False) -> CodeTestResult:
 
         with tempfile.NamedTemporaryFile(delete=False, suffix=".py") as temp_file:
             temp_file.write(code.encode("utf-8"))
@@ -157,7 +176,9 @@ class CodeTester:
 
         # Get the function from the module using the specified function name
         if not hasattr(temp_module, self.function_name):
-            raise AttributeError(f"Function '{self.function_name}' not found in the code")
+            raise AttributeError(
+                f"Function '{self.function_name}' not found in the code"
+            )
 
         globals()[self.function_name] = getattr(temp_module, self.function_name)
 
