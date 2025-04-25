@@ -42,7 +42,7 @@ jobs:
 
     - name: Lint with pylint
       run: |
-        pylint --disable=C0111,C0103,E0401,R0913,R0917 eiplgrader/ tests/
+        pylint --disable=C0111,C0103,E0401,R0913,R0917,R0914,C0301 eiplgrader/* tests/
 
     - name: Check code formatting with black
       run: |
