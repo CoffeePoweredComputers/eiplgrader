@@ -1,6 +1,6 @@
 import json
 import os
-from typing import List, Dict, Any, Union, Optional
+from typing import List, Dict, Any, Optional
 
 import openai
 
@@ -148,7 +148,11 @@ class CodeGenerator:
             num_to_gen,
         )
 
-        # Get generated code
+        if self.model_request is None or not isinstance(
+            self.model_request, ModelRequest
+        ):
+            raise ValueError("ModelRequest is not initialized correctly.")
+
         code_response = self.model_request.request_function_generation(prompt)
 
         if gen_type != "cgbg" and segmentation_few_shot_file:
@@ -238,7 +242,7 @@ class CodeGenerator:
     def _run_segmentation(
         self,
         student_response: str,
-        generated_functions: str,
+        generated_functions: List[str],
         segmentation_few_shot_file: str,
     ) -> List[Dict[str, Any]]:
         """Runs segmentation on the generated code using few-shot examples."""
@@ -246,6 +250,11 @@ class CodeGenerator:
         segmentation_examples = self._load_segmentation_examples(
             segmentation_few_shot_file
         )
+
+        if self.model_request is None or not isinstance(
+            self.model_request, ModelRequest
+        ):
+            raise ValueError("ModelRequest is not initialized correctly.")
 
         if not segmentation_examples:
             return []
@@ -336,7 +345,7 @@ class ModelRequest:
         self.temperature = temperature
         self.num_to_gen = num_to_gen
 
-    def request_function_generation(self, prompt: str) -> Union[str, List[str]]:
+    def request_function_generation(self, prompt: str) -> List[str]:
         """Make a request to the model API for function generation."""
 
         raise NotImplementedError(
@@ -362,10 +371,10 @@ class OpenAIModelRequest(ModelRequest):
     def request_function_generation(self, prompt: str) -> List[str]:
         """Make a request to the OpenAI API for function generation."""
 
-        prompt = [{"role": "user", "content": prompt}]
+        formatted_prompt = [{"role": "user", "content": prompt}]
         response = self.client.chat.completions.create(
             model=self.model,
-            messages=prompt,
+            messages=formatted_prompt,
             temperature=self.temperature,
             n=self.num_to_gen,
         )
@@ -456,6 +465,12 @@ class OpenAIModelRequest(ModelRequest):
 
         segmentation_content = response.choices[0].message.content
         segmentation_results = json.loads(segmentation_content)
+
+        if not isinstance(segmentation_results, dict):
+            raise ValueError(
+                f"Invalid segmentation response format: {segmentation_content}"
+            )
+
         return segmentation_results
 
 
@@ -465,7 +480,7 @@ class AnthropicModelRequest(ModelRequest):
     This is a placeholder for future implementation of Anthropic API support.
     """
 
-    def request_function_generation(self, prompt: str) -> Union[str, List[str]]:
+    def request_function_generation(self, prompt: str) -> List[str]:
         """Make a request to the Anthropic API for function generation (not yet implemented)."""
         raise NotImplementedError("Anthropic API support not yet implemented")
 
@@ -482,7 +497,7 @@ class MetaModelRequest(ModelRequest):
     This is a placeholder for future implementation of Meta API support.
     """
 
-    def request_function_generation(self, prompt: str) -> Union[str, List[str]]:
+    def request_function_generation(self, prompt: str) -> List[str]:
         """Make a request to the Meta API for function generation (not yet implemented)."""
         raise NotImplementedError("Meta API support not yet implemented")
 

@@ -1,6 +1,7 @@
 import unittest
 import tempfile
 import importlib
+import importlib.util
 import os
 from copy import deepcopy
 from typing import List, Dict, Any, Union
@@ -61,7 +62,7 @@ class CodeRunner:
     making it easy to programmatically examine test outcomes.
     """
 
-    def run(self, test_suite):
+    def run(self, test_suite) -> CodeTestResult:
         result = CodeTestResult()
         test_suite.run(result)
         return result
@@ -169,7 +170,14 @@ class CodeTester:
             temp_file_path,
         )
 
+        if spec is None:
+            raise ImportError("Could not load the temporary module")
+
         temp_module = importlib.util.module_from_spec(spec)
+
+        if spec.loader is None:
+            raise ImportError("Could not load the temporary module")
+
         spec.loader.exec_module(temp_module)
 
         os.remove(temp_file_path)
@@ -216,6 +224,6 @@ class CodeTester:
 
         if suppress_output:
             with open(os.devnull, "w", encoding="utf-8") as _:
-                pass  # Use with block for safety
+                pass
 
         return result
