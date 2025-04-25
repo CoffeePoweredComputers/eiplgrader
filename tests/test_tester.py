@@ -1,6 +1,7 @@
 import unittest
 from eiplgrader.tester import CodeTester, CodeTestResult
 
+
 class TestCodeTester(unittest.TestCase):
 
     def test_simple_function(self):
@@ -44,11 +45,11 @@ def foo(a, b):
             """
 def foo(a, b):
     return a * b
-"""
+""",
         ]
         test_cases = [
             {"parameters": {"a": 2, "b": 3}, "expected": 5},
-            {"parameters": {"a": 4, "b": 5}, "expected": 20}
+            {"parameters": {"a": 4, "b": 5}, "expected": 20},
         ]
         tester = CodeTester(codes, test_cases, function_name="foo")
         results = tester.run_tests()
@@ -87,6 +88,7 @@ def foo(a):
         tester = CodeTester(code, test_cases, function_name="foo")
         with self.assertRaises(ValueError):
             tester.run_tests()
+
 
 if __name__ == "__main__":
     unittest.main()
