@@ -90,4 +90,3 @@ def foo(a):
 
 if __name__ == "__main__":
     unittest.main()
-
