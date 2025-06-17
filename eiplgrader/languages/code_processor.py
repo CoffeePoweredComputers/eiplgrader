@@ -6,7 +6,7 @@ class wrapping, and code cleanup.
 """
 
 import re
-from typing import Dict, List, Optional, Callable, Union, Any
+from typing import Dict, List, Optional, Callable, Union, Any, Type
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
@@ -38,7 +38,7 @@ class CodeProcessor(ABC):
 class HeaderInjectionProcessor(CodeProcessor):
     """Processor for injecting necessary headers into C/C++ code."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.language_headers = {
             "c": ["#include <stdio.h>", "#include <stdlib.h>"],
             "cpp": ["#include <iostream>", "#include <vector>", "#include <string>"],
@@ -68,7 +68,7 @@ class HeaderInjectionProcessor(CodeProcessor):
 class ClassWrappingProcessor(CodeProcessor):
     """Processor for wrapping methods in appropriate class structures."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.class_templates: Dict[str, str] = {
             "java": "public class Solution {{\n    {code}\n}}",
             "kotlin": "class Solution {{\n    {code}\n}}",
@@ -211,7 +211,7 @@ class ModuleWrapperProcessor(CodeProcessor):
 class CommentStripProcessor(CodeProcessor):
     """Processor for stripping unwanted comments from extracted code."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.comment_patterns = {
             "python": [r"#.*$"],
             "java": [r"//.*$", r"/\*.*?\*/"],
@@ -251,20 +251,21 @@ class CommentStripProcessor(CodeProcessor):
 class LanguageCodeProcessor:
     """Main code processor that applies language-specific transformations."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize with all available processors."""
-        self.processors: Dict[str, CodeProcessor] = {
-            processor_class().get_config().name: processor_class()
-            for processor_class in [
-                HeaderInjectionProcessor,
-                ClassWrappingProcessor,
-                SemicolonCleanupProcessor,
-                WhitespaceNormalizationProcessor,
-                TypeSignatureProcessor,
-                ModuleWrapperProcessor,
-                CommentStripProcessor,
-            ]
-        }
+        self.processors: Dict[str, CodeProcessor] = {}
+        processor_classes: List[Type[CodeProcessor]] = [
+            HeaderInjectionProcessor,
+            ClassWrappingProcessor,
+            SemicolonCleanupProcessor,
+            WhitespaceNormalizationProcessor,
+            TypeSignatureProcessor,
+            ModuleWrapperProcessor,
+            CommentStripProcessor,
+        ]
+        for processor_class in processor_classes:
+            processor = processor_class()
+            self.processors[processor.get_config().name] = processor
 
         # Language-specific processor configurations
         self.language_processors: Dict[str, List[str]] = {

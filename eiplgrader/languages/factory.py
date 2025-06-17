@@ -11,7 +11,7 @@ from .validators import create_validator, ValidationStrategy
 class AdapterFactory:
     """Factory for creating language adapters with unified interface."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._legacy_adapters: Dict[str, Type[LanguageAdapter]] = {}
         self._unified_adapters: Dict[str, Type[UnifiedLanguageAdapter]] = {}
         self._specs: Dict[str, LanguageSpec] = {}
@@ -176,7 +176,7 @@ class LegacyAdapterWrapper(UnifiedLanguageAdapter):
 class ComponentRegistry:
     """Registry for adapter components (validators, extractors, etc.)."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._validators: Dict[str, Type[ValidationStrategy]] = {}
         self._extractors: Dict[str, Any] = {}  # Type would be CodeExtractor
         self._normalizers: Dict[str, Any] = {}  # Type would be CodeNormalizer

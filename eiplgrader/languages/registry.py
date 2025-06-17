@@ -7,7 +7,7 @@ from .base import LanguageAdapter, LanguageExecutor, UnifiedLanguageAdapter
 class LanguageRegistry:
     """Central registry for language implementations"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._adapters: Dict[
             str, Union[Type[LanguageAdapter], Type[UnifiedLanguageAdapter]]
         ] = {}
