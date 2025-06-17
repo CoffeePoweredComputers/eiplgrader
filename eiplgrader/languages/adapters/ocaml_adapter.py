@@ -17,14 +17,12 @@ class OcamlAdapter(UnifiedLanguageAdapter):
             file_extensions=[".ml"],
             compile_command=["ocamlc"],
             run_command=["./a.out"],
-
             # Enhanced specification
             code_block_tag="ocaml",
             student_model_template="""Pretend you are an introductory CS student learning OCaml for the very first
 time. You have a rudimentary understanding of functions, pattern matching, let bindings, 
 recursion, and basic types. You understand functional programming concepts but are still
 learning the syntax and idioms of OCaml.""",
-
             # Syntax conventions
             syntax_conventions=SyntaxConventions(
                 comment_single="(* *)",  # OCaml uses (* *) for comments
@@ -34,7 +32,6 @@ learning the syntax and idioms of OCaml.""",
                 indentation_type="spaces",
                 indentation_size=2,
             ),
-
             # Function patterns
             function_patterns=FunctionPatterns(
                 definition_regex=r"(let\s+(?:rec\s+)?(\w+)\s+.*?=.*?)(?=let\s+(?:rec\s+)?\w+|$)",
@@ -42,13 +39,11 @@ learning the syntax and idioms of OCaml.""",
                 requires_return_type=False,  # OCaml infers types
                 supports_overloading=False,
                 supports_default_params=False,
-                supports_varargs=False
+                supports_varargs=False,
             ),
-
             # Validation
             validation_strategy="compiler",
             validation_command=["ocamlc", "-c"],
-
             # Template overrides
             template_overrides=TemplateOverrides(
                 custom_templates={
@@ -71,9 +66,9 @@ let {function_name} {params} =
   (* implementation *)
 ```""",
                     "multiple_versions_note": """Each version should use different OCaml idioms or approaches
-(e.g., pattern matching vs if-then-else, tail recursion vs regular recursion, etc.)"""
+(e.g., pattern matching vs if-then-else, tail recursion vs regular recursion, etc.)""",
                 }
-            )
+            ),
         )
 
     def _generate_prompt_impl(
@@ -94,9 +89,9 @@ let {function_name} {params} =
         """Implementation method for code extraction."""
         # Extract OCaml code blocks
         patterns = [
-            r'```ocaml\n(.*?)\n```',
-            r'```ml\n(.*?)\n```',
-            r'```\n(.*?)\n```'  # Generic code block
+            r"```ocaml\n(.*?)\n```",
+            r"```ml\n(.*?)\n```",
+            r"```\n(.*?)\n```",  # Generic code block
         ]
 
         for pattern in patterns:
@@ -112,17 +107,17 @@ let {function_name} {params} =
         functions = []
         # Pattern for OCaml let bindings (functions)
         pattern = r"(let\s+(?:rec\s+)?(\w+)\s+.*?=.*?)"
-        lines = code.split('\n')
+        lines = code.split("\n")
 
         for i, line in enumerate(lines):
             match = re.search(pattern, line)
             if match:
                 func_name = match.group(2)
                 func_dict = {
-                    'name': func_name,
-                    'signature': line.strip(),
-                    'start_line': i + 1,
-                    'code': match.group(0),
+                    "name": func_name,
+                    "signature": line.strip(),
+                    "start_line": i + 1,
+                    "code": match.group(0),
                 }
                 functions.append(func_dict)
 
@@ -137,16 +132,18 @@ let {function_name} {params} =
             import os
 
             # Create temporary file
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.ml', delete=False) as tmp:
+            with tempfile.NamedTemporaryFile(
+                mode="w", suffix=".ml", delete=False
+            ) as tmp:
                 tmp.write(code)
                 tmp_path = tmp.name
 
             try:
                 result = subprocess.run(
-                    ['ocamlc', '-c', tmp_path],
+                    ["ocamlc", "-c", tmp_path],
                     capture_output=True,
                     text=True,
-                    timeout=10
+                    timeout=10,
                 )
 
                 if result.returncode == 0:
@@ -156,21 +153,21 @@ let {function_name} {params} =
             finally:
                 os.unlink(tmp_path)
                 # Clean up compiled files
-                cmi_file = tmp_path.replace('.ml', '.cmi')
-                cmo_file = tmp_path.replace('.ml', '.cmo')
+                cmi_file = tmp_path.replace(".ml", ".cmi")
+                cmo_file = tmp_path.replace(".ml", ".cmo")
                 if os.path.exists(cmi_file):
                     os.unlink(cmi_file)
                 if os.path.exists(cmo_file):
                     os.unlink(cmo_file)
 
         except Exception as e:
-            return False, str(e)
+            return False, f"Validation error: {e}"
 
     def _normalize_code_impl(self, code: str) -> str:
         """Implementation method for code normalization."""
         # Remove OCaml comments
-        code = re.sub(r'\(\*.*?\*\)', '', code, flags=re.DOTALL)
+        code = re.sub(r"\(\*.*?\*\)", "", code, flags=re.DOTALL)
         # Remove extra whitespace
-        code = re.sub(r'\s+', ' ', code)
+        code = re.sub(r"\s+", " ", code)
         code = code.strip()
         return code

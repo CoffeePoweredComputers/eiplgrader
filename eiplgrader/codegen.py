@@ -1,6 +1,6 @@
 import json
 import os
-from typing import List, Dict, Any, Optional, cast
+from typing import List, Dict, Any, Optional
 
 import openai
 import requests
@@ -183,7 +183,7 @@ class CodeGenerator:
 
         # Extract code using language adapter
         code_blocks = adapter.extract_code(raw_response)
-        
+
         if gen_type != "cgbg" and segmentation_few_shot_file:
             raise ValueError(
                 f"Segmentation is not supported for generation type '{gen_type}'."
@@ -306,14 +306,12 @@ class CodeGenerator:
                 self.model_request.model, 0, 1
             )
 
-            segmentation_results = list(
-                map(
-                    lambda x: segmentation_request.request_segmentation(
-                        student_response, x, segmentation_examples
-                    ),
-                    generated_functions,
+            segmentation_results = [
+                segmentation_request.request_segmentation(
+                    student_response, code, segmentation_examples
                 )
-            )
+                for code in generated_functions
+            ]
 
             return segmentation_results
 
@@ -423,8 +421,12 @@ class OpenAIModelRequest(ModelRequest):
             n=self.num_to_gen,
         )
 
-        return response.choices[0].message.content
-
+        content = response.choices[0].message.content
+        if content is None or not isinstance(content, str):
+            raise RuntimeError("API returned empty content")
+        # At this point, content is guaranteed to be a str
+        result: str = content
+        return result
 
     def request_segmentation(
         self, student_response: str, code: str, segmentation_examples: Dict[str, Any]
@@ -568,10 +570,15 @@ class OllamaModelRequest(ModelRequest):
             result = response.json()
 
             # Return the raw generated text
-            return result.get("response", "")
+            response_text = result.get("response")
+            if response_text is None or not isinstance(response_text, str):
+                raise RuntimeError("API returned no response")
+            # At this point, response_text is guaranteed to be a str
+            result_str: str = response_text
+            return result_str
 
         except requests.exceptions.RequestException as e:
-            raise RuntimeError(f"Error making request to Ollama API: {str(e)}") from e
+            raise RuntimeError(f"Error making request to Ollama API: {e}") from e
 
     def request_segmentation(
         self, student_response: str, code: str, segmentation_examples: Dict[str, Any]
@@ -606,13 +613,16 @@ class OllamaModelRequest(ModelRequest):
                 json_end = response_text.rfind("}") + 1
                 if 0 <= json_start < json_end:
                     json_str = response_text[json_start:json_end]
-                    return cast(Dict[str, Any], json.loads(json_str))
+                    parsed_json = json.loads(json_str)
+                    if not isinstance(parsed_json, dict):
+                        raise ValueError("Expected JSON object, got different type")
+                    return parsed_json
                 raise ValueError("No valid JSON found in response")
             except json.JSONDecodeError as e:
-                raise ValueError(f"Failed to parse JSON response: {str(e)}") from e
+                raise ValueError(f"Failed to parse JSON response: {e}") from e
 
         except requests.exceptions.RequestException as e:
-            raise RuntimeError(f"Error making request to Ollama API: {str(e)}") from e
+            raise RuntimeError(f"Error making request to Ollama API: {e}") from e
 
     def _format_segmentation_prompt(
         self, student_response: str, code: str, segmentation_examples: Dict[str, Any]

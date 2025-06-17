@@ -10,7 +10,7 @@ from .base import LanguageConfig
 @dataclass
 class SyntaxConventions:  # pylint: disable=too-many-instance-attributes
     """Language-specific syntax conventions and patterns."""
-    
+
     comment_single: str = ""  # Single line comment prefix (e.g., "#", "//")
     comment_multi_start: str = ""  # Multi-line comment start (e.g., "/*")
     comment_multi_end: str = ""  # Multi-line comment end (e.g., "*/")
@@ -27,7 +27,7 @@ class SyntaxConventions:  # pylint: disable=too-many-instance-attributes
 @dataclass
 class FunctionPatterns:  # pylint: disable=too-many-instance-attributes
     """Language-specific function definition patterns."""
-    
+
     definition_regex: str  # Regex pattern to match function definitions
     name_capture_group: int = 1  # Capture group for function name
     signature_capture_group: int = 0  # Capture group for full signature
@@ -41,7 +41,7 @@ class FunctionPatterns:  # pylint: disable=too-many-instance-attributes
 @dataclass
 class HeaderRequirements:
     """Language-specific header/import requirements."""
-    
+
     required_imports: List[str] = field(default_factory=list)
     optional_imports: List[str] = field(default_factory=list)
     import_template: str = ""  # Template for import statements
@@ -53,7 +53,7 @@ class HeaderRequirements:
 @dataclass
 class TemplateOverrides:
     """Custom templates for specific generation types."""
-    
+
     cgbg_template: Optional[str] = None  # Code generation based grading
     redef_template: Optional[str] = None  # Function redefinition
     segmentation_template: Optional[str] = None  # Code segmentation
@@ -63,7 +63,7 @@ class TemplateOverrides:
 @runtime_checkable
 class ValidationStrategy(Protocol):
     """Protocol for validation strategies."""
-    
+
     def validate(self, code: str) -> tuple[bool, Optional[str]]:
         """Validate code and return (is_valid, error_message)."""
         raise NotImplementedError
@@ -72,12 +72,12 @@ class ValidationStrategy(Protocol):
 @dataclass
 class LanguageSpec:  # pylint: disable=too-many-instance-attributes
     """Enhanced language specification that extends LanguageConfig.
-    
+
     This dataclass provides comprehensive configuration for language adapters,
     including syntax conventions, function patterns, validation strategies,
     and template overrides for advanced language processing.
     """
-    
+
     # Core configuration (extends LanguageConfig)
     name: str
     display_name: str
@@ -86,28 +86,28 @@ class LanguageSpec:  # pylint: disable=too-many-instance-attributes
     docker_image: Optional[str] = None
     compile_command: Optional[List[str]] = None
     test_timeout: int = 30
-    
+
     # Enhanced specification fields
     code_block_tag: str = ""  # Markdown code block tag (e.g., "python", "c")
     student_model_template: str = ""  # Base student model prompt template
     syntax_conventions: SyntaxConventions = field(default_factory=SyntaxConventions)
     function_patterns: Optional[FunctionPatterns] = None
     header_requirements: HeaderRequirements = field(default_factory=HeaderRequirements)
-    
+
     # Validation configuration
     validation_strategy: str = "compiler"  # "compiler", "parser", "custom", "none"
     validation_command: Optional[List[str]] = None  # Command for validation
     validation_flags: List[str] = field(default_factory=list)  # Additional flags
-    
+
     # Template overrides
     template_overrides: TemplateOverrides = field(default_factory=TemplateOverrides)
-    
+
     # Additional metadata
     supports_segmentation: bool = True
     supports_multiple_functions: bool = True
     requires_main_wrapper: bool = False  # For compiled languages
     normalization_rules: Dict[str, Any] = field(default_factory=dict)
-    
+
     def to_language_config(self) -> LanguageConfig:
         """Convert to basic LanguageConfig for backward compatibility."""
         return LanguageConfig(
@@ -119,21 +119,22 @@ class LanguageSpec:  # pylint: disable=too-many-instance-attributes
             compile_command=self.compile_command,
             test_timeout=self.test_timeout,
         )
-    
+
     def get_code_block_tag(self) -> str:
         """Get the code block tag, defaulting to language name if not set."""
         return self.code_block_tag or self.name
-    
+
     def get_validation_command(self) -> Optional[List[str]]:
         """Get the validation command with flags."""
         if not self.validation_command:
             return None
         return self.validation_command + self.validation_flags
-    
+
     def supports_validation_strategy(self, strategy: str) -> bool:
         """Check if the language supports a specific validation strategy."""
         supported_strategies = {
-            "compiler": bool(self.compile_command or self.validation_command),
+            "compiler": self.compile_command is not None
+            or self.validation_command is not None,
             "parser": True,  # All languages support basic parsing
             "custom": True,  # Custom validation can be implemented for any language
             "none": True,

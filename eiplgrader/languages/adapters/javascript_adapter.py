@@ -16,21 +16,17 @@ class JavascriptAdapter(UnifiedLanguageAdapter):
             display_name="JavaScript",
             file_extensions=[".js"],
             run_command=["node"],
-
             # Enhanced specification
             code_block_tag="javascript",
             student_model_template="You are familiar with ES6+ syntax including arrow functions and async/await.",
-
             # Function patterns (handle both regular and arrow functions)
             function_patterns=FunctionPatterns(
                 definition_regex=r"((function\s+\w+\s*\([^)]*\)\s*{[^}]*})|((?:const|let|var)\s+\w+\s*=\s*(?:\([^)]*\)|[^=>\s]+)\s*=>\s*(?:{[^}]*}|[^;]+);?)|(async\s+function\s+\w+\s*\([^)]*\)\s*{[^}]*}))",
-                name_capture_group=1
+                name_capture_group=1,
             ),
-
             # Validation
             validation_strategy="parser",
             validation_command=["node", "--check"],
-
             # Template overrides
             template_overrides=TemplateOverrides(
                 custom_templates={
@@ -55,9 +51,9 @@ Or:
 const {function_name} = ({params}) => {{
     // implementation here
 }};
-```"""
+```""",
                 }
-            )
+            ),
         )
 
     def _generate_prompt_impl(
@@ -78,9 +74,9 @@ const {function_name} = ({params}) => {{
         """Implementation method for code extraction."""
         # Extract JavaScript code blocks
         patterns = [
-            r'```javascript\n(.*?)\n```',
-            r'```js\n(.*?)\n```',
-            r'```\n(.*?)\n```'  # Generic code block
+            r"```javascript\n(.*?)\n```",
+            r"```js\n(.*?)\n```",
+            r"```\n(.*?)\n```",  # Generic code block
         ]
 
         for pattern in patterns:
@@ -106,12 +102,12 @@ const {function_name} = ({params}) => {{
             for match in matches:
                 func_name = match.group(2)
                 start_pos = match.start()
-                lines_before = code[:start_pos].count('\n')
+                lines_before = code[:start_pos].count("\n")
                 func_dict = {
-                    'name': func_name,
-                    'signature': match.group(0).split('\n')[0].strip(),
-                    'start_line': lines_before + 1,
-                    'code': match.group(0),
+                    "name": func_name,
+                    "signature": match.group(0).split("\n")[0].strip(),
+                    "start_line": lines_before + 1,
+                    "code": match.group(0),
                 }
                 functions.append(func_dict)
 
@@ -126,16 +122,18 @@ const {function_name} = ({params}) => {{
             import os
 
             # Create temporary file
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.js', delete=False) as tmp:
+            with tempfile.NamedTemporaryFile(
+                mode="w", suffix=".js", delete=False
+            ) as tmp:
                 tmp.write(code)
                 tmp_path = tmp.name
 
             try:
                 result = subprocess.run(
-                    ['node', '--check', tmp_path],
+                    ["node", "--check", tmp_path],
                     capture_output=True,
                     text=True,
-                    timeout=5
+                    timeout=5,
                 )
 
                 if result.returncode == 0:
@@ -146,15 +144,15 @@ const {function_name} = ({params}) => {{
                 os.unlink(tmp_path)
 
         except Exception as e:
-            return False, str(e)
+            return False, f"Validation error: {e}"
 
     def _normalize_code_impl(self, code: str) -> str:
         """Implementation method for code normalization."""
         # Remove single-line comments
-        code = re.sub(r'//.*', '', code)
+        code = re.sub(r"//.*", "", code)
         # Remove multi-line comments
-        code = re.sub(r'/\*.*?\*/', '', code, flags=re.DOTALL)
+        code = re.sub(r"/\*.*?\*/", "", code, flags=re.DOTALL)
         # Remove extra whitespace
-        code = re.sub(r'\s+', ' ', code)
+        code = re.sub(r"\s+", " ", code)
         code = code.strip()
         return code

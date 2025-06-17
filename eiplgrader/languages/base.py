@@ -1,9 +1,12 @@
 """Abstract base classes for language adapters and executors."""
 
 from abc import ABC, abstractmethod
-from typing import Dict, Any, List, Optional, Tuple, Union
+from typing import Dict, Any, List, Optional, Tuple, Union, TYPE_CHECKING
 from dataclasses import dataclass
 import re
+
+if TYPE_CHECKING:
+    from .spec import LanguageSpec
 
 
 @dataclass
@@ -52,7 +55,7 @@ class LanguageAdapter(ABC):
 # Component interfaces for composition pattern
 class PromptGenerator(ABC):
     """Component interface for generating language-specific prompts."""
-    
+
     @abstractmethod
     def generate_prompt(
         self,
@@ -67,12 +70,12 @@ class PromptGenerator(ABC):
 
 class CodeExtractor(ABC):
     """Component interface for extracting code from LLM responses."""
-    
+
     @abstractmethod
     def extract_code(self, llm_response: str) -> List[str]:
         """Extract code blocks from LLM response."""
         pass
-    
+
     @abstractmethod
     def extract_functions(self, code: str) -> List[Dict[str, Any]]:
         """Extract function definitions from code with metadata."""
@@ -81,7 +84,7 @@ class CodeExtractor(ABC):
 
 class CodeNormalizer(ABC):
     """Component interface for normalizing code for comparison."""
-    
+
     @abstractmethod
     def normalize_code(self, code: str) -> str:
         """Normalize code for comparison (remove comments, whitespace, etc.)."""
@@ -90,21 +93,21 @@ class CodeNormalizer(ABC):
 
 class UnifiedLanguageAdapter(ABC):
     """Enhanced abstract base for unified language adapters with deduplication support.
-    
+
     This class extends the basic LanguageAdapter interface with additional methods
     needed for advanced language-specific processing, validation strategies,
     and deduplication features. It uses composition with PromptGenerator,
     CodeExtractor, and ValidationStrategy components.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._prompt_generator: Optional[PromptGenerator] = None
         self._code_extractor: Optional[CodeExtractor] = None
         self._code_normalizer: Optional[CodeNormalizer] = None
-        self._validation_strategy = None  # Will be set by subclasses
+        self._validation_strategy: Optional[Any] = None  # Will be set by subclasses
 
     @abstractmethod
-    def get_spec(self) -> 'LanguageSpec':  # Forward reference to avoid circular import
+    def get_spec(self) -> "LanguageSpec":  # Forward reference to avoid circular import
         """Return enhanced language specification"""
         pass
 
@@ -122,7 +125,9 @@ class UnifiedLanguageAdapter(ABC):
             )
         else:
             # Fallback to abstract method for subclasses that don't use composition
-            return self._generate_prompt_impl(student_response, function_name, gen_type, **kwargs)
+            return self._generate_prompt_impl(
+                student_response, function_name, gen_type, **kwargs
+            )
 
     @abstractmethod
     def _generate_prompt_impl(
@@ -151,7 +156,16 @@ class UnifiedLanguageAdapter(ABC):
     def validate_syntax(self, code: str) -> Tuple[bool, Optional[str]]:
         """Validate syntax using the configured validation strategy."""
         if self._validation_strategy:
-            return self._validation_strategy.validate(code)
+            result = self._validation_strategy.validate(code)
+            # Type guard to ensure proper return type
+            if isinstance(result, tuple) and len(result) == 2:
+                is_valid, error_msg = result
+                if isinstance(is_valid, bool) and (
+                    error_msg is None or isinstance(error_msg, str)
+                ):
+                    return is_valid, error_msg
+            # Fallback if validation strategy returns unexpected format
+            return False, "Invalid validation strategy response"
         else:
             # Fallback to abstract method
             return self._validate_syntax_impl(code)
@@ -172,7 +186,7 @@ class UnifiedLanguageAdapter(ABC):
     @abstractmethod
     def _extract_functions_impl(self, code: str) -> List[Dict[str, Any]]:
         """Implementation method for function extraction.
-        
+
         Returns list of dictionaries with keys:
         - 'name': function name
         - 'code': function code block
@@ -208,7 +222,9 @@ class UnifiedLanguageAdapter(ABC):
         """Set the code normalizer component."""
         self._code_normalizer = normalizer
 
-    def set_validation_strategy(self, strategy) -> None:  # Type hint avoided to prevent circular import
+    def set_validation_strategy(
+        self, strategy
+    ) -> None:  # Type hint avoided to prevent circular import
         """Set the validation strategy component."""
         self._validation_strategy = strategy
 
@@ -228,54 +244,58 @@ class UnifiedLanguageAdapter(ABC):
 
 class BaseUnifiedAdapter(UnifiedLanguageAdapter):
     """Base implementation of UnifiedLanguageAdapter with common functionality.
-    
+
     This class provides default implementations for common operations
     and can be extended by specific language adapters.
     """
-    
-    def _extract_code_with_patterns(self, llm_response: str, patterns: List[str]) -> List[str]:
+
+    def _extract_code_with_patterns(
+        self, llm_response: str, patterns: List[str]
+    ) -> List[str]:
         """Extract code using multiple regex patterns."""
         for pattern in patterns:
             matches = re.findall(pattern, llm_response, re.DOTALL)
             if matches:
                 return [match.strip() for match in matches]
-        
+
         # If no patterns match, return the response as-is
         return [llm_response.strip()] if llm_response.strip() else []
-    
-    def _extract_functions_with_pattern(self, code: str, pattern: str, name_group: int = 1) -> List[Dict[str, Any]]:
+
+    def _extract_functions_with_pattern(
+        self, code: str, pattern: str, name_group: int = 1
+    ) -> List[Dict[str, Any]]:
         """Extract functions using regex pattern."""
         functions = []
-        lines = code.split('\n')
-        
+        lines = code.split("\n")
+
         for i, line in enumerate(lines):
             match = re.search(pattern, line)
             if match:
                 func_name = match.group(name_group)
                 # Simple function extraction - can be enhanced
                 func_dict = {
-                    'name': func_name,
-                    'signature': line.strip(),
-                    'start_line': i + 1,
-                    'code': line.strip(),  # Simplified - should extract full function
+                    "name": func_name,
+                    "signature": line.strip(),
+                    "start_line": i + 1,
+                    "code": line.strip(),  # Simplified - should extract full function
                 }
                 functions.append(func_dict)
-        
+
         return functions
-    
+
     def _normalize_basic(self, code: str) -> str:
         """Basic code normalization."""
         # Remove comments (simplified)
         spec = self.get_spec()
         conventions = spec.syntax_conventions
-        
+
         if conventions.comment_single:
-            code = re.sub(f'{re.escape(conventions.comment_single)}.*', '', code)
-        
+            code = re.sub(f"{re.escape(conventions.comment_single)}.*", "", code)
+
         # Remove extra whitespace
-        code = re.sub(r'\s+', ' ', code)
+        code = re.sub(r"\s+", " ", code)
         code = code.strip()
-        
+
         return code
 
 

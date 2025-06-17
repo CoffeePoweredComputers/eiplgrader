@@ -16,13 +16,11 @@ class PhpAdapter(UnifiedLanguageAdapter):
             display_name="PHP",
             file_extensions=[".php"],
             run_command=["php"],
-
             # Enhanced specification
             code_block_tag="php",
             student_model_template="""Pretend you are an introductory CS student learning PHP for the very first
 time. You have a rudimentary understanding of functions, loops, variables, and
 conditionals. You don't know about advanced PHP features like namespaces, traits, or type declarations.""",
-
             # Syntax conventions
             syntax_conventions=SyntaxConventions(
                 comment_single="//",
@@ -32,7 +30,6 @@ conditionals. You don't know about advanced PHP features like namespaces, traits
                 indentation_type="spaces",
                 indentation_size=4,
             ),
-
             # Function patterns
             function_patterns=FunctionPatterns(
                 definition_regex=r"(function\s+(\w+)\s*\([^)]*\)\s*\{[^}]*\})",
@@ -40,13 +37,11 @@ conditionals. You don't know about advanced PHP features like namespaces, traits
                 requires_return_type=False,
                 supports_overloading=False,
                 supports_default_params=True,
-                supports_varargs=True
+                supports_varargs=True,
             ),
-
             # Validation
             validation_strategy="parser",
             validation_command=["php", "-l"],
-
             # Template overrides
             template_overrides=TemplateOverrides(
                 custom_templates={
@@ -71,9 +66,9 @@ For example:
 function {function_name}({params}) {{
     // function implementation
 }}
-```"""
+```""",
                 }
-            )
+            ),
         )
 
     def _generate_prompt_impl(
@@ -93,10 +88,7 @@ function {function_name}({params}) {{
     def _extract_code_impl(self, llm_response: str) -> List[str]:
         """Implementation method for code extraction."""
         # Extract PHP code blocks
-        patterns = [
-            r'```php\n(.*?)\n```',
-            r'```\n(.*?)\n```'  # Generic code block
-        ]
+        patterns = [r"```php\n(.*?)\n```", r"```\n(.*?)\n```"]  # Generic code block
 
         for pattern in patterns:
             matches = re.findall(pattern, llm_response, re.DOTALL)
@@ -116,12 +108,12 @@ function {function_name}({params}) {{
         for match in matches:
             func_name = match.group(2)
             start_pos = match.start()
-            lines_before = code[:start_pos].count('\n')
+            lines_before = code[:start_pos].count("\n")
             func_dict = {
-                'name': func_name,
-                'signature': match.group(0).split('\n')[0].strip(),
-                'start_line': lines_before + 1,
-                'code': match.group(0),
+                "name": func_name,
+                "signature": match.group(0).split("\n")[0].strip(),
+                "start_line": lines_before + 1,
+                "code": match.group(0),
             }
             functions.append(func_dict)
 
@@ -136,16 +128,15 @@ function {function_name}({params}) {{
             import os
 
             # Create temporary file
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.php', delete=False) as tmp:
+            with tempfile.NamedTemporaryFile(
+                mode="w", suffix=".php", delete=False
+            ) as tmp:
                 tmp.write(code)
                 tmp_path = tmp.name
 
             try:
                 result = subprocess.run(
-                    ['php', '-l', tmp_path],
-                    capture_output=True,
-                    text=True,
-                    timeout=5
+                    ["php", "-l", tmp_path], capture_output=True, text=True, timeout=5
                 )
 
                 if result.returncode == 0:
@@ -156,18 +147,18 @@ function {function_name}({params}) {{
                 os.unlink(tmp_path)
 
         except Exception as e:
-            return False, str(e)
+            return False, f"Validation error: {e}"
 
     def _normalize_code_impl(self, code: str) -> str:
         """Implementation method for code normalization."""
         # Remove single-line comments
-        code = re.sub(r'//.*', '', code)
+        code = re.sub(r"//.*", "", code)
         # Remove multi-line comments
-        code = re.sub(r'/\*.*?\*/', '', code, flags=re.DOTALL)
+        code = re.sub(r"/\*.*?\*/", "", code, flags=re.DOTALL)
         # Remove PHP tags if present
-        code = re.sub(r'<\?php\s*', '', code)
-        code = re.sub(r'\?>\s*', '', code)
+        code = re.sub(r"<\?php\s*", "", code)
+        code = re.sub(r"\?>\s*", "", code)
         # Remove extra whitespace
-        code = re.sub(r'\s+', ' ', code)
+        code = re.sub(r"\s+", " ", code)
         code = code.strip()
         return code

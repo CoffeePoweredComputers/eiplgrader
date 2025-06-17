@@ -16,13 +16,11 @@ class BashAdapter(UnifiedLanguageAdapter):
             display_name="Bash",
             file_extensions=[".sh"],
             run_command=["bash"],
-
             # Enhanced specification
             code_block_tag="bash",
             student_model_template="""Pretend you are an introductory CS student learning bash scripting for the very first
 time. You have a rudimentary understanding of functions, loops, variables, and
 conditionals in bash. You understand basic shell scripting conventions.""",
-
             # Syntax conventions
             syntax_conventions=SyntaxConventions(
                 comment_single="#",
@@ -30,9 +28,8 @@ conditionals in bash. You understand basic shell scripting conventions.""",
                 indentation_type="spaces",
                 indentation_size=4,
                 block_start="{",
-                block_end="}"
+                block_end="}",
             ),
-
             # Function patterns
             function_patterns=FunctionPatterns(
                 definition_regex=r"((\w+)\s*\(\)\s*\{[^}]*\})",
@@ -40,13 +37,11 @@ conditionals in bash. You understand basic shell scripting conventions.""",
                 requires_return_type=False,
                 supports_overloading=False,
                 supports_default_params=False,
-                supports_varargs=True  # Bash functions can accept any number of args
+                supports_varargs=True,  # Bash functions can accept any number of args
             ),
-
             # Validation
             validation_strategy="parser",
             validation_command=["bash", "-n"],
-
             # Template overrides
             template_overrides=TemplateOverrides(
                 custom_templates={
@@ -77,9 +72,9 @@ when generating the code. For example:
     echo "result"
 }}
 ```""",
-                    "bash_params_note": "Arguments are accessed using $1, $2, etc."
+                    "bash_params_note": "Arguments are accessed using $1, $2, etc.",
                 }
-            )
+            ),
         )
 
     def _generate_prompt_impl(
@@ -100,10 +95,10 @@ when generating the code. For example:
         """Implementation method for code extraction."""
         # Extract bash code blocks
         patterns = [
-            r'```bash\n(.*?)\n```',
-            r'```sh\n(.*?)\n```',
-            r'```shell\n(.*?)\n```',
-            r'```\n(.*?)\n```'  # Generic code block
+            r"```bash\n(.*?)\n```",
+            r"```sh\n(.*?)\n```",
+            r"```shell\n(.*?)\n```",
+            r"```\n(.*?)\n```",  # Generic code block
         ]
 
         for pattern in patterns:
@@ -118,17 +113,17 @@ when generating the code. For example:
         """Implementation method for function extraction."""
         functions = []
         pattern = r"(\w+)\s*\(\)\s*\{[^}]*\}"
-        lines = code.split('\n')
+        lines = code.split("\n")
 
         for i, line in enumerate(lines):
             match = re.search(pattern, line)
             if match:
                 func_name = match.group(1)
                 func_dict = {
-                    'name': func_name,
-                    'signature': line.strip(),
-                    'start_line': i + 1,
-                    'code': match.group(0),
+                    "name": func_name,
+                    "signature": line.strip(),
+                    "start_line": i + 1,
+                    "code": match.group(0),
                 }
                 functions.append(func_dict)
 
@@ -139,25 +134,22 @@ when generating the code. For example:
         # Basic bash syntax validation
         try:
             import subprocess
+
             result = subprocess.run(
-                ['bash', '-n'],
-                input=code,
-                text=True,
-                capture_output=True,
-                timeout=5
+                ["bash", "-n"], input=code, text=True, capture_output=True, timeout=5
             )
             if result.returncode == 0:
                 return True, None
             else:
                 return False, result.stderr
         except Exception as e:
-            return False, str(e)
+            return False, f"Validation error: {e}"
 
     def _normalize_code_impl(self, code: str) -> str:
         """Implementation method for code normalization."""
         # Remove comments
-        code = re.sub(r'#.*', '', code)
+        code = re.sub(r"#.*", "", code)
         # Remove extra whitespace
-        code = re.sub(r'\s+', ' ', code)
+        code = re.sub(r"\s+", " ", code)
         code = code.strip()
         return code

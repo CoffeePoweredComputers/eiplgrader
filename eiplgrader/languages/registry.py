@@ -1,27 +1,31 @@
 """Central registry for language implementations."""
 
-from typing import Dict, Type, Optional, List
-from .base import LanguageAdapter, LanguageExecutor
+from typing import Dict, Type, Optional, List, Union
+from .base import LanguageAdapter, LanguageExecutor, UnifiedLanguageAdapter
 
 
 class LanguageRegistry:
     """Central registry for language implementations"""
 
     def __init__(self):
-        self._adapters: Dict[str, Type[LanguageAdapter]] = {}
+        self._adapters: Dict[
+            str, Union[Type[LanguageAdapter], Type[UnifiedLanguageAdapter]]
+        ] = {}
         self._executors: Dict[str, Type[LanguageExecutor]] = {}
 
     def register(
         self,
         language: str,
-        adapter: Type[LanguageAdapter],
+        adapter: Union[Type[LanguageAdapter], Type[UnifiedLanguageAdapter]],
         executor: Type[LanguageExecutor],
     ) -> None:
         """Register a language implementation"""
         self._adapters[language.lower()] = adapter
         self._executors[language.lower()] = executor
 
-    def get_adapter(self, language: str) -> Optional[LanguageAdapter]:
+    def get_adapter(
+        self, language: str
+    ) -> Optional[Union[LanguageAdapter, UnifiedLanguageAdapter]]:
         """Get adapter instance for language"""
         adapter_class = self._adapters.get(language.lower())
         return adapter_class() if adapter_class else None

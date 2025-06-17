@@ -17,13 +17,11 @@ class TypescriptAdapter(UnifiedLanguageAdapter):
             file_extensions=[".ts"],
             run_command=["ts-node"],
             compile_command=["tsc"],
-
             # Enhanced specification
             code_block_tag="typescript",
             student_model_template="""Pretend you are an introductory CS student learning TypeScript for the very first
 time. You have a rudimentary understanding of functions, loops, variables, and
 conditionals. You are familiar with TypeScript type annotations and basic type safety concepts.""",
-
             # Syntax conventions
             syntax_conventions=SyntaxConventions(
                 comment_single="//",
@@ -33,7 +31,6 @@ conditionals. You are familiar with TypeScript type annotations and basic type s
                 indentation_type="spaces",
                 indentation_size=2,
             ),
-
             # Function patterns (handle multiple function declaration styles)
             function_patterns=FunctionPatterns(
                 definition_regex=r"((function\s+\w+\s*(?:<[^>]+>)?\s*\([^)]*\)\s*(?::\s*\w+(?:<[^>]+>)?)?\s*{[^}]*})|((?:const|let|var)\s+\w+\s*(?::\s*[^=]+)?\s*=\s*(?:<[^>]+>)?\s*(?:\([^)]*\)|[^=>\s]+)\s*(?::\s*\w+(?:<[^>]+>)?)?\s*=>\s*(?:{[^}]*}|[^;]+);?)|(async\s+function\s+\w+\s*(?:<[^>]+>)?\s*\([^)]*\)\s*:\s*(?:Promise<[^>]+>|\w+)\s*{[^}]*}))",
@@ -41,13 +38,11 @@ conditionals. You are familiar with TypeScript type annotations and basic type s
                 requires_return_type=False,  # TypeScript infers types
                 supports_overloading=True,
                 supports_default_params=True,
-                supports_varargs=True
+                supports_varargs=True,
             ),
-
             # Validation
             validation_strategy="compiler",
             validation_command=["tsc", "--noEmit", "--allowJs", "--checkJs"],
-
             # Template overrides
             template_overrides=TemplateOverrides(
                 custom_templates={
@@ -77,9 +72,9 @@ const {function_name} = ({params}): returnType => {{
 }};
 ```""",
                     "multiple_versions_note": """You can use either function declaration or arrow function syntax.
-Always include proper TypeScript type annotations."""
+Always include proper TypeScript type annotations.""",
                 }
-            )
+            ),
         )
 
     def _generate_prompt_impl(
@@ -100,11 +95,11 @@ Always include proper TypeScript type annotations."""
         """Implementation method for code extraction."""
         # Extract TypeScript code blocks
         patterns = [
-            r'```typescript\n(.*?)\n```',
-            r'```ts\n(.*?)\n```',
-            r'```javascript\n(.*?)\n```',  # TypeScript is superset of JS
-            r'```js\n(.*?)\n```',
-            r'```\n(.*?)\n```'  # Generic code block
+            r"```typescript\n(.*?)\n```",
+            r"```ts\n(.*?)\n```",
+            r"```javascript\n(.*?)\n```",  # TypeScript is superset of JS
+            r"```js\n(.*?)\n```",
+            r"```\n(.*?)\n```",  # Generic code block
         ]
 
         for pattern in patterns:
@@ -120,23 +115,23 @@ Always include proper TypeScript type annotations."""
         functions = []
         # TypeScript function patterns
         patterns = [
-            r'function\s+(\w+)\s*(?:<[^>]+>)?\s*\([^)]*\)\s*(?::\s*\w+(?:<[^>]+>)?)?\s*\{[^}]*\}',  # function declaration
-            r'(?:const|let|var)\s+(\w+)\s*(?::\s*[^=]+)?\s*=\s*(?:<[^>]+>)?\s*\([^)]*\)\s*(?::\s*\w+(?:<[^>]+>)?)?\s*=>\s*\{[^}]*\}',  # arrow function with block
-            r'(?:const|let|var)\s+(\w+)\s*(?::\s*[^=]+)?\s*=\s*(?:<[^>]+>)?\s*\([^)]*\)\s*(?::\s*\w+(?:<[^>]+>)?)?\s*=>\s*[^;]+;?',  # arrow function expression
-            r'async\s+function\s+(\w+)\s*(?:<[^>]+>)?\s*\([^)]*\)\s*:\s*(?:Promise<[^>]+>|\w+)\s*\{[^}]*\}'  # async function
+            r"function\s+(\w+)\s*(?:<[^>]+>)?\s*\([^)]*\)\s*(?::\s*\w+(?:<[^>]+>)?)?\s*\{[^}]*\}",  # function declaration
+            r"(?:const|let|var)\s+(\w+)\s*(?::\s*[^=]+)?\s*=\s*(?:<[^>]+>)?\s*\([^)]*\)\s*(?::\s*\w+(?:<[^>]+>)?)?\s*=>\s*\{[^}]*\}",  # arrow function with block
+            r"(?:const|let|var)\s+(\w+)\s*(?::\s*[^=]+)?\s*=\s*(?:<[^>]+>)?\s*\([^)]*\)\s*(?::\s*\w+(?:<[^>]+>)?)?\s*=>\s*[^;]+;?",  # arrow function expression
+            r"async\s+function\s+(\w+)\s*(?:<[^>]+>)?\s*\([^)]*\)\s*:\s*(?:Promise<[^>]+>|\w+)\s*\{[^}]*\}",  # async function
         ]
 
-        lines = code.split('\n')
+        lines = code.split("\n")
         for i, line in enumerate(lines):
             for pattern in patterns:
                 match = re.search(pattern, line)
                 if match:
                     func_name = match.group(1)
                     func_dict = {
-                        'name': func_name,
-                        'signature': line.strip(),
-                        'start_line': i + 1,
-                        'code': match.group(0),
+                        "name": func_name,
+                        "signature": line.strip(),
+                        "start_line": i + 1,
+                        "code": match.group(0),
                     }
                     functions.append(func_dict)
                     break
@@ -152,16 +147,16 @@ Always include proper TypeScript type annotations."""
             import os
 
             # Create a temporary file
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.ts', delete=False) as f:
+            with tempfile.NamedTemporaryFile(mode="w", suffix=".ts", delete=False) as f:
                 f.write(code)
                 temp_file = f.name
 
             try:
                 result = subprocess.run(
-                    ['tsc', '--noEmit', '--allowJs', '--checkJs', temp_file],
+                    ["tsc", "--noEmit", "--allowJs", "--checkJs", temp_file],
                     capture_output=True,
                     text=True,
-                    timeout=10
+                    timeout=10,
                 )
                 if result.returncode == 0:
                     return True, None
@@ -173,28 +168,30 @@ Always include proper TypeScript type annotations."""
             # Fallback to basic syntax checks if tsc is not available
             try:
                 # Basic bracket matching
-                open_braces = code.count('{')
-                close_braces = code.count('}')
-                open_parens = code.count('(')
-                close_parens = code.count(')')
-                open_brackets = code.count('[')
-                close_brackets = code.count(']')
+                open_braces = code.count("{")
+                close_braces = code.count("}")
+                open_parens = code.count("(")
+                close_parens = code.count(")")
+                open_brackets = code.count("[")
+                close_brackets = code.count("]")
 
-                if (open_braces != close_braces or 
-                    open_parens != close_parens or 
-                    open_brackets != close_brackets):
+                if (
+                    open_braces != close_braces
+                    or open_parens != close_parens
+                    or open_brackets != close_brackets
+                ):
                     return False, "Mismatched brackets/parentheses"
 
                 return True, None
             except Exception as fallback_e:
-                return False, str(fallback_e)
+                return False, f"Validation error: {fallback_e}"
 
     def _normalize_code_impl(self, code: str) -> str:
         """Implementation method for code normalization."""
         # Remove comments
-        code = re.sub(r'//.*', '', code)  # Single line comments
-        code = re.sub(r'/\*.*?\*/', '', code, flags=re.DOTALL)  # Multi-line comments
+        code = re.sub(r"//.*", "", code)  # Single line comments
+        code = re.sub(r"/\*.*?\*/", "", code, flags=re.DOTALL)  # Multi-line comments
         # Remove extra whitespace
-        code = re.sub(r'\s+', ' ', code)
+        code = re.sub(r"\s+", " ", code)
         code = code.strip()
         return code

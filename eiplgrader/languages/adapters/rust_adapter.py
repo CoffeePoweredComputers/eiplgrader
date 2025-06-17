@@ -17,14 +17,12 @@ class RustAdapter(UnifiedLanguageAdapter):
             file_extensions=[".rs"],
             compile_command=["rustc"],
             run_command=["cargo", "run"],
-
             # Enhanced specification
             code_block_tag="rust",
             student_model_template="""Pretend you are an introductory CS student learning Rust for the very first
 time. You have a rudimentary understanding of functions, loops, variables, and
 conditionals. You understand basic Rust syntax including ownership, borrowing,
 lifetimes, and error handling with Result types.""",
-
             # Syntax conventions
             syntax_conventions=SyntaxConventions(
                 comment_single="//",
@@ -34,7 +32,6 @@ lifetimes, and error handling with Result types.""",
                 indentation_type="spaces",
                 indentation_size=4,
             ),
-
             # Function patterns
             function_patterns=FunctionPatterns(
                 definition_regex=r"(fn\s+(\w+)\s*(?:<[^>]*>)?\s*\([^)]*\)[^{]*{[^}]*})",
@@ -42,13 +39,19 @@ lifetimes, and error handling with Result types.""",
                 requires_return_type=True,
                 supports_overloading=False,
                 supports_default_params=False,
-                supports_varargs=False
+                supports_varargs=False,
             ),
-
             # Validation
             validation_strategy="compiler",
-            validation_command=["rustc", "--crate-type", "lib", "--emit", "metadata", "-Z", "no-codegen"],
-
+            validation_command=[
+                "rustc",
+                "--crate-type",
+                "lib",
+                "--emit",
+                "metadata",
+                "-Z",
+                "no-codegen",
+            ],
             # Template overrides
             template_overrides=TemplateOverrides(
                 custom_templates={
@@ -80,9 +83,9 @@ If the function should handle errors, use Result<T, E> as the return type
 following Rust conventions. Follow ownership and borrowing rules - use references
 when appropriate and avoid unnecessary clones.""",
                     "multiple_versions_note": """Each version should be a complete, valid Rust function that follows
-ownership and borrowing rules."""
+ownership and borrowing rules.""",
                 }
-            )
+            ),
         )
 
     def _generate_prompt_impl(
@@ -103,9 +106,9 @@ ownership and borrowing rules."""
         """Implementation method for code extraction."""
         # Extract rust code blocks
         patterns = [
-            r'```rust\n(.*?)\n```',
-            r'```rs\n(.*?)\n```',
-            r'```\n(.*?)\n```'  # Generic code block
+            r"```rust\n(.*?)\n```",
+            r"```rs\n(.*?)\n```",
+            r"```\n(.*?)\n```",  # Generic code block
         ]
 
         for pattern in patterns:
@@ -120,17 +123,17 @@ ownership and borrowing rules."""
         """Implementation method for function extraction."""
         functions = []
         pattern = r"fn\s+(\w+)\s*(?:<[^>]*>)?\s*\([^)]*\)(?:\s*->\s*[^{]*)?\s*\{[^}]*\}"
-        lines = code.split('\n')
+        lines = code.split("\n")
 
         for i, line in enumerate(lines):
             match = re.search(pattern, line)
             if match:
                 func_name = match.group(1)
                 func_dict = {
-                    'name': func_name,
-                    'signature': line.strip(),
-                    'start_line': i + 1,
-                    'code': match.group(0),
+                    "name": func_name,
+                    "signature": line.strip(),
+                    "start_line": i + 1,
+                    "code": match.group(0),
                 }
                 functions.append(func_dict)
 
@@ -145,16 +148,25 @@ ownership and borrowing rules."""
             import os
 
             # Create a temporary file
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.rs', delete=False) as f:
+            with tempfile.NamedTemporaryFile(mode="w", suffix=".rs", delete=False) as f:
                 f.write(code)
                 temp_file = f.name
 
             try:
                 result = subprocess.run(
-                    ['rustc', '--crate-type', 'lib', '--emit', 'metadata', '-o', '/dev/null', temp_file],
+                    [
+                        "rustc",
+                        "--crate-type",
+                        "lib",
+                        "--emit",
+                        "metadata",
+                        "-o",
+                        "/dev/null",
+                        temp_file,
+                    ],
                     capture_output=True,
                     text=True,
-                    timeout=10
+                    timeout=10,
                 )
                 if result.returncode == 0:
                     return True, None
@@ -163,14 +175,14 @@ ownership and borrowing rules."""
             finally:
                 os.unlink(temp_file)
         except Exception as e:
-            return False, str(e)
+            return False, f"Validation error: {e}"
 
     def _normalize_code_impl(self, code: str) -> str:
         """Implementation method for code normalization."""
         # Remove comments
-        code = re.sub(r'//.*', '', code)  # Single line comments
-        code = re.sub(r'/\*.*?\*/', '', code, flags=re.DOTALL)  # Multi-line comments
+        code = re.sub(r"//.*", "", code)  # Single line comments
+        code = re.sub(r"/\*.*?\*/", "", code, flags=re.DOTALL)  # Multi-line comments
         # Remove extra whitespace
-        code = re.sub(r'\s+', ' ', code)
+        code = re.sub(r"\s+", " ", code)
         code = code.strip()
         return code

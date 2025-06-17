@@ -17,14 +17,12 @@ class GoAdapter(UnifiedLanguageAdapter):
             file_extensions=[".go"],
             compile_command=["go", "build"],
             run_command=["go", "run"],
-
             # Enhanced specification
             code_block_tag="go",
             student_model_template="""Pretend you are an introductory CS student learning Go for the very first
 time. You have a rudimentary understanding of functions, loops, variables, and
 conditionals. You understand basic Go syntax including package declarations,
 imports, and error handling patterns.""",
-
             # Syntax conventions
             syntax_conventions=SyntaxConventions(
                 comment_single="//",
@@ -34,20 +32,17 @@ imports, and error handling patterns.""",
                 indentation_type="tabs",
                 indentation_size=4,
             ),
-
             # Function patterns
             function_patterns=FunctionPatterns(
                 definition_regex=r"(func\s+(\w+)\s*\([^)]*\)[^{]*{[^}]*})",
                 name_capture_group=2,
                 requires_return_type=True,
                 supports_overloading=False,
-                supports_default_params=False
+                supports_default_params=False,
             ),
-
             # Validation
             validation_strategy="parser",
             validation_command=["gofmt", "-e"],
-
             # Template overrides
             template_overrides=TemplateOverrides(
                 custom_templates={
@@ -80,9 +75,9 @@ func {function_name}({params}) returnType {{
 ```
 
 If the function should handle errors, include error as the last return value
-following Go conventions."""
+following Go conventions.""",
                 }
-            )
+            ),
         )
 
     def _generate_prompt_impl(
@@ -103,9 +98,9 @@ following Go conventions."""
         """Implementation method for code extraction."""
         # Extract Go code blocks
         patterns = [
-            r'```go\n(.*?)\n```',
-            r'```golang\n(.*?)\n```',
-            r'```\n(.*?)\n```'  # Generic code block
+            r"```go\n(.*?)\n```",
+            r"```golang\n(.*?)\n```",
+            r"```\n(.*?)\n```",  # Generic code block
         ]
 
         for pattern in patterns:
@@ -121,17 +116,17 @@ following Go conventions."""
         functions = []
         # Pattern for Go function definitions
         pattern = r"func\s+(\w+)\s*\([^)]*\)[^{]*\{[^}]*\}"
-        lines = code.split('\n')
+        lines = code.split("\n")
 
         for i, line in enumerate(lines):
             match = re.search(r"func\s+(\w+)\s*\(", line)
             if match:
                 func_name = match.group(1)
                 func_dict = {
-                    'name': func_name,
-                    'signature': line.strip(),
-                    'start_line': i + 1,
-                    'code': line.strip(),
+                    "name": func_name,
+                    "signature": line.strip(),
+                    "start_line": i + 1,
+                    "code": line.strip(),
                 }
                 functions.append(func_dict)
 
@@ -145,16 +140,16 @@ following Go conventions."""
             import tempfile
             import os
 
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.go', delete=False) as f:
+            with tempfile.NamedTemporaryFile(mode="w", suffix=".go", delete=False) as f:
                 f.write(code)
                 temp_file = f.name
 
             try:
                 result = subprocess.run(
-                    ['gofmt', '-e', temp_file],
+                    ["gofmt", "-e", temp_file],
                     capture_output=True,
                     text=True,
-                    timeout=5
+                    timeout=5,
                 )
                 if result.returncode == 0:
                     return True, None
@@ -163,14 +158,14 @@ following Go conventions."""
             finally:
                 os.unlink(temp_file)
         except Exception as e:
-            return False, str(e)
+            return False, f"Validation error: {e}"
 
     def _normalize_code_impl(self, code: str) -> str:
         """Implementation method for code normalization."""
         # Remove comments
-        code = re.sub(r'/\*.*?\*/', '', code, flags=re.DOTALL)
-        code = re.sub(r'//.*', '', code)
+        code = re.sub(r"/\*.*?\*/", "", code, flags=re.DOTALL)
+        code = re.sub(r"//.*", "", code)
         # Remove extra whitespace
-        code = re.sub(r'\s+', ' ', code)
+        code = re.sub(r"\s+", " ", code)
         code = code.strip()
         return code

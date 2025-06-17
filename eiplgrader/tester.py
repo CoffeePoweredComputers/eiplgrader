@@ -9,58 +9,64 @@ from .languages import language_registry
 
 class CodeTestResult:
     """Simple, language-agnostic test result container."""
-    
+
     def __init__(self):
         self.test_results = []
         self.successes = 0
         self.failures = 0
         self.errors = 0
-    
+
     def add_success(self, function_call, expected_output, actual_output):
         """Add a successful test result."""
-        self.test_results.append({
-            "function_call": function_call,
-            "expected_output": expected_output,
-            "actual_output": actual_output,
-            "pass": True,
-            "error": None
-        })
+        self.test_results.append(
+            {
+                "function_call": function_call,
+                "expected_output": expected_output,
+                "actual_output": actual_output,
+                "pass": True,
+                "error": None,
+            }
+        )
         self.successes += 1
-    
+
     def add_failure(self, function_call, expected_output, actual_output, error_msg):
         """Add a failed test result."""
-        self.test_results.append({
-            "function_call": function_call,
-            "expected_output": expected_output,
-            "actual_output": actual_output,
-            "pass": False,
-            "error": error_msg
-        })
+        self.test_results.append(
+            {
+                "function_call": function_call,
+                "expected_output": expected_output,
+                "actual_output": actual_output,
+                "pass": False,
+                "error": error_msg,
+            }
+        )
         self.failures += 1
-    
+
     def add_error(self, function_call, error_msg):
         """Add an error result."""
-        self.test_results.append({
-            "function_call": function_call,
-            "expected_output": "N/A",
-            "actual_output": "N/A",
-            "pass": False,
-            "error": error_msg
-        })
+        self.test_results.append(
+            {
+                "function_call": function_call,
+                "expected_output": "N/A",
+                "actual_output": "N/A",
+                "pass": False,
+                "error": error_msg,
+            }
+        )
         self.errors += 1
-    
+
     def was_successful(self):
         """Return True if all tests passed."""
         return self.failures == 0 and self.errors == 0
-    
+
     @property
     def testsRun(self):
         """Compatibility property for existing code."""
         return len(self.test_results)
-    
+
     def __str__(self):
         return f"<TestResult run={self.testsRun} errors={self.errors} failures={self.failures}>"
-    
+
     def __repr__(self):
         return self.__str__()
 
@@ -98,14 +104,14 @@ class CodeTester:
 
     def _run_test(self, code: str) -> CodeTestResult:
         """Unified test execution for all languages."""
-        
+
         # Get the language executor
         executor = language_registry.get_executor(self.language)
         if not executor:
             raise ValueError(f"Unsupported language: {self.language}")
-        
+
         result = CodeTestResult()
-        
+
         for test_case in self.test_cases:
             if not isinstance(test_case, dict):
                 raise ValueError("Test case must be a dictionary")
@@ -120,31 +126,28 @@ class CodeTester:
             test_case = deepcopy(test_case)
             test_case["function_name"] = self.function_name
             test_case["inplace"] = self.inplace
-            
+
             try:
                 # Execute the test
                 test_result = executor.execute_test(code, test_case)
-                
+
                 # Add result directly to our simple TestResult
                 if test_result["passed"]:
                     result.add_success(
                         test_result.get("function_call", "N/A"),
                         test_case["expected"],
-                        test_result.get("actual", None)
+                        test_result.get("actual", None),
                     )
                 else:
                     result.add_failure(
                         test_result.get("function_call", "N/A"),
                         test_case["expected"],
                         test_result.get("actual", None),
-                        test_result.get("error", "Test failed")
+                        test_result.get("error", "Test failed"),
                     )
             except Exception as e:
-                result.add_error(
-                    f"Error executing test",
-                    str(e)
-                )
-        
+                result.add_error("Error executing test", str(e))
+
         # Clean up
         executor.cleanup()
         return result

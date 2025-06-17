@@ -16,15 +16,13 @@ class HaskellAdapter(UnifiedLanguageAdapter):
             display_name="Haskell",
             file_extensions=[".hs"],
             compile_command=["ghc"],
-            run_command=None,  # Haskell is compiled, not interpreted
-
+            run_command=[],  # Haskell is compiled, not interpreted
             # Enhanced specification
             code_block_tag="haskell",
             student_model_template="""Pretend you are an introductory CS student learning Haskell for the very first
 time. You have a rudimentary understanding of functions, recursion, pattern matching,
 and basic types. You understand functional programming concepts like pure functions,
 immutability, and lazy evaluation.""",
-
             # Syntax conventions
             syntax_conventions=SyntaxConventions(
                 comment_single="--",
@@ -33,9 +31,8 @@ immutability, and lazy evaluation.""",
                 statement_terminator="",
                 indentation_type="spaces",
                 indentation_size=2,
-                case_sensitive=True
+                case_sensitive=True,
             ),
-
             # Function patterns
             function_patterns=FunctionPatterns(
                 definition_regex=r"((\w+)\s*::[^\n]+\n\2[^=]*=[^}]+?)(?=\n\w+\s*::|$)",
@@ -43,13 +40,11 @@ immutability, and lazy evaluation.""",
                 requires_return_type=True,
                 supports_overloading=False,
                 supports_default_params=False,
-                supports_varargs=False
+                supports_varargs=False,
             ),
-
             # Validation
             validation_strategy="compiler",
             validation_command=["ghc", "-fno-code"],
-
             # Template overrides
             template_overrides=TemplateOverrides(
                 custom_templates={
@@ -82,9 +77,9 @@ Use standard Haskell conventions:
 - Use pattern matching for different cases
 - Keep functions pure (no side effects)
 - Use recursion instead of loops
-- Use guards or if-then-else for conditionals"""
+- Use guards or if-then-else for conditionals""",
                 }
-            )
+            ),
         )
 
     def _generate_prompt_impl(
@@ -97,7 +92,9 @@ Use standard Haskell conventions:
         """Implementation method for prompt generation."""
         # This is a fallback - the spec-based system should handle this
         if gen_type == "cgbg":
-            return f"Generate a Haskell function {function_name} that {student_response}"
+            return (
+                f"Generate a Haskell function {function_name} that {student_response}"
+            )
         else:
             return f"Generate a Haskell function named {function_name}"
 
@@ -105,9 +102,9 @@ Use standard Haskell conventions:
         """Implementation method for code extraction."""
         # Extract Haskell code blocks
         patterns = [
-            r'```haskell\n(.*?)\n```',
-            r'```hs\n(.*?)\n```',
-            r'```\n(.*?)\n```'  # Generic code block
+            r"```haskell\n(.*?)\n```",
+            r"```hs\n(.*?)\n```",
+            r"```\n(.*?)\n```",  # Generic code block
         ]
 
         for pattern in patterns:
@@ -122,31 +119,31 @@ Use standard Haskell conventions:
         """Implementation method for function extraction."""
         functions = []
         # Pattern for Haskell function definitions with type signatures
-        lines = code.split('\n')
+        lines = code.split("\n")
 
         for i, line in enumerate(lines):
             # Look for function definitions (pattern: name :: Type)
-            if '::' in line:
-                match = re.search(r'^(\w+)\s*::', line.strip())
+            if "::" in line:
+                match = re.search(r"^(\w+)\s*::", line.strip())
                 if match:
                     func_name = match.group(1)
                     func_dict = {
-                        'name': func_name,
-                        'signature': line.strip(),
-                        'start_line': i + 1,
-                        'code': line.strip(),
+                        "name": func_name,
+                        "signature": line.strip(),
+                        "start_line": i + 1,
+                        "code": line.strip(),
                     }
                     functions.append(func_dict)
             # Also look for function definitions without type signatures
-            elif '=' in line and not line.strip().startswith('--'):
-                match = re.search(r'^(\w+)\s+.*=', line.strip())
+            elif "=" in line and not line.strip().startswith("--"):
+                match = re.search(r"^(\w+)\s+.*=", line.strip())
                 if match:
                     func_name = match.group(1)
                     func_dict = {
-                        'name': func_name,
-                        'signature': line.strip(),
-                        'start_line': i + 1,
-                        'code': line.strip(),
+                        "name": func_name,
+                        "signature": line.strip(),
+                        "start_line": i + 1,
+                        "code": line.strip(),
                     }
                     functions.append(func_dict)
 
@@ -160,16 +157,16 @@ Use standard Haskell conventions:
             import tempfile
             import os
 
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.hs', delete=False) as f:
+            with tempfile.NamedTemporaryFile(mode="w", suffix=".hs", delete=False) as f:
                 f.write(code)
                 temp_file = f.name
 
             try:
                 result = subprocess.run(
-                    ['ghc', '-fno-code', temp_file],
+                    ["ghc", "-fno-code", temp_file],
                     capture_output=True,
                     text=True,
-                    timeout=5
+                    timeout=5,
                 )
                 if result.returncode == 0:
                     return True, None
@@ -178,14 +175,14 @@ Use standard Haskell conventions:
             finally:
                 os.unlink(temp_file)
         except Exception as e:
-            return False, str(e)
+            return False, f"Validation error: {e}"
 
     def _normalize_code_impl(self, code: str) -> str:
         """Implementation method for code normalization."""
         # Remove comments
-        code = re.sub(r'\{-.*?-\}', '', code, flags=re.DOTALL)
-        code = re.sub(r'--.*', '', code)
+        code = re.sub(r"\{-.*?-\}", "", code, flags=re.DOTALL)
+        code = re.sub(r"--.*", "", code)
         # Remove extra whitespace
-        code = re.sub(r'\s+', ' ', code)
+        code = re.sub(r"\s+", " ", code)
         code = code.strip()
         return code

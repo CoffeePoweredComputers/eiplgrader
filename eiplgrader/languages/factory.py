@@ -10,48 +10,47 @@ from .validators import create_validator, ValidationStrategy
 
 class AdapterFactory:
     """Factory for creating language adapters with unified interface."""
-    
+
     def __init__(self):
         self._legacy_adapters: Dict[str, Type[LanguageAdapter]] = {}
         self._unified_adapters: Dict[str, Type[UnifiedLanguageAdapter]] = {}
         self._specs: Dict[str, LanguageSpec] = {}
-    
-    def register_legacy_adapter(self, name: str, adapter_class: Type[LanguageAdapter]) -> None:
+
+    def register_legacy_adapter(
+        self, name: str, adapter_class: Type[LanguageAdapter]
+    ) -> None:
         """Register a legacy LanguageAdapter."""
         self._legacy_adapters[name] = adapter_class
-    
+
     def register_unified_adapter(
-        self, 
-        name: str, 
-        adapter_class: Type[UnifiedLanguageAdapter],
-        spec: LanguageSpec
+        self, name: str, adapter_class: Type[UnifiedLanguageAdapter], spec: LanguageSpec
     ) -> None:
         """Register a UnifiedLanguageAdapter with its specification."""
         self._unified_adapters[name] = adapter_class
         self._specs[name] = spec
-    
+
     def register_spec(self, name: str, spec: LanguageSpec) -> None:
         """Register a language specification."""
         self._specs[name] = spec
-    
+
     def create_adapter(
-        self, 
-        language: str, 
+        self,
+        language: str,
         prefer_unified: bool = True,
         validation_strategy: Optional[str] = None,
-        **kwargs
+        **kwargs,
     ) -> AdapterType:
         """Create an adapter for the specified language.
-        
+
         Args:
             language: Language name
             prefer_unified: Whether to prefer unified adapters over legacy ones
             validation_strategy: Override validation strategy
             **kwargs: Additional arguments for adapter construction
-            
+
         Returns:
             Language adapter instance
-            
+
         Raises:
             ValueError: If language is not supported
         """
@@ -59,52 +58,52 @@ class AdapterFactory:
         if prefer_unified and language in self._unified_adapters:
             adapter_class = self._unified_adapters[language]
             adapter = adapter_class(**kwargs)
-            
+
             # Set up validation strategy if specified
             if validation_strategy and language in self._specs:
                 spec = self._specs[language]
                 spec.validation_strategy = validation_strategy
                 validator = create_validator(spec)
                 adapter.set_validation_strategy(validator)
-            
+
             return adapter
-        
+
         # Fall back to legacy adapter
         if language in self._legacy_adapters:
-            adapter_class = self._legacy_adapters[language]
-            return adapter_class(**kwargs)
-        
+            legacy_adapter_class = self._legacy_adapters[language]
+            return legacy_adapter_class(**kwargs)
+
         # If unified is available but not preferred, try it anyway
         if language in self._unified_adapters:
-            adapter_class = self._unified_adapters[language]
-            return adapter_class(**kwargs)
-        
+            unified_adapter_class = self._unified_adapters[language]
+            return unified_adapter_class(**kwargs)
+
         raise ValueError(f"No adapter available for language: {language}")
-    
+
     def get_available_languages(self) -> Dict[str, str]:
         """Get available languages and their types.
-        
+
         Returns:
             Dictionary mapping language names to adapter types ('legacy' or 'unified')
         """
         languages = {}
-        
+
         for name in self._legacy_adapters:
-            languages[name] = 'legacy'
-        
+            languages[name] = "legacy"
+
         for name in self._unified_adapters:
-            languages[name] = 'unified'
-        
+            languages[name] = "unified"
+
         return languages
-    
+
     def get_spec(self, language: str) -> Optional[LanguageSpec]:
         """Get language specification for a language."""
         return self._specs.get(language)
-    
+
     def is_unified_adapter(self, language: str) -> bool:
         """Check if a language has a unified adapter."""
         return language in self._unified_adapters
-    
+
     def is_legacy_adapter(self, language: str) -> bool:
         """Check if a language has a legacy adapter."""
         return language in self._legacy_adapters
@@ -112,22 +111,24 @@ class AdapterFactory:
 
 class LegacyAdapterWrapper(UnifiedLanguageAdapter):
     """Wrapper to make legacy adapters compatible with unified interface."""
-    
-    def __init__(self, legacy_adapter: LanguageAdapter, spec: Optional[LanguageSpec] = None):
+
+    def __init__(
+        self, legacy_adapter: LanguageAdapter, spec: Optional[LanguageSpec] = None
+    ):
         super().__init__()
         self._legacy_adapter = legacy_adapter
         self._spec = spec
-        
+
         # Set up basic validation if spec is available
         if spec:
             validator = create_validator(spec)
             self.set_validation_strategy(validator)
-    
+
     def get_spec(self) -> LanguageSpec:
         """Return language specification (may be minimal for legacy adapters)."""
         if self._spec:
             return self._spec
-        
+
         # Create minimal spec from legacy config
         config = self._legacy_adapter.get_config()
         return LanguageSpec(
@@ -139,7 +140,7 @@ class LegacyAdapterWrapper(UnifiedLanguageAdapter):
             compile_command=config.compile_command,
             test_timeout=config.test_timeout,
         )
-    
+
     def _generate_prompt_impl(
         self,
         student_response: str,
@@ -151,21 +152,21 @@ class LegacyAdapterWrapper(UnifiedLanguageAdapter):
         return self._legacy_adapter.generate_prompt(
             student_response, function_name, gen_type, **kwargs
         )
-    
+
     def _extract_code_impl(self, llm_response: str) -> list[str]:
         """Delegate to legacy adapter."""
         return self._legacy_adapter.extract_code(llm_response)
-    
+
     def _validate_syntax_impl(self, code: str) -> tuple[bool, Optional[str]]:
         """Delegate to legacy adapter."""
         return self._legacy_adapter.validate_syntax(code)
-    
+
     def _extract_functions_impl(self, code: str) -> list[Dict[str, Any]]:
         """Basic function extraction for legacy adapters."""
         # This is a simplified implementation
         # Real implementation would need language-specific parsing
-        return [{'name': 'unknown', 'code': code, 'signature': 'unknown'}]
-    
+        return [{"name": "unknown", "code": code, "signature": "unknown"}]
+
     def _normalize_code_impl(self, code: str) -> str:
         """Basic normalization for legacy adapters."""
         # Basic normalization - remove excess whitespace
@@ -174,16 +175,18 @@ class LegacyAdapterWrapper(UnifiedLanguageAdapter):
 
 class ComponentRegistry:
     """Registry for adapter components (validators, extractors, etc.)."""
-    
+
     def __init__(self):
         self._validators: Dict[str, Type[ValidationStrategy]] = {}
         self._extractors: Dict[str, Any] = {}  # Type would be CodeExtractor
         self._normalizers: Dict[str, Any] = {}  # Type would be CodeNormalizer
-    
-    def register_validator(self, name: str, validator_class: Type[ValidationStrategy]) -> None:
+
+    def register_validator(
+        self, name: str, validator_class: Type[ValidationStrategy]
+    ) -> None:
         """Register a validation strategy."""
         self._validators[name] = validator_class
-    
+
     def get_validator(self, name: str) -> Optional[Type[ValidationStrategy]]:
         """Get a registered validator."""
         return self._validators.get(name)
@@ -208,7 +211,7 @@ def create_adapter(
     language: str,
     prefer_unified: bool = True,
     validation_strategy: Optional[str] = None,
-    **kwargs
+    **kwargs,
 ) -> AdapterType:
     """Convenience function to create an adapter using the global factory."""
     return _adapter_factory.create_adapter(
@@ -222,17 +225,14 @@ def register_legacy_adapter(name: str, adapter_class: Type[LanguageAdapter]) -> 
 
 
 def register_unified_adapter(
-    name: str,
-    adapter_class: Type[UnifiedLanguageAdapter],
-    spec: LanguageSpec
+    name: str, adapter_class: Type[UnifiedLanguageAdapter], spec: LanguageSpec
 ) -> None:
     """Convenience function to register a unified adapter."""
     _adapter_factory.register_unified_adapter(name, adapter_class, spec)
 
 
 def wrap_legacy_adapter(
-    adapter: LanguageAdapter,
-    spec: Optional[LanguageSpec] = None
+    adapter: LanguageAdapter, spec: Optional[LanguageSpec] = None
 ) -> UnifiedLanguageAdapter:
     """Wrap a legacy adapter to provide unified interface."""
     return LegacyAdapterWrapper(adapter, spec)
@@ -245,7 +245,7 @@ def get_available_languages() -> Dict[str, str]:
 
 def migrate_legacy_adapters():
     """Auto-discover and register legacy adapters for backward compatibility.
-    
+
     This function can be called during initialization to automatically
     register existing legacy adapters with the factory.
     """
@@ -254,25 +254,29 @@ def migrate_legacy_adapters():
     import importlib
     import pkgutil
     from . import adapters
-    
+
     # Scan adapters package
     for _, module_name, _ in pkgutil.iter_modules(adapters.__path__):
         try:
-            module = importlib.import_module(f'.adapters.{module_name}', package=__package__)
-            
+            module = importlib.import_module(
+                f".adapters.{module_name}", package=__package__
+            )
+
             # Look for adapter classes
             for attr_name in dir(module):
                 attr = getattr(module, attr_name)
-                if (isinstance(attr, type) and 
-                    issubclass(attr, LanguageAdapter) and 
-                    attr != LanguageAdapter and
-                    attr != UnifiedLanguageAdapter):
-                    
+                if (
+                    isinstance(attr, type)
+                    and issubclass(attr, LanguageAdapter)
+                    and attr != LanguageAdapter
+                    and attr != UnifiedLanguageAdapter
+                ):
+
                     # Extract language name from class name (e.g., PythonAdapter -> python)
-                    if attr_name.endswith('Adapter'):
+                    if attr_name.endswith("Adapter"):
                         lang_name = attr_name[:-7].lower()
                         register_legacy_adapter(lang_name, attr)
-                        
+
         except ImportError:
             # Skip modules that can't be imported
             continue

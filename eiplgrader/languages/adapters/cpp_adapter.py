@@ -17,7 +17,6 @@ class CppAdapter(UnifiedLanguageAdapter):
             file_extensions=[".cpp", ".cc", ".cxx"],
             compile_command=["g++", "-std=c++17"],
             run_command=["./a.out"],
-
             # Enhanced specification
             code_block_tag="cpp",
             student_model_template="""Pretend you are an introductory CS student learning C++ for the very first
@@ -25,7 +24,6 @@ time. You have a rudimentary understanding of functions, loops, variables, and
 conditionals. You understand basic C++ syntax including headers, namespaces,
 and the Standard Template Library (STL). You know about references and pointers
 but prefer using modern C++ features when appropriate.""",
-
             # Syntax conventions
             syntax_conventions=SyntaxConventions(
                 comment_single="//",
@@ -35,20 +33,17 @@ but prefer using modern C++ features when appropriate.""",
                 indentation_type="spaces",
                 indentation_size=4,
             ),
-
             # Function patterns
             function_patterns=FunctionPatterns(
                 definition_regex=r"((?:(?:inline|static|extern|virtual|const|constexpr)\s+)*(?:\w+(?:::\w+)*(?:<[^>]+>)?(?:\s*[*&]+)?)\s+(\w+)\s*\([^)]*\)[^{]*{[^}]*})",
                 name_capture_group=2,
                 requires_return_type=True,
                 supports_overloading=True,
-                supports_default_params=True
+                supports_default_params=True,
             ),
-
             # Validation
             validation_strategy="compiler",
             validation_command=["g++", "-std=c++17", "-fsyntax-only"],
-
             # Template overrides
             template_overrides=TemplateOverrides(
                 custom_templates={
@@ -88,9 +83,9 @@ when generating the code and include necessary headers. For example:
 ```
 
 Use modern C++ features and STL containers where appropriate.
-Prefer references over pointers for non-nullable parameters."""
+Prefer references over pointers for non-nullable parameters.""",
                 }
-            )
+            ),
         )
 
     def _generate_prompt_impl(
@@ -111,9 +106,9 @@ Prefer references over pointers for non-nullable parameters."""
         """Implementation method for code extraction."""
         # Extract C++ code blocks
         patterns = [
-            r'```cpp\n(.*?)\n```',
-            r'```c\+\+\n(.*?)\n```',
-            r'```\n(.*?)\n```'  # Generic code block
+            r"```cpp\n(.*?)\n```",
+            r"```c\+\+\n(.*?)\n```",
+            r"```\n(.*?)\n```",  # Generic code block
         ]
 
         for pattern in patterns:
@@ -129,17 +124,17 @@ Prefer references over pointers for non-nullable parameters."""
         functions = []
         # Pattern for C++ function definitions (simplified)
         pattern = r"(\w+(?:<[^>]+>)?(?:\s*[*&]+)?\s+(\w+)\s*\([^)]*\)[^{]*\{[^}]*\})"
-        lines = code.split('\n')
+        lines = code.split("\n")
 
         for i, line in enumerate(lines):
             match = re.search(r"(\w+(?:<[^>]+>)?)(?:\s*[*&]+)?\s+(\w+)\s*\(", line)
             if match:
                 func_name = match.group(2)
                 func_dict = {
-                    'name': func_name,
-                    'signature': line.strip(),
-                    'start_line': i + 1,
-                    'code': line.strip(),
+                    "name": func_name,
+                    "signature": line.strip(),
+                    "start_line": i + 1,
+                    "code": line.strip(),
                 }
                 functions.append(func_dict)
 
@@ -153,16 +148,18 @@ Prefer references over pointers for non-nullable parameters."""
             import tempfile
             import os
 
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.cpp', delete=False) as f:
+            with tempfile.NamedTemporaryFile(
+                mode="w", suffix=".cpp", delete=False
+            ) as f:
                 f.write(code)
                 temp_file = f.name
 
             try:
                 result = subprocess.run(
-                    ['g++', '-std=c++17', '-fsyntax-only', temp_file],
+                    ["g++", "-std=c++17", "-fsyntax-only", temp_file],
                     capture_output=True,
                     text=True,
-                    timeout=5
+                    timeout=5,
                 )
                 if result.returncode == 0:
                     return True, None
@@ -171,14 +168,14 @@ Prefer references over pointers for non-nullable parameters."""
             finally:
                 os.unlink(temp_file)
         except Exception as e:
-            return False, str(e)
+            return False, f"Validation error: {e}"
 
     def _normalize_code_impl(self, code: str) -> str:
         """Implementation method for code normalization."""
         # Remove comments
-        code = re.sub(r'/\*.*?\*/', '', code, flags=re.DOTALL)
-        code = re.sub(r'//.*', '', code)
+        code = re.sub(r"/\*.*?\*/", "", code, flags=re.DOTALL)
+        code = re.sub(r"//.*", "", code)
         # Remove extra whitespace
-        code = re.sub(r'\s+', ' ', code)
+        code = re.sub(r"\s+", " ", code)
         code = code.strip()
         return code

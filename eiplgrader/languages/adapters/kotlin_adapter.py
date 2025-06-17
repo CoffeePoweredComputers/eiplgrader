@@ -17,13 +17,11 @@ class KotlinAdapter(UnifiedLanguageAdapter):
             file_extensions=[".kt", ".kts"],
             run_command=["kotlin"],
             compile_command=["kotlinc"],
-
             # Enhanced specification
             code_block_tag="kotlin",
             student_model_template="""Pretend you are an introductory CS student learning Kotlin for the very first
 time. You have a rudimentary understanding of functions, loops, variables, and
 conditionals. You understand basic Kotlin syntax including null safety and type inference.""",
-
             # Syntax conventions
             syntax_conventions=SyntaxConventions(
                 comment_single="//",
@@ -33,7 +31,6 @@ conditionals. You understand basic Kotlin syntax including null safety and type 
                 indentation_type="spaces",
                 indentation_size=4,
             ),
-
             # Function patterns (handle both regular and single-expression functions)
             function_patterns=FunctionPatterns(
                 definition_regex=r"(fun\s+(\w+)\s*\([^)]*\)(?:\s*:\s*[\w\?]+)?\s*(?:\{[^}]*\}|=.*?)(?=fun\s+\w+\s*\(|$))",
@@ -41,12 +38,10 @@ conditionals. You understand basic Kotlin syntax including null safety and type 
                 requires_return_type=False,  # Kotlin infers types
                 supports_overloading=True,
                 supports_default_params=True,
-                supports_varargs=True
+                supports_varargs=True,
             ),
-
             # Validation
             validation_strategy="parser",  # Use basic parser validation
-
             # Template overrides
             template_overrides=TemplateOverrides(
                 custom_templates={
@@ -69,9 +64,9 @@ fun {function_name}({params}): <return_type> {{
 }}
 ```""",
                     "multiple_versions_note": """Each version should use different Kotlin idioms where appropriate
-(e.g., single expression functions, when expressions, null-safe operators)."""
+(e.g., single expression functions, when expressions, null-safe operators).""",
                 }
-            )
+            ),
         )
 
     def _generate_prompt_impl(
@@ -92,9 +87,9 @@ fun {function_name}({params}): <return_type> {{
         """Implementation method for code extraction."""
         # Extract Kotlin code blocks
         patterns = [
-            r'```kotlin\n(.*?)\n```',
-            r'```kt\n(.*?)\n```',
-            r'```\n(.*?)\n```'  # Generic code block
+            r"```kotlin\n(.*?)\n```",
+            r"```kt\n(.*?)\n```",
+            r"```\n(.*?)\n```",  # Generic code block
         ]
 
         for pattern in patterns:
@@ -115,12 +110,12 @@ fun {function_name}({params}): <return_type> {{
         for match in matches:
             func_name = match.group(2)
             start_pos = match.start()
-            lines_before = code[:start_pos].count('\n')
+            lines_before = code[:start_pos].count("\n")
             func_dict = {
-                'name': func_name,
-                'signature': match.group(0).split('\n')[0].strip(),
-                'start_line': lines_before + 1,
-                'code': match.group(0),
+                "name": func_name,
+                "signature": match.group(0).split("\n")[0].strip(),
+                "start_line": lines_before + 1,
+                "code": match.group(0),
             }
             functions.append(func_dict)
 
@@ -135,16 +130,18 @@ fun {function_name}({params}): <return_type> {{
             import os
 
             # Create temporary file
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.kt', delete=False) as tmp:
+            with tempfile.NamedTemporaryFile(
+                mode="w", suffix=".kt", delete=False
+            ) as tmp:
                 tmp.write(code)
                 tmp_path = tmp.name
 
             try:
                 result = subprocess.run(
-                    ['kotlinc', '-cp', '.', tmp_path],
+                    ["kotlinc", "-cp", ".", tmp_path],
                     capture_output=True,
                     text=True,
-                    timeout=10
+                    timeout=10,
                 )
 
                 if result.returncode == 0:
@@ -154,20 +151,20 @@ fun {function_name}({params}): <return_type> {{
             finally:
                 os.unlink(tmp_path)
                 # Clean up compiled class files
-                class_file = tmp_path.replace('.kt', '.class')
+                class_file = tmp_path.replace(".kt", ".class")
                 if os.path.exists(class_file):
                     os.unlink(class_file)
 
         except Exception as e:
-            return False, str(e)
+            return False, f"Validation error: {e}"
 
     def _normalize_code_impl(self, code: str) -> str:
         """Implementation method for code normalization."""
         # Remove single-line comments
-        code = re.sub(r'//.*', '', code)
+        code = re.sub(r"//.*", "", code)
         # Remove multi-line comments
-        code = re.sub(r'/\*.*?\*/', '', code, flags=re.DOTALL)
+        code = re.sub(r"/\*.*?\*/", "", code, flags=re.DOTALL)
         # Remove extra whitespace
-        code = re.sub(r'\s+', ' ', code)
+        code = re.sub(r"\s+", " ", code)
         code = code.strip()
         return code

@@ -16,28 +16,23 @@ class CAdapter(UnifiedLanguageAdapter):
             display_name="C",
             file_extensions=[".c"],
             compile_command=["gcc"],
-            run_command=None,
-
+            run_command=[],
             # Enhanced specification
             code_block_tag="c",
             student_model_template="You understand basic C syntax including headers, pointers, and memory management patterns.",
-
             # Function patterns
             function_patterns=FunctionPatterns(
                 definition_regex=r"(\w+\s+\w+\s*\([^)]*\)[^{]*{[^}]*})",
-                name_capture_group=1
+                name_capture_group=1,
             ),
-
             # Header requirements
             header_requirements=HeaderRequirements(
                 required_imports=["#include <stdio.h>", "#include <stdlib.h>"]
             ),
-
             # Validation
             validation_strategy="compiler",
             validation_command=["gcc", "-fsyntax-only"],
             requires_main_wrapper=True,
-
             # Template overrides
             template_overrides=TemplateOverrides(
                 custom_templates={
@@ -61,9 +56,9 @@ If working with arrays, remember C arrays are passed as pointers.""",
                     "language_specific_conventions": """Use standard C conventions for parameter passing:
 - Pass by value for basic types
 - Pass pointers for arrays or when modifications are needed
-- Use const for read-only pointer parameters"""
+- Use const for read-only pointer parameters""",
                 }
-            )
+            ),
         )
 
     def _generate_prompt_impl(
@@ -83,10 +78,7 @@ If working with arrays, remember C arrays are passed as pointers.""",
     def _extract_code_impl(self, llm_response: str) -> List[str]:
         """Implementation method for code extraction."""
         # Extract C code blocks
-        patterns = [
-            r'```c\n(.*?)\n```',
-            r'```\n(.*?)\n```'  # Generic code block
-        ]
+        patterns = [r"```c\n(.*?)\n```", r"```\n(.*?)\n```"]  # Generic code block
 
         for pattern in patterns:
             matches = re.findall(pattern, llm_response, re.DOTALL)
@@ -101,17 +93,17 @@ If working with arrays, remember C arrays are passed as pointers.""",
         functions = []
         # Pattern for C function definitions
         pattern = r"(\w+\s+\w+\s*\([^)]*\)[^{]*\{[^}]*\})"
-        lines = code.split('\n')
+        lines = code.split("\n")
 
         for i, line in enumerate(lines):
             match = re.search(r"(\w+)\s+(\w+)\s*\(", line)
             if match:
                 func_name = match.group(2)
                 func_dict = {
-                    'name': func_name,
-                    'signature': line.strip(),
-                    'start_line': i + 1,
-                    'code': line.strip(),
+                    "name": func_name,
+                    "signature": line.strip(),
+                    "start_line": i + 1,
+                    "code": line.strip(),
                 }
                 functions.append(func_dict)
 
@@ -125,16 +117,16 @@ If working with arrays, remember C arrays are passed as pointers.""",
             import tempfile
             import os
 
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.c', delete=False) as f:
+            with tempfile.NamedTemporaryFile(mode="w", suffix=".c", delete=False) as f:
                 f.write(code)
                 temp_file = f.name
 
             try:
                 result = subprocess.run(
-                    ['gcc', '-fsyntax-only', temp_file],
+                    ["gcc", "-fsyntax-only", temp_file],
                     capture_output=True,
                     text=True,
-                    timeout=5
+                    timeout=5,
                 )
                 if result.returncode == 0:
                     return True, None
@@ -143,14 +135,14 @@ If working with arrays, remember C arrays are passed as pointers.""",
             finally:
                 os.unlink(temp_file)
         except Exception as e:
-            return False, str(e)
+            return False, f"Validation error: {e}"
 
     def _normalize_code_impl(self, code: str) -> str:
         """Implementation method for code normalization."""
         # Remove comments
-        code = re.sub(r'/\*.*?\*/', '', code, flags=re.DOTALL)
-        code = re.sub(r'//.*', '', code)
+        code = re.sub(r"/\*.*?\*/", "", code, flags=re.DOTALL)
+        code = re.sub(r"//.*", "", code)
         # Remove extra whitespace
-        code = re.sub(r'\s+', ' ', code)
+        code = re.sub(r"\s+", " ", code)
         code = code.strip()
         return code

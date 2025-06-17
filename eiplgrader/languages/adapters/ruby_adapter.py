@@ -16,13 +16,11 @@ class RubyAdapter(UnifiedLanguageAdapter):
             display_name="Ruby",
             file_extensions=[".rb"],
             run_command=["ruby"],
-
             # Enhanced specification
             code_block_tag="ruby",
             student_model_template="""Pretend you are an introductory CS student learning Ruby for the very first
 time. You have a rudimentary understanding of methods, loops, variables, and
 conditionals. You understand Ruby idioms like blocks and symbols.""",
-
             # Syntax conventions
             syntax_conventions=SyntaxConventions(
                 comment_single="#",
@@ -32,9 +30,8 @@ conditionals. You understand Ruby idioms like blocks and symbols.""",
                 indentation_type="spaces",
                 indentation_size=2,
                 block_start="do",
-                block_end="end"
+                block_end="end",
             ),
-
             # Function patterns
             function_patterns=FunctionPatterns(
                 definition_regex=r"(def\s+(\w+)\s*\([^)]*\).*?end)",
@@ -42,13 +39,11 @@ conditionals. You understand Ruby idioms like blocks and symbols.""",
                 requires_return_type=False,
                 supports_overloading=False,
                 supports_default_params=True,
-                supports_varargs=True
+                supports_varargs=True,
             ),
-
             # Validation
             validation_strategy="parser",
             validation_command=["ruby", "-c"],
-
             # Template overrides
             template_overrides=TemplateOverrides(
                 custom_templates={
@@ -68,9 +63,9 @@ when generating the code. For example:
 def {function_name}({params})
   # implementation
 end
-```"""
+```""",
                 }
-            )
+            ),
         )
 
     def _generate_prompt_impl(
@@ -91,9 +86,9 @@ end
         """Implementation method for code extraction."""
         # Extract Ruby code blocks
         patterns = [
-            r'```ruby\n(.*?)\n```',
-            r'```rb\n(.*?)\n```',
-            r'```\n(.*?)\n```'  # Generic code block
+            r"```ruby\n(.*?)\n```",
+            r"```rb\n(.*?)\n```",
+            r"```\n(.*?)\n```",  # Generic code block
         ]
 
         for pattern in patterns:
@@ -114,12 +109,12 @@ end
         for match in matches:
             func_name = match.group(2)
             start_pos = match.start()
-            lines_before = code[:start_pos].count('\n')
+            lines_before = code[:start_pos].count("\n")
             func_dict = {
-                'name': func_name,
-                'signature': match.group(0).split('\n')[0].strip(),
-                'start_line': lines_before + 1,
-                'code': match.group(0),
+                "name": func_name,
+                "signature": match.group(0).split("\n")[0].strip(),
+                "start_line": lines_before + 1,
+                "code": match.group(0),
             }
             functions.append(func_dict)
 
@@ -134,16 +129,15 @@ end
             import os
 
             # Create temporary file
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.rb', delete=False) as tmp:
+            with tempfile.NamedTemporaryFile(
+                mode="w", suffix=".rb", delete=False
+            ) as tmp:
                 tmp.write(code)
                 tmp_path = tmp.name
 
             try:
                 result = subprocess.run(
-                    ['ruby', '-c', tmp_path],
-                    capture_output=True,
-                    text=True,
-                    timeout=5
+                    ["ruby", "-c", tmp_path], capture_output=True, text=True, timeout=5
                 )
 
                 if result.returncode == 0:
@@ -154,15 +148,15 @@ end
                 os.unlink(tmp_path)
 
         except Exception as e:
-            return False, str(e)
+            return False, f"Validation error: {e}"
 
     def _normalize_code_impl(self, code: str) -> str:
         """Implementation method for code normalization."""
         # Remove single-line comments
-        code = re.sub(r'#.*', '', code)
+        code = re.sub(r"#.*", "", code)
         # Remove multi-line comments
-        code = re.sub(r'=begin.*?=end', '', code, flags=re.DOTALL)
+        code = re.sub(r"=begin.*?=end", "", code, flags=re.DOTALL)
         # Remove extra whitespace
-        code = re.sub(r'\s+', ' ', code)
+        code = re.sub(r"\s+", " ", code)
         code = code.strip()
         return code

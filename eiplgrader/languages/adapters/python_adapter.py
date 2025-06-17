@@ -17,29 +17,25 @@ class PythonAdapter(UnifiedLanguageAdapter):
             display_name="Python",
             file_extensions=[".py"],
             run_command=["python3"],
-
             # Enhanced specification
             code_block_tag="python",
             student_model_template="You also don't know about type annotations.",
-
             # Function patterns
             function_patterns=FunctionPatterns(
                 definition_regex=r"(def\s+\w+\s*\([^)]*\):.*?)(?=def\s+\w+\s*\(|$)",
                 name_capture_group=1,
                 supports_default_params=True,
-                supports_varargs=True
+                supports_varargs=True,
             ),
-
             # Validation
             validation_strategy="parser",
-
             # Template overrides
             template_overrides=TemplateOverrides(
                 custom_templates={
                     "function_example": "<code here>",
-                    "language_specific_instructions": "Respond with the code for the function {function_name} in the following format which has the code wrapped in markdown of a python code block:\n\n```python\n<code here>\n```"
+                    "language_specific_instructions": "Respond with the code for the function {function_name} in the following format which has the code wrapped in markdown of a python code block:\n\n```python\n<code here>\n```",
                 }
-            )
+            ),
         )
 
     def _generate_prompt_impl(
@@ -60,9 +56,9 @@ class PythonAdapter(UnifiedLanguageAdapter):
         """Implementation method for code extraction."""
         # Extract Python code blocks
         patterns = [
-            r'```python\n(.*?)\n```',
-            r'```py\n(.*?)\n```',
-            r'```\n(.*?)\n```'  # Generic code block
+            r"```python\n(.*?)\n```",
+            r"```py\n(.*?)\n```",
+            r"```\n(.*?)\n```",  # Generic code block
         ]
 
         for pattern in patterns:
@@ -81,26 +77,27 @@ class PythonAdapter(UnifiedLanguageAdapter):
             for node in ast.walk(tree):
                 if isinstance(node, ast.FunctionDef):
                     func_dict = {
-                        'name': node.name,
-                        'signature': f"def {node.name}(...)",
-                        'start_line': node.lineno,
-                        'end_line': getattr(node, 'end_lineno', node.lineno),
-                        'code': ast.get_source_segment(code, node) or f"def {node.name}(...): ..."
+                        "name": node.name,
+                        "signature": f"def {node.name}(...)",
+                        "start_line": node.lineno,
+                        "end_line": getattr(node, "end_lineno", node.lineno),
+                        "code": ast.get_source_segment(code, node)
+                        or f"def {node.name}(...): ...",
                     }
                     functions.append(func_dict)
         except SyntaxError:
             # Fallback to regex if AST parsing fails
             pattern = r"def\s+(\w+)\s*\([^)]*\):"
-            lines = code.split('\n')
+            lines = code.split("\n")
             for i, line in enumerate(lines):
                 match = re.search(pattern, line)
                 if match:
                     func_name = match.group(1)
                     func_dict = {
-                        'name': func_name,
-                        'signature': line.strip(),
-                        'start_line': i + 1,
-                        'code': line.strip(),
+                        "name": func_name,
+                        "signature": line.strip(),
+                        "start_line": i + 1,
+                        "code": line.strip(),
                     }
                     functions.append(func_dict)
 
@@ -112,21 +109,21 @@ class PythonAdapter(UnifiedLanguageAdapter):
             ast.parse(code)
             return True, None
         except SyntaxError as e:
-            return False, str(e)
+            return False, f"Syntax error: {e}"
         except Exception as e:
-            return False, str(e)
+            return False, f"Validation error: {e}"
 
     def _normalize_code_impl(self, code: str) -> str:
         """Implementation method for code normalization."""
         # Remove comments and docstrings
-        lines = code.split('\n')
+        lines = code.split("\n")
         normalized_lines = []
         in_multiline_comment = False
 
         for line in lines:
             # Remove single-line comments
-            if '#' in line:
-                line = line[:line.index('#')]
+            if "#" in line:
+                line = line[: line.index("#")]
 
             # Skip empty lines
             line = line.strip()
@@ -134,6 +131,6 @@ class PythonAdapter(UnifiedLanguageAdapter):
                 normalized_lines.append(line)
 
         # Join and normalize whitespace
-        code = ' '.join(normalized_lines)
-        code = re.sub(r'\s+', ' ', code)
+        code = " ".join(normalized_lines)
+        code = re.sub(r"\s+", " ", code)
         return code.strip()
