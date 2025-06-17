@@ -17,8 +17,7 @@ jobs:
           pip install pytest pytest-cov
       - name: Test base system
         run: |
-          pytest tests/test_base.py tests/test_registry.py -v || true
-          pytest tests/test_codegen.py tests/test_tester.py -v
+          pytest tests/test_tester.py tests/languages/test_base_language.py -v
 
   test-language:
     needs: test-base
@@ -64,4 +63,8 @@ jobs:
           
       - name: Test language integration
         run: |
-          python tests/integration/test_${{ matrix.language.name }}_integration.py || echo "Integration tests not yet implemented for ${{ matrix.language.name }}"
+          if [ -f "tests/languages/test_${{ matrix.language.name }}_integration.py" ]; then
+            pytest tests/languages/test_${{ matrix.language.name }}_integration.py -v
+          else
+            echo "Integration tests not yet implemented for ${{ matrix.language.name }}"
+          fi
