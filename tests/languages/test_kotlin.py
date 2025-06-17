@@ -260,7 +260,10 @@ class TestKotlinExecutor:
         assert self.executor._get_parse_method("Double") == "toDouble()"
         assert self.executor._get_parse_method("Boolean") == "toBoolean()"
         assert self.executor._get_parse_method("String") == ""
-        assert "split(',').map { it.trim().toInt() }" in self.executor._get_parse_method("List<Int>")
+        assert (
+            "split(',').map { it.trim().toInt() }"
+            in self.executor._get_parse_method("List<Int>")
+        )
 
     @pytest.mark.skipif(not _kotlin_available(), reason="Kotlin not available")
     def test_execute_simple_function(self):

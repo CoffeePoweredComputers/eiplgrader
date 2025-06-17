@@ -189,9 +189,9 @@ parseStringParam key jsonStr =
                 if output.startswith('"') and output.endswith('"'):
                     actual = output[1:-1]
                     result["actual"] = actual
-                elif output == "True" or output == "true":
+                elif output in ("True", "true"):
                     result["actual"] = True
-                elif output == "False" or output == "false":
+                elif output in ("False", "false"):
                     result["actual"] = False
                 else:
                     # Try to parse as JSON first, then as literal

@@ -157,6 +157,8 @@ let read_all_stdin () =
                         param_extraction += f'  let {name} = parse_float_list (get_json_field json_obj "{name}") in\n'
 
         # Generate function call based on inplace mode
+        function_call = ""  # Initialize to ensure it's always defined
+
         if inplace_mode == "0":
             # Normal function call - function returns a value
             if param_names:
@@ -217,6 +219,16 @@ let read_all_stdin () =
             else:
                 function_call = f"  let result = {function_name} () in\n"
                 output_code = self._generate_output_code(test_case.get("expected"))
+
+        else:
+            # Default case for unexpected inplace_mode values - treat as normal function call
+            if param_names:
+                function_call = (
+                    f"  let result = {function_name} {' '.join(param_names)} in\n"
+                )
+            else:
+                function_call = f"  let result = {function_name} () in\n"
+            output_code = self._generate_output_code(test_case.get("expected"))
 
         # Build the main function
         main_code = f"""

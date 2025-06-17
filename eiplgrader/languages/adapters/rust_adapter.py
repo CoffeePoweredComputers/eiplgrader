@@ -122,6 +122,7 @@ ownership and borrowing rules.
         """Validate Rust syntax using rustc."""
         import subprocess
         import tempfile
+        import os
 
         try:
             # Write code to temporary file
@@ -148,14 +149,12 @@ ownership and borrowing rules.
                 capture_output=True,
                 text=True,
                 env={
-                    **subprocess.os.environ,
+                    **os.environ,
                     "RUSTC_BOOTSTRAP": "1",
                 },  # Enable unstable features
             )
 
             # Clean up
-            import os
-
             os.unlink(temp_path)
 
             if result.returncode == 0:

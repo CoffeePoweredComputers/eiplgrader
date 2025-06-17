@@ -1,7 +1,8 @@
-from typing import List, Dict, Any, Optional, Union
 import json
-import openai
 import os
+from typing import List, Dict, Any, Optional
+
+import openai
 import requests
 from .languages import language_registry
 
@@ -579,7 +580,7 @@ class OllamaModelRequest(ModelRequest):
                 if line.startswith("```python"):
                     in_code_block = True
                     continue
-                elif line.startswith("```") and in_code_block:
+                if line.startswith("```") and in_code_block:
                     in_code_block = False
                     if current_block:
                         code_blocks.append("\n".join(current_block))
@@ -596,7 +597,7 @@ class OllamaModelRequest(ModelRequest):
             return code_blocks
 
         except requests.exceptions.RequestException as e:
-            raise RuntimeError(f"Error making request to Ollama API: {str(e)}")
+            raise RuntimeError(f"Error making request to Ollama API: {str(e)}") from e
 
     def request_segmentation(
         self, student_response: str, code: str, segmentation_examples: Dict[str, Any]
@@ -629,16 +630,15 @@ class OllamaModelRequest(ModelRequest):
                 # Find JSON content between curly braces
                 json_start = response_text.find("{")
                 json_end = response_text.rfind("}") + 1
-                if json_start >= 0 and json_end > json_start:
+                if 0 <= json_start < json_end:
                     json_str = response_text[json_start:json_end]
                     return json.loads(json_str)
-                else:
-                    raise ValueError("No valid JSON found in response")
+                raise ValueError("No valid JSON found in response")
             except json.JSONDecodeError as e:
-                raise ValueError(f"Failed to parse JSON response: {str(e)}")
+                raise ValueError(f"Failed to parse JSON response: {str(e)}") from e
 
         except requests.exceptions.RequestException as e:
-            raise RuntimeError(f"Error making request to Ollama API: {str(e)}")
+            raise RuntimeError(f"Error making request to Ollama API: {str(e)}") from e
 
     def _format_segmentation_prompt(
         self, student_response: str, code: str, segmentation_examples: Dict[str, Any]

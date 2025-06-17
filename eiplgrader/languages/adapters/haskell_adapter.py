@@ -15,7 +15,7 @@ class HaskellAdapter(LanguageAdapter):
             display_name="Haskell",
             file_extensions=[".hs"],
             compile_command=["ghc"],
-            run_command=None,  # Haskell is compiled, not interpreted
+            run_command=[],  # Haskell is compiled, not interpreted
         )
 
     def generate_prompt(

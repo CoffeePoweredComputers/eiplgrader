@@ -25,9 +25,9 @@ class TestCppAdapter:
         prompt = self.adapter.generate_prompt(
             student_response="adds two numbers together",
             function_name="add",
-            gen_type="cgbg"
+            gen_type="cgbg",
         )
-        
+
         assert "add" in prompt
         assert "adds two numbers together" in prompt
         assert "```cpp" in prompt
@@ -42,9 +42,9 @@ class TestCppAdapter:
             gen_type="redef",
             params="int a, int b",
             assumptions="a and b are positive integers",
-            return_type="int"
+            return_type="int",
         )
-        
+
         assert "multiply" in prompt
         assert "int a, int b" in prompt
         assert "positive integers" in prompt
@@ -53,11 +53,9 @@ class TestCppAdapter:
     def test_generate_prompt_multiple_versions(self):
         """Test prompt with multiple versions requested."""
         prompt = self.adapter.generate_prompt(
-            student_response="reverses a string",
-            function_name="reverse",
-            num_to_gen=3
+            student_response="reverses a string", function_name="reverse", num_to_gen=3
         )
-        
+
         assert "3 different versions" in prompt
 
     def test_extract_code_markdown_blocks(self):
@@ -82,7 +80,7 @@ int add(int x, int y) {
 }
 ```
 """
-        
+
         codes = self.adapter.extract_code(llm_response)
         assert len(codes) == 2
         assert "int add(int a, int b)" in codes[0]
@@ -98,7 +96,7 @@ int multiply(int a, int b) {
 }
 ```
 """
-        
+
         codes = self.adapter.extract_code(llm_response)
         assert len(codes) == 1
         assert "multiply" in codes[0]
@@ -111,7 +109,7 @@ int divide(int a, int b) {
     return a / b;
 }
 """
-        
+
         codes = self.adapter.extract_code(llm_response)
         assert len(codes) == 1
         assert "divide" in codes[0]
@@ -124,7 +122,7 @@ T max(T a, T b) {
     return (a > b) ? a : b;
 }
 ```"""
-        
+
         codes = self.adapter.extract_code(llm_response)
         assert len(codes) == 1
         assert "template" in codes[0]
@@ -140,7 +138,7 @@ int factorial(int n) {
     return n * factorial(n - 1);
 }
 """
-        
+
         is_valid, error = self.adapter.validate_syntax(code)
         # Note: This might fail if g++ is not available
         # In that case, it should return (True, None)
@@ -153,7 +151,7 @@ int broken(int a {  // Missing closing parenthesis
     return a + ;  // Incomplete expression
 }
 """
-        
+
         is_valid, error = self.adapter.validate_syntax(code)
         # If g++ is available, this should fail
         # If not available, it returns (True, None)
@@ -180,14 +178,14 @@ int add(int a, int b) {
     return a + b;
 }
 """
-        
+
         test_case = {
             "function_name": "add",
             "parameters": {"a": 5, "b": 3},
             "expected": 8,
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(code, test_case)
         assert result["passed"]
         assert result["actual"] == 8
@@ -201,14 +199,14 @@ std::string concatenate(std::string a, std::string b) {
     return a + b;
 }
 """
-        
+
         test_case = {
             "function_name": "concatenate",
             "parameters": {"a": "Hello", "b": "World"},
             "expected": "HelloWorld",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(code, test_case)
         print(f"Result: {result}")
         assert result["passed"]
@@ -227,14 +225,14 @@ int sum_vector(std::vector<int> nums) {
     return sum;
 }
 """
-        
+
         test_case = {
             "function_name": "sum_vector",
             "parameters": {"nums": [1, 2, 3, 4, 5]},
             "expected": 15,
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(code, test_case)
         assert result["passed"]
         assert result["actual"] == 15
@@ -249,14 +247,14 @@ void sort_vector(std::vector<int>& nums) {
     std::sort(nums.begin(), nums.end());
 }
 """
-        
+
         test_case = {
             "function_name": "sort_vector",
             "parameters": {"nums": [3, 1, 4, 1, 5]},
             "expected": [1, 1, 3, 4, 5],
-            "inplace": "1"
+            "inplace": "1",
         }
-        
+
         result = self.executor.execute_test(code, test_case)
         assert result["passed"]
         assert result["actual"] == [1, 1, 3, 4, 5]
@@ -278,14 +276,14 @@ int reverse_and_sum(std::vector<int>& nums) {
     return sum;
 }
 """
-        
+
         test_case = {
             "function_name": "reverse_and_sum",
             "parameters": {"nums": [1, 2, 3, 4]},
             "expected": 10,  # Sum of elements
-            "inplace": "2"
+            "inplace": "2",
         }
-        
+
         result = self.executor.execute_test(code, test_case)
         assert result["passed"]
         assert result["actual"] == 10
@@ -301,14 +299,14 @@ T multiply(T a, T b) {
 // Explicit instantiation for int
 template int multiply<int>(int, int);
 """
-        
+
         test_case = {
             "function_name": "multiply",
             "parameters": {"a": 4, "b": 7},
             "expected": 28,
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(code, test_case)
         assert result["passed"]
         assert result["actual"] == 28
@@ -320,13 +318,9 @@ int broken(int a) {
     return a +   // Syntax error
 }
 """
-        
-        test_case = {
-            "function_name": "broken",
-            "parameters": {"a": 5},
-            "expected": 5
-        }
-        
+
+        test_case = {"function_name": "broken", "parameters": {"a": 5}, "expected": 5}
+
         result = self.executor.execute_test(code, test_case)
         assert not result["passed"]
         assert "error" in result
@@ -341,13 +335,13 @@ int access_element(std::vector<int> vec, int index) {
     return vec.at(index);  // Will throw if index out of bounds
 }
 """
-        
+
         test_case = {
             "function_name": "access_element",
             "parameters": {"vec": [1, 2, 3], "index": 10},
-            "expected": 0
+            "expected": 0,
         }
-        
+
         result = self.executor.execute_test(code, test_case)
         assert not result["passed"]
         # Runtime error or unexpected output
@@ -362,14 +356,14 @@ int infinite_loop(int n) {
     return n;
 }
 """
-        
+
         test_case = {
             "function_name": "infinite_loop",
             "parameters": {"n": 1},
             "expected": 1,
-            "timeout": 2  # 2 second timeout
+            "timeout": 2,  # 2 second timeout
         }
-        
+
         result = self.executor.execute_test(code, test_case)
         assert not result["passed"]
         assert "timeout" in result["error"].lower()
@@ -387,14 +381,14 @@ double average(std::vector<int> nums) {
     return static_cast<double>(sum) / nums.size();
 }
 """
-        
+
         test_case = {
             "function_name": "average",
             "parameters": {"nums": [10, 20, 30, 40, 50]},
             "expected": 30.0,
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(code, test_case)
         assert result["passed"]
         assert result["actual"] == 30.0
@@ -413,14 +407,14 @@ auto filter_even(const std::vector<int>& nums) {
     return result;
 }
 """
-        
+
         test_case = {
             "function_name": "filter_even",
             "parameters": {"nums": [1, 2, 3, 4, 5, 6]},
             "expected": [2, 4, 6],
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(code, test_case)
         assert result["passed"]
         assert result["actual"] == [2, 4, 6]

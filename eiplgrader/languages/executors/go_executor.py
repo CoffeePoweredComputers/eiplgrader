@@ -30,10 +30,8 @@ class GoExecutor(CompiledLanguageExecutor):
         if "error" in code and "errors" not in code:
             imports_needed.append("errors")
 
-        import_block = "import (\n"
-        for imp in imports_needed:
-            import_block += f'    "{imp}"\n'
-        import_block += ")\n"
+        import_lines = [f'    "{imp}"' for imp in imports_needed]
+        import_block = "import (\n" + "\n".join(import_lines) + "\n)\n"
 
         # Insert imports after package declaration if not already present
         if "import" not in code:

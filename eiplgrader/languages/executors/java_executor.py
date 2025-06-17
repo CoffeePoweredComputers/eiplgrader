@@ -144,7 +144,7 @@ public class Test {{
             return "Object"
 
     def _get_parse_code(
-        self, var_name: str, arg_expr: str, java_type: str, value: Any
+        self, var_name: str, arg_expr: str, java_type: str, _value: Any
     ) -> str:
         """Generate code to parse command line argument into Java type."""
         if java_type == "int":

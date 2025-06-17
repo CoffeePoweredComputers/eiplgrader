@@ -15,7 +15,7 @@ class CAdapter(LanguageAdapter):
             display_name="C",
             file_extensions=[".c"],
             compile_command=["gcc"],
-            run_command=None,  # C is compiled, not interpreted
+            run_command=[],  # C is compiled, not interpreted
         )
 
     def generate_prompt(

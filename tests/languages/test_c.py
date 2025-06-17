@@ -28,7 +28,7 @@ class TestCAdapter:
             function_name="add",
             gen_type="cgbg",
         )
-        
+
         assert "add" in prompt
         assert "adds two numbers together" in prompt
         assert "```c" in prompt
@@ -44,7 +44,7 @@ class TestCAdapter:
             params="int a, int b",
             assumptions="a and b are positive integers",
         )
-        
+
         assert "multiply" in prompt
         assert "int a, int b" in prompt
         assert "positive integers" in prompt
@@ -132,14 +132,14 @@ class TestCExecutor:
 int add(int a, int b) {
     return a + b;
 }"""
-        
+
         test_case = {
             "function_name": "add",
             "parameters": {"a": 5, "b": 3},
             "expected": 8,
             "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(code, test_case)
         assert result["passed"]
         assert result["actual"] == 8
@@ -155,14 +155,14 @@ char* greet(char* name) {
     sprintf(greeting, "Hello, %s", name);
     return greeting;
 }"""
-        
+
         test_case = {
             "function_name": "greet",
             "parameters": {"name": "World"},
             "expected": "Hello, World",
             "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(code, test_case)
         assert result["passed"]
         assert result["actual"] == "Hello, World"
@@ -178,14 +178,14 @@ int sum_array(int* arr, int size) {
     }
     return sum;
 }"""
-        
+
         test_case = {
             "function_name": "sum_array",
             "parameters": {"arr": [1, 2, 3, 4, 5], "size": 5},
             "expected": 15,
             "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(code, test_case)
         assert result["passed"]
         assert result["actual"] == 15
@@ -199,14 +199,14 @@ void double_array(int* arr, int size) {
         arr[i] *= 2;
     }
 }"""
-        
+
         test_case = {
             "function_name": "double_array",
             "parameters": {"arr": [1, 2, 3], "size": 3},
             "expected": [2, 4, 6],
             "inplace": "1",
         }
-        
+
         result = self.executor.execute_test(code, test_case)
         assert result["passed"]
         assert result["actual"] == [2, 4, 6]
@@ -220,14 +220,14 @@ void swap(int* a, int* b) {
     *a = *b;
     *b = temp;
 }"""
-        
+
         test_case = {
             "function_name": "swap",
             "parameters": {"a": 5, "b": 10},
             "expected": 10,  # We expect the first parameter to be modified to 10
             "inplace": "1",
         }
-        
+
         result = self.executor.execute_test(code, test_case)
         assert result["passed"]
         assert result["actual"] == 10
@@ -237,14 +237,14 @@ void swap(int* a, int* b) {
         code = """int add(int a, int b {  // Syntax error
     return a + b;
 }"""
-        
+
         test_case = {
             "function_name": "add",
             "parameters": {"a": 5, "b": 3},
             "expected": 8,
             "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(code, test_case)
         assert not result["passed"]
         assert "Compilation failed" in result["error"]
@@ -256,14 +256,14 @@ void swap(int* a, int* b) {
 int divide(int a, int b) {
     return a / b;  // Will cause division by zero
 }"""
-        
+
         test_case = {
             "function_name": "divide",
             "parameters": {"a": 10, "b": 0},
             "expected": None,
             "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(code, test_case)
         assert not result["passed"]
         # Runtime error might manifest as incorrect output or signal
@@ -273,14 +273,14 @@ int divide(int a, int b) {
         code = """int add(int a, int b) {
     return a + b;
 }"""
-        
+
         test_case = {
             "function_name": "add",
             "parameters": {"a": 1, "b": 2},
             "expected": 3,
             "inplace": "0",
         }
-        
+
         prepared = self.executor.prepare_code(code, test_case)
         assert "#include <stdio.h>" in prepared
         assert "#include <stdlib.h>" in prepared
@@ -293,14 +293,14 @@ int divide(int a, int b) {
 double multiply(double a, double b) {
     return a * b;
 }"""
-        
+
         test_case = {
             "function_name": "multiply",
             "parameters": {"a": 2.5, "b": 4.0},
             "expected": 10.0,
             "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(code, test_case)
         assert result["passed"]
         assert result["actual"] == 10.0

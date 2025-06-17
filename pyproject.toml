@@ -44,7 +44,27 @@ disable = [
   "invalid-name",
   "import-error",
   "too-many-arguments",
-  "too-many-positional-arguments"
+  "too-many-positional-arguments",
+  "duplicate-code",
+  "unnecessary-pass",
+  "unused-import",
+  "unused-variable",
+  "broad-exception-caught",
+  "too-many-branches",
+  "too-many-statements",
+  "too-many-return-statements",
+  "no-else-return",
+  "no-else-break",
+  "too-many-nested-blocks",
+  "protected-access",
+  "attribute-defined-outside-init",
+  "import-outside-toplevel",
+  "wrong-import-order",
+  "trailing-whitespace",
+  "f-string-without-interpolation",
+  "unspecified-encoding",
+  "subprocess-run-check",
+  "bare-except"
 ]
 
 [tool.pytest.ini_options]

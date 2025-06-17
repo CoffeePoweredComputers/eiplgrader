@@ -4,7 +4,7 @@ import importlib
 import importlib.util
 import os
 from copy import deepcopy
-from typing import List, Dict, Any, Union, Optional
+from typing import List, Dict, Any, Union
 from .languages import language_registry
 
 
