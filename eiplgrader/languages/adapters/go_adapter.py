@@ -17,14 +17,14 @@ class GoAdapter(UnifiedLanguageAdapter):
             file_extensions=[".go"],
             compile_command=["go", "build"],
             run_command=["go", "run"],
-            
+
             # Enhanced specification
             code_block_tag="go",
             student_model_template="""Pretend you are an introductory CS student learning Go for the very first
 time. You have a rudimentary understanding of functions, loops, variables, and
 conditionals. You understand basic Go syntax including package declarations,
 imports, and error handling patterns.""",
-            
+
             # Syntax conventions
             syntax_conventions=SyntaxConventions(
                 comment_single="//",
@@ -34,7 +34,7 @@ imports, and error handling patterns.""",
                 indentation_type="tabs",
                 indentation_size=4,
             ),
-            
+
             # Function patterns
             function_patterns=FunctionPatterns(
                 definition_regex=r"(func\s+(\w+)\s*\([^)]*\)[^{]*{[^}]*})",
@@ -43,11 +43,11 @@ imports, and error handling patterns.""",
                 supports_overloading=False,
                 supports_default_params=False
             ),
-            
+
             # Validation
             validation_strategy="parser",
             validation_command=["gofmt", "-e"],
-            
+
             # Template overrides
             template_overrides=TemplateOverrides(
                 custom_templates={
@@ -107,12 +107,12 @@ following Go conventions."""
             r'```golang\n(.*?)\n```',
             r'```\n(.*?)\n```'  # Generic code block
         ]
-        
+
         for pattern in patterns:
             matches = re.findall(pattern, llm_response, re.DOTALL)
             if matches:
                 return [match.strip() for match in matches]
-        
+
         # If no code blocks found, return the response as-is
         return [llm_response.strip()] if llm_response.strip() else []
 
@@ -122,7 +122,7 @@ following Go conventions."""
         # Pattern for Go function definitions
         pattern = r"func\s+(\w+)\s*\([^)]*\)[^{]*\{[^}]*\}"
         lines = code.split('\n')
-        
+
         for i, line in enumerate(lines):
             match = re.search(r"func\s+(\w+)\s*\(", line)
             if match:
@@ -134,7 +134,7 @@ following Go conventions."""
                     'code': line.strip(),
                 }
                 functions.append(func_dict)
-        
+
         return functions
 
     def _validate_syntax_impl(self, code: str) -> Tuple[bool, Optional[str]]:
@@ -144,11 +144,11 @@ following Go conventions."""
             import subprocess
             import tempfile
             import os
-            
+
             with tempfile.NamedTemporaryFile(mode='w', suffix='.go', delete=False) as f:
                 f.write(code)
                 temp_file = f.name
-            
+
             try:
                 result = subprocess.run(
                     ['gofmt', '-e', temp_file],
@@ -174,4 +174,3 @@ following Go conventions."""
         code = re.sub(r'\s+', ' ', code)
         code = code.strip()
         return code
-

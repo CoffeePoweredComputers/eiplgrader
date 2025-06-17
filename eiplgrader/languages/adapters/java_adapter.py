@@ -8,7 +8,7 @@ from ..spec import LanguageSpec, FunctionPatterns, TemplateOverrides
 
 class JavaAdapter(UnifiedLanguageAdapter):
     """Java language adapter - configuration driven"""
-    
+
     def get_spec(self) -> LanguageSpec:
         return LanguageSpec(
             # Core configuration
@@ -17,22 +17,22 @@ class JavaAdapter(UnifiedLanguageAdapter):
             file_extensions=[".java"],
             run_command=["java"],
             compile_command=["javac"],
-            
+
             # Enhanced specification
             code_block_tag="java",
             student_model_template="You understand basic Java syntax including classes, static methods, and types.",
-            
+
             # Function patterns
             function_patterns=FunctionPatterns(
                 definition_regex=r"(public\s+class\s+\w+\s*\{[^}]*\})",
                 name_capture_group=0,
                 requires_return_type=True
             ),
-            
+
             # Validation
             validation_strategy="compiler",
             validation_command=["javac", "-Xlint"],
-            
+
             # Template overrides
             template_overrides=TemplateOverrides(
                 custom_templates={
@@ -82,12 +82,12 @@ when generating the code. The method must be static and placed within a Solution
             r'```java\n(.*?)\n```',
             r'```\n(.*?)\n```'  # Generic code block
         ]
-        
+
         for pattern in patterns:
             matches = re.findall(pattern, llm_response, re.DOTALL)
             if matches:
                 return [match.strip() for match in matches]
-        
+
         # If no code blocks found, return the response as-is
         return [llm_response.strip()] if llm_response.strip() else []
 
@@ -96,7 +96,7 @@ when generating the code. The method must be static and placed within a Solution
         functions = []
         # Pattern for Java method definitions (simplified)
         lines = code.split('\n')
-        
+
         for i, line in enumerate(lines):
             # Look for method definitions
             match = re.search(r'(public|private|protected)?\s*(static)?\s*\w+\s+(\w+)\s*\(', line)
@@ -109,7 +109,7 @@ when generating the code. The method must be static and placed within a Solution
                     'code': line.strip(),
                 }
                 functions.append(func_dict)
-        
+
         return functions
 
     def _validate_syntax_impl(self, code: str) -> Tuple[bool, Optional[str]]:
@@ -119,11 +119,11 @@ when generating the code. The method must be static and placed within a Solution
             import subprocess
             import tempfile
             import os
-            
+
             with tempfile.NamedTemporaryFile(mode='w', suffix='.java', delete=False) as f:
                 f.write(code)
                 temp_file = f.name
-            
+
             try:
                 result = subprocess.run(
                     ['javac', '-Xlint', temp_file],

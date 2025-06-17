@@ -17,14 +17,14 @@ class RustAdapter(UnifiedLanguageAdapter):
             file_extensions=[".rs"],
             compile_command=["rustc"],
             run_command=["cargo", "run"],
-            
+
             # Enhanced specification
             code_block_tag="rust",
             student_model_template="""Pretend you are an introductory CS student learning Rust for the very first
 time. You have a rudimentary understanding of functions, loops, variables, and
 conditionals. You understand basic Rust syntax including ownership, borrowing,
 lifetimes, and error handling with Result types.""",
-            
+
             # Syntax conventions
             syntax_conventions=SyntaxConventions(
                 comment_single="//",
@@ -34,7 +34,7 @@ lifetimes, and error handling with Result types.""",
                 indentation_type="spaces",
                 indentation_size=4,
             ),
-            
+
             # Function patterns
             function_patterns=FunctionPatterns(
                 definition_regex=r"(fn\s+(\w+)\s*(?:<[^>]*>)?\s*\([^)]*\)[^{]*{[^}]*})",
@@ -44,11 +44,11 @@ lifetimes, and error handling with Result types.""",
                 supports_default_params=False,
                 supports_varargs=False
             ),
-            
+
             # Validation
             validation_strategy="compiler",
             validation_command=["rustc", "--crate-type", "lib", "--emit", "metadata", "-Z", "no-codegen"],
-            
+
             # Template overrides
             template_overrides=TemplateOverrides(
                 custom_templates={
@@ -107,12 +107,12 @@ ownership and borrowing rules."""
             r'```rs\n(.*?)\n```',
             r'```\n(.*?)\n```'  # Generic code block
         ]
-        
+
         for pattern in patterns:
             matches = re.findall(pattern, llm_response, re.DOTALL)
             if matches:
                 return [match.strip() for match in matches]
-        
+
         # If no code blocks found, return the response as-is
         return [llm_response.strip()] if llm_response.strip() else []
 
@@ -121,7 +121,7 @@ ownership and borrowing rules."""
         functions = []
         pattern = r"fn\s+(\w+)\s*(?:<[^>]*>)?\s*\([^)]*\)(?:\s*->\s*[^{]*)?\s*\{[^}]*\}"
         lines = code.split('\n')
-        
+
         for i, line in enumerate(lines):
             match = re.search(pattern, line)
             if match:
@@ -133,7 +133,7 @@ ownership and borrowing rules."""
                     'code': match.group(0),
                 }
                 functions.append(func_dict)
-        
+
         return functions
 
     def _validate_syntax_impl(self, code: str) -> Tuple[bool, Optional[str]]:
@@ -143,12 +143,12 @@ ownership and borrowing rules."""
             import subprocess
             import tempfile
             import os
-            
+
             # Create a temporary file
             with tempfile.NamedTemporaryFile(mode='w', suffix='.rs', delete=False) as f:
                 f.write(code)
                 temp_file = f.name
-            
+
             try:
                 result = subprocess.run(
                     ['rustc', '--crate-type', 'lib', '--emit', 'metadata', '-o', '/dev/null', temp_file],
@@ -174,6 +174,3 @@ ownership and borrowing rules."""
         code = re.sub(r'\s+', ' ', code)
         code = code.strip()
         return code
-
-
-

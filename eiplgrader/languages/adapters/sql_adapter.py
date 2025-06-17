@@ -8,7 +8,7 @@ from ..spec import LanguageSpec, FunctionPatterns, TemplateOverrides
 
 class SqlAdapter(UnifiedLanguageAdapter):
     """SQL language adapter - configuration driven"""
-    
+
     def get_spec(self) -> LanguageSpec:
         return LanguageSpec(
             # Core configuration
@@ -16,20 +16,20 @@ class SqlAdapter(UnifiedLanguageAdapter):
             display_name="SQL",
             file_extensions=[".sql"],
             run_command=["sqlite3"],
-            
+
             # Enhanced specification
             code_block_tag="sql",
             student_model_template="You have a rudimentary understanding of SELECT, INSERT, UPDATE, DELETE statements, basic JOINs, WHERE clauses, and simple aggregations like COUNT, SUM, AVG.",
-            
+
             # Function patterns (SQL queries)
             function_patterns=FunctionPatterns(
                 definition_regex=r"((?:SELECT|INSERT|UPDATE|DELETE|CREATE|DROP|ALTER).*?)(?=(?:SELECT|INSERT|UPDATE|DELETE|CREATE|DROP|ALTER)|$)",
                 name_capture_group=0
             ),
-            
+
             # Validation
             validation_strategy="custom",
-            
+
             # Template overrides
             template_overrides=TemplateOverrides(
                 custom_templates={
@@ -72,12 +72,12 @@ Do not include any semicolons at the end of the query."""
             r'```SQL\n(.*?)\n```',
             r'```\n(.*?)\n```'  # Generic code block
         ]
-        
+
         for pattern in patterns:
             matches = re.findall(pattern, llm_response, re.DOTALL)
             if matches:
                 return [match.strip() for match in matches]
-        
+
         # If no code blocks found, return the response as-is
         return [llm_response.strip()] if llm_response.strip() else []
 
@@ -95,7 +95,7 @@ Do not include any semicolons at the end of the query."""
             r'(DROP\s+.*?)(?=SELECT|INSERT|UPDATE|DELETE|CREATE|DROP|ALTER|$)',
             r'(ALTER\s+.*?)(?=SELECT|INSERT|UPDATE|DELETE|CREATE|DROP|ALTER|$)'
         ]
-        
+
         lines = code.split('\n')
         for i, line in enumerate(lines):
             for j, pattern in enumerate(patterns):
@@ -110,7 +110,7 @@ Do not include any semicolons at the end of the query."""
                     }
                     functions.append(func_dict)
                     break
-        
+
         return functions
 
     def _validate_syntax_impl(self, code: str) -> Tuple[bool, Optional[str]]:
@@ -120,18 +120,18 @@ Do not include any semicolons at the end of the query."""
             # Simple validation - check for basic SQL keywords and structure
             sql_keywords = ['SELECT', 'INSERT', 'UPDATE', 'DELETE', 'CREATE', 'DROP', 'ALTER']
             code_upper = code.upper()
-            
+
             # Check if it contains at least one SQL keyword
             has_sql_keyword = any(keyword in code_upper for keyword in sql_keywords)
             if not has_sql_keyword:
                 return False, "No SQL keywords found"
-            
+
             # Basic parentheses matching
             open_parens = code.count('(')
             close_parens = code.count(')')
             if open_parens != close_parens:
                 return False, "Mismatched parentheses"
-            
+
             return True, None
         except Exception as e:
             return False, str(e)

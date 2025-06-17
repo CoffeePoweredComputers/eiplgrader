@@ -178,11 +178,11 @@ class CodeProcessor:
         
         # Class wrapping for Java
         if spec.name == "java" and "class" not in code.lower():
-            code = CodeProcessor._wrap_in_class(code, spec)
+            code = CodeProcessor._wrap_in_class(code)
         
         # SQL semicolon cleanup
         if spec.name == "sql":
-            code = CodeProcessor._clean_semicolons(code, spec)
+            code = CodeProcessor._clean_semicolons(code)
         
         # Normalize whitespace
         code = CodeProcessor._normalize_whitespace(code)
@@ -197,14 +197,14 @@ class CodeProcessor:
         return code
     
     @staticmethod
-    def _wrap_in_class(code: str, spec: LanguageSpec) -> str:
+    def _wrap_in_class(code: str) -> str:
         """Wrap standalone methods in classes (Java)"""
         if "public class" not in code:
             return f"public class Solution {{\n    {code}\n}}"
         return code
     
     @staticmethod
-    def _clean_semicolons(code: str, spec: LanguageSpec) -> str:
+    def _clean_semicolons(code: str) -> str:
         """Remove trailing semicolons (SQL)"""
         return code.rstrip(";").strip()
     

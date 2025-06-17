@@ -394,8 +394,7 @@ def get_extraction_patterns() -> ExtractionPatternRegistry:
     return extraction_patterns
 
 
-def document_pattern_usage(language: str, pattern_name: str, success: bool, 
-                         input_text: str = "", extracted_code: str = "") -> None:
+def document_pattern_usage() -> None:
     """Document pattern usage for analytics (placeholder for future implementation)."""
     # This could be extended to log pattern usage statistics
     # for continuous improvement of extraction patterns

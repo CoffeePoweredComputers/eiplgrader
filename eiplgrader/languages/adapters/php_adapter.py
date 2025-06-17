@@ -16,13 +16,13 @@ class PhpAdapter(UnifiedLanguageAdapter):
             display_name="PHP",
             file_extensions=[".php"],
             run_command=["php"],
-            
+
             # Enhanced specification
             code_block_tag="php",
             student_model_template="""Pretend you are an introductory CS student learning PHP for the very first
 time. You have a rudimentary understanding of functions, loops, variables, and
 conditionals. You don't know about advanced PHP features like namespaces, traits, or type declarations.""",
-            
+
             # Syntax conventions
             syntax_conventions=SyntaxConventions(
                 comment_single="//",
@@ -32,7 +32,7 @@ conditionals. You don't know about advanced PHP features like namespaces, traits
                 indentation_type="spaces",
                 indentation_size=4,
             ),
-            
+
             # Function patterns
             function_patterns=FunctionPatterns(
                 definition_regex=r"(function\s+(\w+)\s*\([^)]*\)\s*\{[^}]*\})",
@@ -42,11 +42,11 @@ conditionals. You don't know about advanced PHP features like namespaces, traits
                 supports_default_params=True,
                 supports_varargs=True
             ),
-            
+
             # Validation
             validation_strategy="parser",
             validation_command=["php", "-l"],
-            
+
             # Template overrides
             template_overrides=TemplateOverrides(
                 custom_templates={
@@ -97,12 +97,12 @@ function {function_name}({params}) {{
             r'```php\n(.*?)\n```',
             r'```\n(.*?)\n```'  # Generic code block
         ]
-        
+
         for pattern in patterns:
             matches = re.findall(pattern, llm_response, re.DOTALL)
             if matches:
                 return [match.strip() for match in matches]
-        
+
         # If no code blocks found, return the response as-is
         return [llm_response.strip()] if llm_response.strip() else []
 
@@ -111,7 +111,7 @@ function {function_name}({params}) {{
         functions = []
         # Pattern for PHP functions (handle multi-line)
         pattern = r"(function\s+(\w+)\s*\([^)]*\)\s*\{.*?\})"
-        
+
         matches = re.finditer(pattern, code, re.DOTALL)
         for match in matches:
             func_name = match.group(2)
@@ -124,7 +124,7 @@ function {function_name}({params}) {{
                 'code': match.group(0),
             }
             functions.append(func_dict)
-        
+
         return functions
 
     def _validate_syntax_impl(self, code: str) -> Tuple[bool, Optional[str]]:
@@ -134,12 +134,12 @@ function {function_name}({params}) {{
             import subprocess
             import tempfile
             import os
-            
+
             # Create temporary file
             with tempfile.NamedTemporaryFile(mode='w', suffix='.php', delete=False) as tmp:
                 tmp.write(code)
                 tmp_path = tmp.name
-            
+
             try:
                 result = subprocess.run(
                     ['php', '-l', tmp_path],
@@ -147,14 +147,14 @@ function {function_name}({params}) {{
                     text=True,
                     timeout=5
                 )
-                
+
                 if result.returncode == 0:
                     return True, None
                 else:
                     return False, result.stderr
             finally:
                 os.unlink(tmp_path)
-                
+
         except Exception as e:
             return False, str(e)
 
@@ -171,6 +171,3 @@ function {function_name}({params}) {{
         code = re.sub(r'\s+', ' ', code)
         code = code.strip()
         return code
-
-
-

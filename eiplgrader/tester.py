@@ -86,19 +86,17 @@ class CodeTester:
         self.function_name = function_name
         self.language = language
 
-    def run_tests(
-        self, suppress_output: bool = False
-    ) -> Union[CodeTestResult, List[CodeTestResult]]:
+    def run_tests(self) -> Union[CodeTestResult, List[CodeTestResult]]:
         """Run tests on the provided code and return results."""
         if isinstance(self.code, list):
-            return list(map(lambda x: self._run_test(x, suppress_output), self.code))
+            return [self._run_test(code_item) for code_item in self.code]
 
         if isinstance(self.code, str):
-            return self._run_test(self.code, suppress_output)
+            return self._run_test(self.code)
 
         raise ValueError("Code must be a string or a list of strings")
 
-    def _run_test(self, code: str, suppress_output: bool = False) -> CodeTestResult:
+    def _run_test(self, code: str) -> CodeTestResult:
         """Unified test execution for all languages."""
         
         # Get the language executor

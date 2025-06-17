@@ -17,13 +17,13 @@ class KotlinAdapter(UnifiedLanguageAdapter):
             file_extensions=[".kt", ".kts"],
             run_command=["kotlin"],
             compile_command=["kotlinc"],
-            
+
             # Enhanced specification
             code_block_tag="kotlin",
             student_model_template="""Pretend you are an introductory CS student learning Kotlin for the very first
 time. You have a rudimentary understanding of functions, loops, variables, and
 conditionals. You understand basic Kotlin syntax including null safety and type inference.""",
-            
+
             # Syntax conventions
             syntax_conventions=SyntaxConventions(
                 comment_single="//",
@@ -33,7 +33,7 @@ conditionals. You understand basic Kotlin syntax including null safety and type 
                 indentation_type="spaces",
                 indentation_size=4,
             ),
-            
+
             # Function patterns (handle both regular and single-expression functions)
             function_patterns=FunctionPatterns(
                 definition_regex=r"(fun\s+(\w+)\s*\([^)]*\)(?:\s*:\s*[\w\?]+)?\s*(?:\{[^}]*\}|=.*?)(?=fun\s+\w+\s*\(|$))",
@@ -43,10 +43,10 @@ conditionals. You understand basic Kotlin syntax including null safety and type 
                 supports_default_params=True,
                 supports_varargs=True
             ),
-            
+
             # Validation
             validation_strategy="parser",  # Use basic parser validation
-            
+
             # Template overrides
             template_overrides=TemplateOverrides(
                 custom_templates={
@@ -96,12 +96,12 @@ fun {function_name}({params}): <return_type> {{
             r'```kt\n(.*?)\n```',
             r'```\n(.*?)\n```'  # Generic code block
         ]
-        
+
         for pattern in patterns:
             matches = re.findall(pattern, llm_response, re.DOTALL)
             if matches:
                 return [match.strip() for match in matches]
-        
+
         # If no code blocks found, return the response as-is
         return [llm_response.strip()] if llm_response.strip() else []
 
@@ -110,7 +110,7 @@ fun {function_name}({params}): <return_type> {{
         functions = []
         # Pattern for Kotlin functions (both regular and single-expression, handle multi-line)
         pattern = r"(fun\s+(\w+)\s*\([^)]*\)(?:\s*:\s*[\w\?]+)?\s*(?:\{.*?\}|=.*?))"
-        
+
         matches = re.finditer(pattern, code, re.DOTALL)
         for match in matches:
             func_name = match.group(2)
@@ -123,7 +123,7 @@ fun {function_name}({params}): <return_type> {{
                 'code': match.group(0),
             }
             functions.append(func_dict)
-        
+
         return functions
 
     def _validate_syntax_impl(self, code: str) -> Tuple[bool, Optional[str]]:
@@ -133,12 +133,12 @@ fun {function_name}({params}): <return_type> {{
             import subprocess
             import tempfile
             import os
-            
+
             # Create temporary file
             with tempfile.NamedTemporaryFile(mode='w', suffix='.kt', delete=False) as tmp:
                 tmp.write(code)
                 tmp_path = tmp.name
-            
+
             try:
                 result = subprocess.run(
                     ['kotlinc', '-cp', '.', tmp_path],
@@ -146,7 +146,7 @@ fun {function_name}({params}): <return_type> {{
                     text=True,
                     timeout=10
                 )
-                
+
                 if result.returncode == 0:
                     return True, None
                 else:
@@ -157,7 +157,7 @@ fun {function_name}({params}): <return_type> {{
                 class_file = tmp_path.replace('.kt', '.class')
                 if os.path.exists(class_file):
                     os.unlink(class_file)
-                
+
         except Exception as e:
             return False, str(e)
 
@@ -171,6 +171,3 @@ fun {function_name}({params}): <return_type> {{
         code = re.sub(r'\s+', ' ', code)
         code = code.strip()
         return code
-
-
-

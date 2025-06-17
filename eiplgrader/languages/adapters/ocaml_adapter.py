@@ -17,14 +17,14 @@ class OcamlAdapter(UnifiedLanguageAdapter):
             file_extensions=[".ml"],
             compile_command=["ocamlc"],
             run_command=["./a.out"],
-            
+
             # Enhanced specification
             code_block_tag="ocaml",
             student_model_template="""Pretend you are an introductory CS student learning OCaml for the very first
 time. You have a rudimentary understanding of functions, pattern matching, let bindings, 
 recursion, and basic types. You understand functional programming concepts but are still
 learning the syntax and idioms of OCaml.""",
-            
+
             # Syntax conventions
             syntax_conventions=SyntaxConventions(
                 comment_single="(* *)",  # OCaml uses (* *) for comments
@@ -34,7 +34,7 @@ learning the syntax and idioms of OCaml.""",
                 indentation_type="spaces",
                 indentation_size=2,
             ),
-            
+
             # Function patterns
             function_patterns=FunctionPatterns(
                 definition_regex=r"(let\s+(?:rec\s+)?(\w+)\s+.*?=.*?)(?=let\s+(?:rec\s+)?\w+|$)",
@@ -44,11 +44,11 @@ learning the syntax and idioms of OCaml.""",
                 supports_default_params=False,
                 supports_varargs=False
             ),
-            
+
             # Validation
             validation_strategy="compiler",
             validation_command=["ocamlc", "-c"],
-            
+
             # Template overrides
             template_overrides=TemplateOverrides(
                 custom_templates={
@@ -98,12 +98,12 @@ let {function_name} {params} =
             r'```ml\n(.*?)\n```',
             r'```\n(.*?)\n```'  # Generic code block
         ]
-        
+
         for pattern in patterns:
             matches = re.findall(pattern, llm_response, re.DOTALL)
             if matches:
                 return [match.strip() for match in matches]
-        
+
         # If no code blocks found, return the response as-is
         return [llm_response.strip()] if llm_response.strip() else []
 
@@ -113,7 +113,7 @@ let {function_name} {params} =
         # Pattern for OCaml let bindings (functions)
         pattern = r"(let\s+(?:rec\s+)?(\w+)\s+.*?=.*?)"
         lines = code.split('\n')
-        
+
         for i, line in enumerate(lines):
             match = re.search(pattern, line)
             if match:
@@ -125,7 +125,7 @@ let {function_name} {params} =
                     'code': match.group(0),
                 }
                 functions.append(func_dict)
-        
+
         return functions
 
     def _validate_syntax_impl(self, code: str) -> Tuple[bool, Optional[str]]:
@@ -135,12 +135,12 @@ let {function_name} {params} =
             import subprocess
             import tempfile
             import os
-            
+
             # Create temporary file
             with tempfile.NamedTemporaryFile(mode='w', suffix='.ml', delete=False) as tmp:
                 tmp.write(code)
                 tmp_path = tmp.name
-            
+
             try:
                 result = subprocess.run(
                     ['ocamlc', '-c', tmp_path],
@@ -148,7 +148,7 @@ let {function_name} {params} =
                     text=True,
                     timeout=10
                 )
-                
+
                 if result.returncode == 0:
                     return True, None
                 else:
@@ -162,7 +162,7 @@ let {function_name} {params} =
                     os.unlink(cmi_file)
                 if os.path.exists(cmo_file):
                     os.unlink(cmo_file)
-                
+
         except Exception as e:
             return False, str(e)
 
@@ -174,6 +174,3 @@ let {function_name} {params} =
         code = re.sub(r'\s+', ' ', code)
         code = code.strip()
         return code
-
-
-

@@ -17,14 +17,14 @@ class HaskellAdapter(UnifiedLanguageAdapter):
             file_extensions=[".hs"],
             compile_command=["ghc"],
             run_command=None,  # Haskell is compiled, not interpreted
-            
+
             # Enhanced specification
             code_block_tag="haskell",
             student_model_template="""Pretend you are an introductory CS student learning Haskell for the very first
 time. You have a rudimentary understanding of functions, recursion, pattern matching,
 and basic types. You understand functional programming concepts like pure functions,
 immutability, and lazy evaluation.""",
-            
+
             # Syntax conventions
             syntax_conventions=SyntaxConventions(
                 comment_single="--",
@@ -35,7 +35,7 @@ immutability, and lazy evaluation.""",
                 indentation_size=2,
                 case_sensitive=True
             ),
-            
+
             # Function patterns
             function_patterns=FunctionPatterns(
                 definition_regex=r"((\w+)\s*::[^\n]+\n\2[^=]*=[^}]+?)(?=\n\w+\s*::|$)",
@@ -45,11 +45,11 @@ immutability, and lazy evaluation.""",
                 supports_default_params=False,
                 supports_varargs=False
             ),
-            
+
             # Validation
             validation_strategy="compiler",
             validation_command=["ghc", "-fno-code"],
-            
+
             # Template overrides
             template_overrides=TemplateOverrides(
                 custom_templates={
@@ -109,12 +109,12 @@ Use standard Haskell conventions:
             r'```hs\n(.*?)\n```',
             r'```\n(.*?)\n```'  # Generic code block
         ]
-        
+
         for pattern in patterns:
             matches = re.findall(pattern, llm_response, re.DOTALL)
             if matches:
                 return [match.strip() for match in matches]
-        
+
         # If no code blocks found, return the response as-is
         return [llm_response.strip()] if llm_response.strip() else []
 
@@ -123,7 +123,7 @@ Use standard Haskell conventions:
         functions = []
         # Pattern for Haskell function definitions with type signatures
         lines = code.split('\n')
-        
+
         for i, line in enumerate(lines):
             # Look for function definitions (pattern: name :: Type)
             if '::' in line:
@@ -149,7 +149,7 @@ Use standard Haskell conventions:
                         'code': line.strip(),
                     }
                     functions.append(func_dict)
-        
+
         return functions
 
     def _validate_syntax_impl(self, code: str) -> Tuple[bool, Optional[str]]:
@@ -159,11 +159,11 @@ Use standard Haskell conventions:
             import subprocess
             import tempfile
             import os
-            
+
             with tempfile.NamedTemporaryFile(mode='w', suffix='.hs', delete=False) as f:
                 f.write(code)
                 temp_file = f.name
-            
+
             try:
                 result = subprocess.run(
                     ['ghc', '-fno-code', temp_file],
@@ -189,4 +189,3 @@ Use standard Haskell conventions:
         code = re.sub(r'\s+', ' ', code)
         code = code.strip()
         return code
-

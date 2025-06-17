@@ -85,7 +85,7 @@ class PromptGenerator:
         try:
             prompt = template.format(**context)
         except KeyError as e:
-            raise ValueError(f"Missing template variable: {e}")
+            raise ValueError(f"Missing template variable: {e}") from e
         
         return prompt
     
@@ -165,7 +165,7 @@ class PromptGenerator:
         return context
     
     def _build_cgbg_context(
-        self, language_spec: LanguageSpec, function_name: str, **kwargs
+        self, language_spec: LanguageSpec, function_name: str, **kwargs  # pylint: disable=unused-argument
     ) -> Dict[str, Any]:
         """Build context specific to CGBG (Code Generation Based Grading).
         
@@ -209,7 +209,7 @@ class PromptGenerator:
         }
     
     def _apply_overrides(
-        self, language_spec: LanguageSpec, context: Dict[str, Any], gen_type: str
+        self, language_spec: LanguageSpec, context: Dict[str, Any], gen_type: str  # pylint: disable=unused-argument
     ) -> Dict[str, Any]:
         """Apply language-specific overrides to the context.
         
@@ -537,7 +537,7 @@ constraints."""
             with open(template_path, 'r', encoding='utf-8') as f:
                 template_content = f.read()
         except Exception as e:
-            raise PromptValidationError(f"Cannot read template file: {e}")
+            raise PromptValidationError(f"Cannot read template file: {e}") from e
         
         # Check for required template variables (all templates need these core ones)
         required_vars = {
@@ -589,11 +589,11 @@ constraints."""
         except KeyError as e:
             raise PromptValidationError(
                 f"Template contains undefined variable: {e}"
-            )
+            ) from e
         except Exception as e:
             raise PromptValidationError(
                 f"Template formatting error: {e}"
-            )
+            ) from e
         
         return True
     

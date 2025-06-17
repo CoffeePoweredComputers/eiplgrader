@@ -8,7 +8,7 @@ from ..spec import LanguageSpec, FunctionPatterns, TemplateOverrides
 
 class JavascriptAdapter(UnifiedLanguageAdapter):
     """JavaScript language adapter - configuration driven"""
-    
+
     def get_spec(self) -> LanguageSpec:
         return LanguageSpec(
             # Core configuration
@@ -16,21 +16,21 @@ class JavascriptAdapter(UnifiedLanguageAdapter):
             display_name="JavaScript",
             file_extensions=[".js"],
             run_command=["node"],
-            
+
             # Enhanced specification
             code_block_tag="javascript",
             student_model_template="You are familiar with ES6+ syntax including arrow functions and async/await.",
-            
+
             # Function patterns (handle both regular and arrow functions)
             function_patterns=FunctionPatterns(
                 definition_regex=r"((function\s+\w+\s*\([^)]*\)\s*{[^}]*})|((?:const|let|var)\s+\w+\s*=\s*(?:\([^)]*\)|[^=>\s]+)\s*=>\s*(?:{[^}]*}|[^;]+);?)|(async\s+function\s+\w+\s*\([^)]*\)\s*{[^}]*}))",
                 name_capture_group=1
             ),
-            
+
             # Validation
             validation_strategy="parser",
             validation_command=["node", "--check"],
-            
+
             # Template overrides
             template_overrides=TemplateOverrides(
                 custom_templates={
@@ -82,12 +82,12 @@ const {function_name} = ({params}) => {{
             r'```js\n(.*?)\n```',
             r'```\n(.*?)\n```'  # Generic code block
         ]
-        
+
         for pattern in patterns:
             matches = re.findall(pattern, llm_response, re.DOTALL)
             if matches:
                 return [match.strip() for match in matches]
-        
+
         # If no code blocks found, return the response as-is
         return [llm_response.strip()] if llm_response.strip() else []
 
@@ -100,7 +100,7 @@ const {function_name} = ({params}) => {{
             r"((?:const|let|var)\s+(\w+)\s*=\s*(?:\([^)]*\)|[^=>\s]+)\s*=>\s*(?:\{.*?\}|[^;]+);?)",  # arrow functions
             r"(async\s+function\s+(\w+)\s*\([^)]*\)\s*\{.*?\})",  # async functions
         ]
-        
+
         for pattern in patterns:
             matches = re.finditer(pattern, code, re.DOTALL)
             for match in matches:
@@ -114,7 +114,7 @@ const {function_name} = ({params}) => {{
                     'code': match.group(0),
                 }
                 functions.append(func_dict)
-        
+
         return functions
 
     def _validate_syntax_impl(self, code: str) -> Tuple[bool, Optional[str]]:
@@ -124,12 +124,12 @@ const {function_name} = ({params}) => {{
             import subprocess
             import tempfile
             import os
-            
+
             # Create temporary file
             with tempfile.NamedTemporaryFile(mode='w', suffix='.js', delete=False) as tmp:
                 tmp.write(code)
                 tmp_path = tmp.name
-            
+
             try:
                 result = subprocess.run(
                     ['node', '--check', tmp_path],
@@ -137,14 +137,14 @@ const {function_name} = ({params}) => {{
                     text=True,
                     timeout=5
                 )
-                
+
                 if result.returncode == 0:
                     return True, None
                 else:
                     return False, result.stderr
             finally:
                 os.unlink(tmp_path)
-                
+
         except Exception as e:
             return False, str(e)
 

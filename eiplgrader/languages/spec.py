@@ -8,7 +8,7 @@ from .base import LanguageConfig
 
 
 @dataclass
-class SyntaxConventions:
+class SyntaxConventions:  # pylint: disable=too-many-instance-attributes
     """Language-specific syntax conventions and patterns."""
     
     comment_single: str = ""  # Single line comment prefix (e.g., "#", "//")
@@ -25,7 +25,7 @@ class SyntaxConventions:
 
 
 @dataclass
-class FunctionPatterns:
+class FunctionPatterns:  # pylint: disable=too-many-instance-attributes
     """Language-specific function definition patterns."""
     
     definition_regex: str  # Regex pattern to match function definitions
@@ -66,11 +66,11 @@ class ValidationStrategy(Protocol):
     
     def validate(self, code: str) -> tuple[bool, Optional[str]]:
         """Validate code and return (is_valid, error_message)."""
-        ...
+        raise NotImplementedError
 
 
 @dataclass
-class LanguageSpec:
+class LanguageSpec:  # pylint: disable=too-many-instance-attributes
     """Enhanced language specification that extends LanguageConfig.
     
     This dataclass provides comprehensive configuration for language adapters,

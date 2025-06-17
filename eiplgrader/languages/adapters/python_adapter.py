@@ -9,7 +9,7 @@ from ..spec import LanguageSpec, FunctionPatterns, TemplateOverrides
 
 class PythonAdapter(UnifiedLanguageAdapter):
     """Python language adapter - configuration driven"""
-    
+
     def get_spec(self) -> LanguageSpec:
         return LanguageSpec(
             # Core configuration
@@ -17,11 +17,11 @@ class PythonAdapter(UnifiedLanguageAdapter):
             display_name="Python",
             file_extensions=[".py"],
             run_command=["python3"],
-            
+
             # Enhanced specification
             code_block_tag="python",
             student_model_template="You also don't know about type annotations.",
-            
+
             # Function patterns
             function_patterns=FunctionPatterns(
                 definition_regex=r"(def\s+\w+\s*\([^)]*\):.*?)(?=def\s+\w+\s*\(|$)",
@@ -29,10 +29,10 @@ class PythonAdapter(UnifiedLanguageAdapter):
                 supports_default_params=True,
                 supports_varargs=True
             ),
-            
+
             # Validation
             validation_strategy="parser",
-            
+
             # Template overrides
             template_overrides=TemplateOverrides(
                 custom_templates={
@@ -64,12 +64,12 @@ class PythonAdapter(UnifiedLanguageAdapter):
             r'```py\n(.*?)\n```',
             r'```\n(.*?)\n```'  # Generic code block
         ]
-        
+
         for pattern in patterns:
             matches = re.findall(pattern, llm_response, re.DOTALL)
             if matches:
                 return [match.strip() for match in matches]
-        
+
         # If no code blocks found, return the response as-is
         return [llm_response.strip()] if llm_response.strip() else []
 
@@ -103,7 +103,7 @@ class PythonAdapter(UnifiedLanguageAdapter):
                         'code': line.strip(),
                     }
                     functions.append(func_dict)
-        
+
         return functions
 
     def _validate_syntax_impl(self, code: str) -> Tuple[bool, Optional[str]]:
@@ -122,17 +122,17 @@ class PythonAdapter(UnifiedLanguageAdapter):
         lines = code.split('\n')
         normalized_lines = []
         in_multiline_comment = False
-        
+
         for line in lines:
             # Remove single-line comments
             if '#' in line:
                 line = line[:line.index('#')]
-            
+
             # Skip empty lines
             line = line.strip()
             if line:
                 normalized_lines.append(line)
-        
+
         # Join and normalize whitespace
         code = ' '.join(normalized_lines)
         code = re.sub(r'\s+', ' ', code)

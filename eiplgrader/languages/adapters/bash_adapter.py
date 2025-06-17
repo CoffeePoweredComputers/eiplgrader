@@ -16,13 +16,13 @@ class BashAdapter(UnifiedLanguageAdapter):
             display_name="Bash",
             file_extensions=[".sh"],
             run_command=["bash"],
-            
+
             # Enhanced specification
             code_block_tag="bash",
             student_model_template="""Pretend you are an introductory CS student learning bash scripting for the very first
 time. You have a rudimentary understanding of functions, loops, variables, and
 conditionals in bash. You understand basic shell scripting conventions.""",
-            
+
             # Syntax conventions
             syntax_conventions=SyntaxConventions(
                 comment_single="#",
@@ -32,7 +32,7 @@ conditionals in bash. You understand basic shell scripting conventions.""",
                 block_start="{",
                 block_end="}"
             ),
-            
+
             # Function patterns
             function_patterns=FunctionPatterns(
                 definition_regex=r"((\w+)\s*\(\)\s*\{[^}]*\})",
@@ -42,11 +42,11 @@ conditionals in bash. You understand basic shell scripting conventions.""",
                 supports_default_params=False,
                 supports_varargs=True  # Bash functions can accept any number of args
             ),
-            
+
             # Validation
             validation_strategy="parser",
             validation_command=["bash", "-n"],
-            
+
             # Template overrides
             template_overrides=TemplateOverrides(
                 custom_templates={
@@ -105,12 +105,12 @@ when generating the code. For example:
             r'```shell\n(.*?)\n```',
             r'```\n(.*?)\n```'  # Generic code block
         ]
-        
+
         for pattern in patterns:
             matches = re.findall(pattern, llm_response, re.DOTALL)
             if matches:
                 return [match.strip() for match in matches]
-        
+
         # If no code blocks found, return the response as-is
         return [llm_response.strip()] if llm_response.strip() else []
 
@@ -119,7 +119,7 @@ when generating the code. For example:
         functions = []
         pattern = r"(\w+)\s*\(\)\s*\{[^}]*\}"
         lines = code.split('\n')
-        
+
         for i, line in enumerate(lines):
             match = re.search(pattern, line)
             if match:
@@ -131,7 +131,7 @@ when generating the code. For example:
                     'code': match.group(0),
                 }
                 functions.append(func_dict)
-        
+
         return functions
 
     def _validate_syntax_impl(self, code: str) -> Tuple[bool, Optional[str]]:

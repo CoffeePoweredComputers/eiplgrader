@@ -8,7 +8,7 @@ from ..spec import LanguageSpec, FunctionPatterns, TemplateOverrides, HeaderRequ
 
 class CAdapter(UnifiedLanguageAdapter):
     """C language adapter - configuration driven"""
-    
+
     def get_spec(self) -> LanguageSpec:
         return LanguageSpec(
             # Core configuration
@@ -17,27 +17,27 @@ class CAdapter(UnifiedLanguageAdapter):
             file_extensions=[".c"],
             compile_command=["gcc"],
             run_command=None,
-            
+
             # Enhanced specification
             code_block_tag="c",
             student_model_template="You understand basic C syntax including headers, pointers, and memory management patterns.",
-            
+
             # Function patterns
             function_patterns=FunctionPatterns(
                 definition_regex=r"(\w+\s+\w+\s*\([^)]*\)[^{]*{[^}]*})",
                 name_capture_group=1
             ),
-            
+
             # Header requirements
             header_requirements=HeaderRequirements(
                 required_imports=["#include <stdio.h>", "#include <stdlib.h>"]
             ),
-            
+
             # Validation
             validation_strategy="compiler",
             validation_command=["gcc", "-fsyntax-only"],
             requires_main_wrapper=True,
-            
+
             # Template overrides
             template_overrides=TemplateOverrides(
                 custom_templates={
@@ -87,12 +87,12 @@ If working with arrays, remember C arrays are passed as pointers.""",
             r'```c\n(.*?)\n```',
             r'```\n(.*?)\n```'  # Generic code block
         ]
-        
+
         for pattern in patterns:
             matches = re.findall(pattern, llm_response, re.DOTALL)
             if matches:
                 return [match.strip() for match in matches]
-        
+
         # If no code blocks found, return the response as-is
         return [llm_response.strip()] if llm_response.strip() else []
 
@@ -102,7 +102,7 @@ If working with arrays, remember C arrays are passed as pointers.""",
         # Pattern for C function definitions
         pattern = r"(\w+\s+\w+\s*\([^)]*\)[^{]*\{[^}]*\})"
         lines = code.split('\n')
-        
+
         for i, line in enumerate(lines):
             match = re.search(r"(\w+)\s+(\w+)\s*\(", line)
             if match:
@@ -114,7 +114,7 @@ If working with arrays, remember C arrays are passed as pointers.""",
                     'code': line.strip(),
                 }
                 functions.append(func_dict)
-        
+
         return functions
 
     def _validate_syntax_impl(self, code: str) -> Tuple[bool, Optional[str]]:
@@ -124,11 +124,11 @@ If working with arrays, remember C arrays are passed as pointers.""",
             import subprocess
             import tempfile
             import os
-            
+
             with tempfile.NamedTemporaryFile(mode='w', suffix='.c', delete=False) as f:
                 f.write(code)
                 temp_file = f.name
-            
+
             try:
                 result = subprocess.run(
                     ['gcc', '-fsyntax-only', temp_file],

@@ -17,13 +17,13 @@ class TypescriptAdapter(UnifiedLanguageAdapter):
             file_extensions=[".ts"],
             run_command=["ts-node"],
             compile_command=["tsc"],
-            
+
             # Enhanced specification
             code_block_tag="typescript",
             student_model_template="""Pretend you are an introductory CS student learning TypeScript for the very first
 time. You have a rudimentary understanding of functions, loops, variables, and
 conditionals. You are familiar with TypeScript type annotations and basic type safety concepts.""",
-            
+
             # Syntax conventions
             syntax_conventions=SyntaxConventions(
                 comment_single="//",
@@ -33,7 +33,7 @@ conditionals. You are familiar with TypeScript type annotations and basic type s
                 indentation_type="spaces",
                 indentation_size=2,
             ),
-            
+
             # Function patterns (handle multiple function declaration styles)
             function_patterns=FunctionPatterns(
                 definition_regex=r"((function\s+\w+\s*(?:<[^>]+>)?\s*\([^)]*\)\s*(?::\s*\w+(?:<[^>]+>)?)?\s*{[^}]*})|((?:const|let|var)\s+\w+\s*(?::\s*[^=]+)?\s*=\s*(?:<[^>]+>)?\s*(?:\([^)]*\)|[^=>\s]+)\s*(?::\s*\w+(?:<[^>]+>)?)?\s*=>\s*(?:{[^}]*}|[^;]+);?)|(async\s+function\s+\w+\s*(?:<[^>]+>)?\s*\([^)]*\)\s*:\s*(?:Promise<[^>]+>|\w+)\s*{[^}]*}))",
@@ -43,11 +43,11 @@ conditionals. You are familiar with TypeScript type annotations and basic type s
                 supports_default_params=True,
                 supports_varargs=True
             ),
-            
+
             # Validation
             validation_strategy="compiler",
             validation_command=["tsc", "--noEmit", "--allowJs", "--checkJs"],
-            
+
             # Template overrides
             template_overrides=TemplateOverrides(
                 custom_templates={
@@ -106,12 +106,12 @@ Always include proper TypeScript type annotations."""
             r'```js\n(.*?)\n```',
             r'```\n(.*?)\n```'  # Generic code block
         ]
-        
+
         for pattern in patterns:
             matches = re.findall(pattern, llm_response, re.DOTALL)
             if matches:
                 return [match.strip() for match in matches]
-        
+
         # If no code blocks found, return the response as-is
         return [llm_response.strip()] if llm_response.strip() else []
 
@@ -125,7 +125,7 @@ Always include proper TypeScript type annotations."""
             r'(?:const|let|var)\s+(\w+)\s*(?::\s*[^=]+)?\s*=\s*(?:<[^>]+>)?\s*\([^)]*\)\s*(?::\s*\w+(?:<[^>]+>)?)?\s*=>\s*[^;]+;?',  # arrow function expression
             r'async\s+function\s+(\w+)\s*(?:<[^>]+>)?\s*\([^)]*\)\s*:\s*(?:Promise<[^>]+>|\w+)\s*\{[^}]*\}'  # async function
         ]
-        
+
         lines = code.split('\n')
         for i, line in enumerate(lines):
             for pattern in patterns:
@@ -140,7 +140,7 @@ Always include proper TypeScript type annotations."""
                     }
                     functions.append(func_dict)
                     break
-        
+
         return functions
 
     def _validate_syntax_impl(self, code: str) -> Tuple[bool, Optional[str]]:
@@ -150,12 +150,12 @@ Always include proper TypeScript type annotations."""
             import subprocess
             import tempfile
             import os
-            
+
             # Create a temporary file
             with tempfile.NamedTemporaryFile(mode='w', suffix='.ts', delete=False) as f:
                 f.write(code)
                 temp_file = f.name
-            
+
             try:
                 result = subprocess.run(
                     ['tsc', '--noEmit', '--allowJs', '--checkJs', temp_file],
@@ -179,12 +179,12 @@ Always include proper TypeScript type annotations."""
                 close_parens = code.count(')')
                 open_brackets = code.count('[')
                 close_brackets = code.count(']')
-                
+
                 if (open_braces != close_braces or 
                     open_parens != close_parens or 
                     open_brackets != close_brackets):
                     return False, "Mismatched brackets/parentheses"
-                
+
                 return True, None
             except Exception as fallback_e:
                 return False, str(fallback_e)
@@ -198,6 +198,3 @@ Always include proper TypeScript type annotations."""
         code = re.sub(r'\s+', ' ', code)
         code = code.strip()
         return code
-
-
-

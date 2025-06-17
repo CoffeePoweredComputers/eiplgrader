@@ -16,13 +16,13 @@ class RubyAdapter(UnifiedLanguageAdapter):
             display_name="Ruby",
             file_extensions=[".rb"],
             run_command=["ruby"],
-            
+
             # Enhanced specification
             code_block_tag="ruby",
             student_model_template="""Pretend you are an introductory CS student learning Ruby for the very first
 time. You have a rudimentary understanding of methods, loops, variables, and
 conditionals. You understand Ruby idioms like blocks and symbols.""",
-            
+
             # Syntax conventions
             syntax_conventions=SyntaxConventions(
                 comment_single="#",
@@ -34,7 +34,7 @@ conditionals. You understand Ruby idioms like blocks and symbols.""",
                 block_start="do",
                 block_end="end"
             ),
-            
+
             # Function patterns
             function_patterns=FunctionPatterns(
                 definition_regex=r"(def\s+(\w+)\s*\([^)]*\).*?end)",
@@ -44,11 +44,11 @@ conditionals. You understand Ruby idioms like blocks and symbols.""",
                 supports_default_params=True,
                 supports_varargs=True
             ),
-            
+
             # Validation
             validation_strategy="parser",
             validation_command=["ruby", "-c"],
-            
+
             # Template overrides
             template_overrides=TemplateOverrides(
                 custom_templates={
@@ -95,12 +95,12 @@ end
             r'```rb\n(.*?)\n```',
             r'```\n(.*?)\n```'  # Generic code block
         ]
-        
+
         for pattern in patterns:
             matches = re.findall(pattern, llm_response, re.DOTALL)
             if matches:
                 return [match.strip() for match in matches]
-        
+
         # If no code blocks found, return the response as-is
         return [llm_response.strip()] if llm_response.strip() else []
 
@@ -109,7 +109,7 @@ end
         functions = []
         # Pattern for Ruby methods (handle multi-line, with or without parentheses)
         pattern = r"(def\s+(\w+)(?:\s*\([^)]*\)|\s+[^;\n]*)?.*?end)"
-        
+
         matches = re.finditer(pattern, code, re.DOTALL)
         for match in matches:
             func_name = match.group(2)
@@ -122,7 +122,7 @@ end
                 'code': match.group(0),
             }
             functions.append(func_dict)
-        
+
         return functions
 
     def _validate_syntax_impl(self, code: str) -> Tuple[bool, Optional[str]]:
@@ -132,12 +132,12 @@ end
             import subprocess
             import tempfile
             import os
-            
+
             # Create temporary file
             with tempfile.NamedTemporaryFile(mode='w', suffix='.rb', delete=False) as tmp:
                 tmp.write(code)
                 tmp_path = tmp.name
-            
+
             try:
                 result = subprocess.run(
                     ['ruby', '-c', tmp_path],
@@ -145,14 +145,14 @@ end
                     text=True,
                     timeout=5
                 )
-                
+
                 if result.returncode == 0:
                     return True, None
                 else:
                     return False, result.stderr
             finally:
                 os.unlink(tmp_path)
-                
+
         except Exception as e:
             return False, str(e)
 
@@ -166,6 +166,3 @@ end
         code = re.sub(r'\s+', ' ', code)
         code = code.strip()
         return code
-
-
-

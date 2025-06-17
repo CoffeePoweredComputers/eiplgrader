@@ -168,7 +168,8 @@ class LegacyAdapterWrapper(UnifiedLanguageAdapter):
     
     def _normalize_code_impl(self, code: str) -> str:
         """Basic normalization for legacy adapters."""
-        return self._normalize_basic(code)
+        # Basic normalization - remove excess whitespace
+        return code.strip()
 
 
 class ComponentRegistry:
