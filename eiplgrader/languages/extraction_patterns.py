@@ -9,7 +9,16 @@ from dataclasses import dataclass, field
 from enum import Enum
 import re
 
-from .code_extractor import ExtractionPattern
+# Remove invalid import - will define ExtractionPattern below
+
+
+@dataclass
+class ExtractionPattern:
+    """A code extraction pattern with metadata."""
+    name: str
+    pattern: str
+    description: str
+    flags: int = 0
 
 
 class PatternType(Enum):
@@ -49,8 +58,9 @@ class ExtractionPatternRegistry:
             "function_definitions": PatternDocumentation(
                 pattern=ExtractionPattern(
                     name="function_definitions",
-                    pattern=r"(def\s+\w+\s*\([^)]*\):.*?)(?=def\s+\w+\s*\(|$)",
-                    description="Match Python function definitions"
+                    pattern=r"def\s+\w+\s*\([^)]*\):.*?(?=\ndef\s+\w+|$)",
+                    description="Match Python function definitions",
+                    flags=re.DOTALL
                 ),
                 pattern_type=PatternType.FUNCTION_DEFINITION,
                 examples=[
@@ -118,8 +128,9 @@ class ExtractionPatternRegistry:
             "function_definitions": PatternDocumentation(
                 pattern=ExtractionPattern(
                     name="function_definitions",
-                    pattern=r"(\w+\s+\w+\s*\([^)]*\)[^{]*{[^}]*})",
-                    description="Match C function definitions"
+                    pattern=r"\w+[\w\s\*]*\s+\w+\s*\([^)]*\)[^{]*\{.*?\}",
+                    description="Match C function definitions",
+                    flags=re.DOTALL
                 ),
                 pattern_type=PatternType.FUNCTION_DEFINITION,
                 examples=[
@@ -289,8 +300,9 @@ class ExtractionPatternRegistry:
             "function_definitions": PatternDocumentation(
                 pattern=ExtractionPattern(
                     name="function_definitions",
-                    pattern=r"(fn\s+\w+\s*(?:<[^>]*>)?\s*\([^)]*\)[^{]*{.*?})",
-                    description="Match Rust function definitions"
+                    pattern=r"fn\s+\w+\s*(?:<[^>]*>)?\s*\([^)]*\)[^{]*\{.*?\}",
+                    description="Match Rust function definitions",
+                    flags=re.DOTALL
                 ),
                 pattern_type=PatternType.FUNCTION_DEFINITION,
                 examples=[

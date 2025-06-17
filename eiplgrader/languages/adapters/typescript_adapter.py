@@ -1,6 +1,7 @@
 """TypeScript language adapter using unified architecture."""
 
-from typing import List, Optional
+from typing import List, Optional, Tuple, Dict, Any
+import re
 from ..base import UnifiedLanguageAdapter
 from ..spec import LanguageSpec, FunctionPatterns, TemplateOverrides, SyntaxConventions
 
@@ -8,7 +9,7 @@ from ..spec import LanguageSpec, FunctionPatterns, TemplateOverrides, SyntaxConv
 class TypescriptAdapter(UnifiedLanguageAdapter):
     """TypeScript language adapter - configuration driven"""
 
-    def get_language_spec(self) -> LanguageSpec:
+    def get_spec(self) -> LanguageSpec:
         return LanguageSpec(
             # Core configuration
             name="typescript",
@@ -80,6 +81,123 @@ Always include proper TypeScript type annotations."""
                 }
             )
         )
+
+    def _generate_prompt_impl(
+        self,
+        student_response: str,
+        function_name: str,
+        gen_type: str = "cgbg",
+        **kwargs,
+    ) -> str:
+        """Implementation method for prompt generation."""
+        # This is a fallback - the spec-based system should handle this
+        if gen_type == "cgbg":
+            return f"Generate a TypeScript function {function_name} that {student_response}"
+        else:
+            return f"Generate a TypeScript function named {function_name}"
+
+    def _extract_code_impl(self, llm_response: str) -> List[str]:
+        """Implementation method for code extraction."""
+        # Extract TypeScript code blocks
+        patterns = [
+            r'```typescript\n(.*?)\n```',
+            r'```ts\n(.*?)\n```',
+            r'```javascript\n(.*?)\n```',  # TypeScript is superset of JS
+            r'```js\n(.*?)\n```',
+            r'```\n(.*?)\n```'  # Generic code block
+        ]
+        
+        for pattern in patterns:
+            matches = re.findall(pattern, llm_response, re.DOTALL)
+            if matches:
+                return [match.strip() for match in matches]
+        
+        # If no code blocks found, return the response as-is
+        return [llm_response.strip()] if llm_response.strip() else []
+
+    def _extract_functions_impl(self, code: str) -> List[Dict[str, Any]]:
+        """Implementation method for function extraction."""
+        functions = []
+        # TypeScript function patterns
+        patterns = [
+            r'function\s+(\w+)\s*(?:<[^>]+>)?\s*\([^)]*\)\s*(?::\s*\w+(?:<[^>]+>)?)?\s*\{[^}]*\}',  # function declaration
+            r'(?:const|let|var)\s+(\w+)\s*(?::\s*[^=]+)?\s*=\s*(?:<[^>]+>)?\s*\([^)]*\)\s*(?::\s*\w+(?:<[^>]+>)?)?\s*=>\s*\{[^}]*\}',  # arrow function with block
+            r'(?:const|let|var)\s+(\w+)\s*(?::\s*[^=]+)?\s*=\s*(?:<[^>]+>)?\s*\([^)]*\)\s*(?::\s*\w+(?:<[^>]+>)?)?\s*=>\s*[^;]+;?',  # arrow function expression
+            r'async\s+function\s+(\w+)\s*(?:<[^>]+>)?\s*\([^)]*\)\s*:\s*(?:Promise<[^>]+>|\w+)\s*\{[^}]*\}'  # async function
+        ]
+        
+        lines = code.split('\n')
+        for i, line in enumerate(lines):
+            for pattern in patterns:
+                match = re.search(pattern, line)
+                if match:
+                    func_name = match.group(1)
+                    func_dict = {
+                        'name': func_name,
+                        'signature': line.strip(),
+                        'start_line': i + 1,
+                        'code': match.group(0),
+                    }
+                    functions.append(func_dict)
+                    break
+        
+        return functions
+
+    def _validate_syntax_impl(self, code: str) -> Tuple[bool, Optional[str]]:
+        """Implementation method for syntax validation."""
+        # Use TypeScript compiler for validation
+        try:
+            import subprocess
+            import tempfile
+            import os
+            
+            # Create a temporary file
+            with tempfile.NamedTemporaryFile(mode='w', suffix='.ts', delete=False) as f:
+                f.write(code)
+                temp_file = f.name
+            
+            try:
+                result = subprocess.run(
+                    ['tsc', '--noEmit', '--allowJs', '--checkJs', temp_file],
+                    capture_output=True,
+                    text=True,
+                    timeout=10
+                )
+                if result.returncode == 0:
+                    return True, None
+                else:
+                    return False, result.stderr
+            finally:
+                os.unlink(temp_file)
+        except Exception as e:
+            # Fallback to basic syntax checks if tsc is not available
+            try:
+                # Basic bracket matching
+                open_braces = code.count('{')
+                close_braces = code.count('}')
+                open_parens = code.count('(')
+                close_parens = code.count(')')
+                open_brackets = code.count('[')
+                close_brackets = code.count(']')
+                
+                if (open_braces != close_braces or 
+                    open_parens != close_parens or 
+                    open_brackets != close_brackets):
+                    return False, "Mismatched brackets/parentheses"
+                
+                return True, None
+            except Exception as fallback_e:
+                return False, str(fallback_e)
+
+    def _normalize_code_impl(self, code: str) -> str:
+        """Implementation method for code normalization."""
+        # Remove comments
+        code = re.sub(r'//.*', '', code)  # Single line comments
+        code = re.sub(r'/\*.*?\*/', '', code, flags=re.DOTALL)  # Multi-line comments
+        # Remove extra whitespace
+        code = re.sub(r'\s+', ' ', code)
+        code = code.strip()
+        return code
 
 
 

@@ -16,7 +16,7 @@ def foo(a, b):
         tester = CodeTester(code, test_cases, function_name="foo")
         result = tester.run_tests()
         self.assertIsInstance(result, CodeTestResult)
-        self.assertTrue(result.wasSuccessful())
+        self.assertTrue(result.was_successful())
         self.assertEqual(len(result.test_results), 2)
         for tr in result.test_results:
             self.assertTrue(tr["pass"])
@@ -33,7 +33,7 @@ def foo(lst):
         ]
         tester = CodeTester(code, test_cases, inplace="1", function_name="foo")
         result = tester.run_tests()
-        self.assertTrue(result.wasSuccessful())
+        self.assertTrue(result.was_successful())
         self.assertEqual(result.test_results[0]["actual_output"], [1, 2, 3, 4])
 
     def test_list_of_codes(self):
@@ -56,8 +56,8 @@ def foo(num1, num2):
         results = tester.run_tests()
         self.assertIsInstance(results, list)
         self.assertEqual(len(results), 2)
-        self.assertTrue(results[0].wasSuccessful())
-        self.assertTrue(results[1].wasSuccessful())
+        self.assertTrue(results[0].was_successful())
+        self.assertTrue(results[1].was_successful())
 
     def test_function_not_found(self):
         code = """
@@ -66,8 +66,12 @@ def bar(a):
 """
         test_cases = [{"parameters": {"a": 1}, "expected": 1}]
         tester = CodeTester(code, test_cases, function_name="foo")
-        with self.assertRaises(AttributeError):
-            tester.run_tests()
+        result = tester.run_tests()
+        # The new unified executor returns failure instead of raising exception
+        self.assertFalse(result.was_successful())
+        self.assertEqual(result.errors, 0)  # Not an error, but a failure
+        self.assertEqual(result.failures, 1)
+        self.assertIn("Function 'foo' not found", result.test_results[0]["error"])
 
     def test_invalid_test_case_structure(self):
         code = """
@@ -102,7 +106,7 @@ def foo(lst):
         ]
         tester = CodeTester(code, test_cases, function_name="foo")
         result = tester.run_tests()
-        self.assertTrue(result.wasSuccessful())
+        self.assertTrue(result.was_successful())
         self.assertEqual(result.test_results[0]["actual_output"], 4)
 
     def test_function_with_complex_output(self):
@@ -115,7 +119,7 @@ def foo():
         ]
         tester = CodeTester(code, test_cases, function_name="foo")
         result = tester.run_tests()
-        self.assertTrue(result.wasSuccessful())
+        self.assertTrue(result.was_successful())
         self.assertEqual(result.test_results[0]["actual_output"], {"a": 1, "b": [2, 3]})
 
     def test_function_with_none_output(self):
@@ -128,7 +132,7 @@ def foo():
         ]
         tester = CodeTester(code, test_cases, function_name="foo")
         result = tester.run_tests()
-        self.assertTrue(result.wasSuccessful())
+        self.assertTrue(result.was_successful())
         self.assertIsNone(result.test_results[0]["actual_output"])
 
 

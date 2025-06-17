@@ -12,15 +12,7 @@ The `tester.py` file contains the `CodeTester` class and supporting classes, whi
 
 ### `CodeTestResult`
 
-Extends `unittest.TestResult` to store detailed information about test executions, including function calls, expected outputs, actual outputs, and pass/fail status for each test.
-
-### `CodeRunner`
-
-A test runner class that returns the results of tests in a structured format.
-
-### `CodeFunctionTest`
-
-A test case class that runs a single test for a function, handling different testing scenarios including normal function calls, in-place operations, and functions that both modify in-place and return values.
+A simple, language-agnostic test result container that stores detailed information about test executions, including function calls, expected outputs, actual outputs, and pass/fail status for each test. No longer depends on unittest framework.
 
 ### `CodeTester`
 
@@ -28,12 +20,13 @@ This class provides a comprehensive interface for testing functions using predef
 
 #### Methods
 
-- `__init__(code: Union[str, List[str]], test_cases: List[Dict[str, Any]], inplace: str = "0", function_name: str = "foo")`
+- `__init__(code: Union[str, List[str]], test_cases: List[Dict[str, Any]], inplace: str = "0", function_name: str = "foo", language: str = "python")`
   - Initializes the tester with:
     - `code`: The code to be tested (single function or multiple function variants)
     - `test_cases`: List of test cases with parameters and expected outputs
     - `inplace`: Mode for handling in-place operations (options: "0", "1", "2")
     - `function_name`: Name of the function to test
+    - `language`: Programming language for the code (default: "python")
   
 - `run_tests(suppress_output: bool = False) -> Union[CodeTestResult, List[CodeTestResult]]`
   - Runs test cases against the provided code
@@ -59,6 +52,25 @@ Test cases must be provided as a list of dictionaries, each containing:
 - `"0"`: Standard function that returns a value without modifying inputs
 - `"1"`: Function that modifies its first argument in-place without returning a value
 - `"2"`: Function that both modifies its first argument in-place and returns a value
+
+## Multi-Language Support
+
+The CodeTester now supports multiple programming languages through a unified architecture. Supported languages include:
+
+- Python (default)
+- JavaScript/TypeScript  
+- Bash
+- C/C++
+- Java/Kotlin
+- Rust
+- Go
+- Ruby
+- PHP
+- SQL
+- OCaml
+- Haskell
+
+Each language has its own adapter and executor that handle language-specific compilation, execution, and testing requirements.
 
 ## Example Usage
 
@@ -113,5 +125,36 @@ test_cases = [
 ]
 
 code_tester = CodeTester(code, test_cases, inplace="1")
+test_result = code_tester.run_tests()
+```
+
+### Testing Code in Different Languages
+
+```python
+# JavaScript example
+javascript_code = """
+function foo(a, b) {
+    return a + b;
+}
+"""
+
+test_cases = [
+    {"parameters": {"a": 1, "b": 2}, "expected": 3},
+    {"parameters": {"a": 5, "b": 7}, "expected": 12}
+]
+
+code_tester = CodeTester(javascript_code, test_cases, language="javascript")
+test_result = code_tester.run_tests()
+```
+
+```python
+# C++ example  
+cpp_code = """
+int foo(int a, int b) {
+    return a + b;
+}
+"""
+
+code_tester = CodeTester(cpp_code, test_cases, language="cpp")
 test_result = code_tester.run_tests()
 ```
