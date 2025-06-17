@@ -84,6 +84,7 @@ class SqlExecutor(LanguageExecutor):
 
             # Get results based on query type
             query_upper = query.upper().strip()
+            actual: Any
 
             if query_upper.startswith("SELECT"):
                 # Fetch all results
@@ -223,7 +224,7 @@ class SqlExecutor(LanguageExecutor):
             return abs(expected - actual) < 1e-9
 
         # Direct comparison for other types
-        return actual == expected
+        return bool(actual == expected)
 
     def cleanup(self) -> None:
         """Clean up temporary database."""

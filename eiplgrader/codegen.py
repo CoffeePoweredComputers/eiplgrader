@@ -1,6 +1,6 @@
 import json
 import os
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, cast
 
 import openai
 import requests
@@ -105,6 +105,7 @@ class CodeGenerator:
         self.model_request: Optional["ModelRequest"] = None
         self.ollama_base_url: str = ollama_base_url
         self.language: str = language
+        self.client: Optional[openai.OpenAI] = None
 
         if client_type == "openai":
             self.client = openai.OpenAI(api_key=api_key)
@@ -158,6 +159,11 @@ class CodeGenerator:
 
         self.model_request = self._create_model_request(model, temperature, num_to_gen)
 
+        # if the student is defining the function then we use the student
+        # response as the function name
+        if gen_type == "redef":
+            function_name = student_response
+
         # Use language adapter to create prompt
         prompt = adapter.generate_prompt(
             student_response=student_response,
@@ -173,22 +179,25 @@ class CodeGenerator:
         ):
             raise ValueError("ModelRequest is not initialized correctly.")
 
-        code_response = self.model_request.request_function_generation(prompt)
+        raw_response = self.model_request.request_function_generation(prompt)
 
+        # Extract code using language adapter
+        code_blocks = adapter.extract_code(raw_response)
+        
         if gen_type != "cgbg" and segmentation_few_shot_file:
             raise ValueError(
                 f"Segmentation is not supported for generation type '{gen_type}'."
             )
 
         if not segmentation_few_shot_file:
-            return {"code": code_response, "language": lang}
+            return {"code": code_blocks, "language": lang}
 
         segmentation_results = self._run_segmentation(
-            student_response, code_response, segmentation_few_shot_file
+            student_response, code_blocks, segmentation_few_shot_file
         )
 
         result = {
-            "code": code_response,
+            "code": code_blocks,
             "segmentation": segmentation_results,
             "language": lang,
         }
@@ -380,7 +389,7 @@ class ModelRequest:
         self.temperature = temperature
         self.num_to_gen = num_to_gen
 
-    def request_function_generation(self, prompt: str) -> List[str]:
+    def request_function_generation(self, prompt: str) -> str:
         """Make a request to the model API for function generation."""
 
         raise NotImplementedError(
@@ -403,7 +412,7 @@ class OpenAIModelRequest(ModelRequest):
     Handles making requests to OpenAI models and processing their responses.
     """
 
-    def request_function_generation(self, prompt: str) -> List[str]:
+    def request_function_generation(self, prompt: str) -> str:
         """Make a request to the OpenAI API for function generation."""
 
         formatted_prompt = [{"role": "user", "content": prompt}]
@@ -414,18 +423,8 @@ class OpenAIModelRequest(ModelRequest):
             n=self.num_to_gen,
         )
 
-        return self._process_function_response(response)
+        return response.choices[0].message.content
 
-    def _process_function_response(self, response: Any) -> List[str]:
-        """Process the function generation response from OpenAI API."""
-
-        response = response.choices[0].message.content
-
-        functions = list(
-            map(lambda x: x.split("```")[0].strip(), response.split("```python"))
-        )[1:]
-
-        return functions
 
     def request_segmentation(
         self, student_response: str, code: str, segmentation_examples: Dict[str, Any]
@@ -515,7 +514,7 @@ class AnthropicModelRequest(ModelRequest):
     This is a placeholder for future implementation of Anthropic API support.
     """
 
-    def request_function_generation(self, prompt: str) -> List[str]:
+    def request_function_generation(self, prompt: str) -> str:
         """Make a request to the Anthropic API for function generation (not yet implemented)."""
         raise NotImplementedError("Anthropic API support not yet implemented")
 
@@ -532,7 +531,7 @@ class MetaModelRequest(ModelRequest):
     This is a placeholder for future implementation of Meta API support.
     """
 
-    def request_function_generation(self, prompt: str) -> List[str]:
+    def request_function_generation(self, prompt: str) -> str:
         """Make a request to the Meta API for function generation (not yet implemented)."""
         raise NotImplementedError("Meta API support not yet implemented")
 
@@ -552,7 +551,7 @@ class OllamaModelRequest(ModelRequest):
         super().__init__(None, model, temperature, num_to_gen)
         self.ollama_base_url = ollama_base_url
 
-    def request_function_generation(self, prompt: str) -> List[str]:
+    def request_function_generation(self, prompt: str) -> str:
         """Make a request to the Ollama API for function generation."""
         url = f"{self.ollama_base_url}/api/generate"
 
@@ -564,37 +563,12 @@ class OllamaModelRequest(ModelRequest):
         }
 
         try:
-            response = requests.post(url, json=payload)
+            response = requests.post(url, json=payload, timeout=30)
             response.raise_for_status()
             result = response.json()
 
-            # Extract the generated code from the response
-            generated_text = result.get("response", "")
-
-            # Extract code blocks from markdown
-            code_blocks = []
-            current_block = []
-            in_code_block = False
-
-            for line in generated_text.split("\n"):
-                if line.startswith("```python"):
-                    in_code_block = True
-                    continue
-                if line.startswith("```") and in_code_block:
-                    in_code_block = False
-                    if current_block:
-                        code_blocks.append("\n".join(current_block))
-                        current_block = []
-                    continue
-
-                if in_code_block:
-                    current_block.append(line)
-
-            # If no code blocks found, return the entire response
-            if not code_blocks:
-                return [generated_text.strip()]
-
-            return code_blocks
+            # Return the raw generated text
+            return result.get("response", "")
 
         except requests.exceptions.RequestException as e:
             raise RuntimeError(f"Error making request to Ollama API: {str(e)}") from e
@@ -618,7 +592,7 @@ class OllamaModelRequest(ModelRequest):
         }
 
         try:
-            response = requests.post(url, json=payload)
+            response = requests.post(url, json=payload, timeout=30)
             response.raise_for_status()
             result = response.json()
 
@@ -632,7 +606,7 @@ class OllamaModelRequest(ModelRequest):
                 json_end = response_text.rfind("}") + 1
                 if 0 <= json_start < json_end:
                     json_str = response_text[json_start:json_end]
-                    return json.loads(json_str)
+                    return cast(Dict[str, Any], json.loads(json_str))
                 raise ValueError("No valid JSON found in response")
             except json.JSONDecodeError as e:
                 raise ValueError(f"Failed to parse JSON response: {str(e)}") from e

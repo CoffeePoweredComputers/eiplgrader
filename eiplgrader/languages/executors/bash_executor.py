@@ -116,7 +116,7 @@ exit 1
                 }
 
             # Parse output
-            actual = result.stdout.strip()
+            actual: Any = result.stdout.strip()
 
             # Try to parse as JSON if the expected value is a complex type
             expected = test_case.get("expected")

@@ -1,48 +1,57 @@
-"""Rust language adapter for code generation."""
+"""Rust language adapter using unified architecture."""
 
-import re
-from typing import List, Tuple, Optional
-from ..base import LanguageAdapter, LanguageConfig
+from typing import List, Optional
+from ..base import UnifiedLanguageAdapter
+from ..spec import LanguageSpec, FunctionPatterns, TemplateOverrides, SyntaxConventions
 
 
-class RustAdapter(LanguageAdapter):
-    """Adapter for Rust language code generation."""
+class RustAdapter(UnifiedLanguageAdapter):
+    """Rust language adapter - configuration driven"""
 
-    def get_config(self) -> LanguageConfig:
-        """Return Rust language configuration."""
-        return LanguageConfig(
+    def get_language_spec(self) -> LanguageSpec:
+        return LanguageSpec(
+            # Core configuration
             name="rust",
             display_name="Rust",
             file_extensions=[".rs"],
             compile_command=["rustc"],
             run_command=["cargo", "run"],
-        )
-
-    def generate_prompt(
-        self,
-        student_response: str,
-        function_name: str,
-        gen_type: str = "cgbg",
-        **kwargs,
-    ) -> str:
-        """Generate Rust-specific prompt for LLM."""
-
-        # Base student model for Rust
-        prompt = """Pretend you are an introductory CS student learning Rust for the very first
+            
+            # Enhanced specification
+            code_block_tag="rust",
+            student_model_template="""Pretend you are an introductory CS student learning Rust for the very first
 time. You have a rudimentary understanding of functions, loops, variables, and
 conditionals. You understand basic Rust syntax including ownership, borrowing,
-lifetimes, and error handling with Result types.
-"""
-
-        if gen_type == "cgbg":
-            # Code generation based grading
-            prompt += f"""
-Create a function, called {function_name},
-according to the following prompt:
-
-Create a function {function_name} that {student_response}
-
-Include only the function and no additional test cases, code, or comments.
+lifetimes, and error handling with Result types.""",
+            
+            # Syntax conventions
+            syntax_conventions=SyntaxConventions(
+                comment_single="//",
+                comment_multi_start="/*",
+                comment_multi_end="*/",
+                statement_terminator=";",
+                indentation_type="spaces",
+                indentation_size=4,
+            ),
+            
+            # Function patterns
+            function_patterns=FunctionPatterns(
+                definition_regex=r"(fn\s+(\w+)\s*(?:<[^>]*>)?\s*\([^)]*\)[^{]*{[^}]*})",
+                name_capture_group=2,
+                requires_return_type=True,
+                supports_overloading=False,
+                supports_default_params=False,
+                supports_varargs=False
+            ),
+            
+            # Validation
+            validation_strategy="compiler",
+            validation_command=["rustc", "--crate-type", "lib", "--emit", "metadata", "-Z", "no-codegen"],
+            
+            # Template overrides
+            template_overrides=TemplateOverrides(
+                custom_templates={
+                    "cgbg_instructions": """Include only the function and no additional test cases, code, or comments.
 The function should follow Rust conventions and handle errors using Result<T, E> when appropriate.
 Respond with the code for the function {function_name} in the following format
 which has the code wrapped in markdown of a Rust code block:
@@ -55,19 +64,8 @@ fn {function_name}(parameters) -> ReturnType {{
 
 If the function can fail, use Rust's idiomatic error handling pattern with Result<T, E>.
 Follow Rust ownership rules and borrowing conventions. Use references (&) when you don't
-need to take ownership of parameters.
-"""
-        elif gen_type == "redef":
-            # Function redefinition
-            params = kwargs.get("params", "")
-            assumptions = kwargs.get("assumptions", "")
-
-            prompt += f"""
-Create a function based on the following function signature: fn {function_name}({params}) -> ReturnType
-You are given the following assumptions about the arguments:
-{assumptions}.
-
-Generate the code only and generate it to be surrounded with markdown of a
+need to take ownership of parameters.""",
+                    "redef_instructions": """Generate the code only and generate it to be surrounded with markdown of a
 Rust code block. It is very important that you use the provided function name
 when generating the code. For example:
 
@@ -79,99 +77,12 @@ fn {function_name}({params}) -> ReturnType {{
 
 If the function should handle errors, use Result<T, E> as the return type
 following Rust conventions. Follow ownership and borrowing rules - use references
-when appropriate and avoid unnecessary clones.
-"""
-
-        # Add robustness prompt if generating multiple versions
-        num_to_gen = kwargs.get("num_to_gen", 1)
-        if num_to_gen > 1:
-            prompt += f"""
-Generate {num_to_gen} different versions of this function with these formatting
-constraints. Each version should be a complete, valid Rust function that follows
-ownership and borrowing rules.
-"""
-
-        return prompt
-
-    def extract_code(self, llm_response: str) -> List[str]:
-        """Extract Rust code blocks from LLM response."""
-        # Method 1: Extract markdown code blocks
-        pattern = r"```rust\n(.*?)```"
-        matches = re.findall(pattern, llm_response, re.DOTALL)
-
-        if matches:
-            return [match.strip() for match in matches]
-
-        # Method 2: If no markdown blocks, split by ```rust
-        if "```rust" in llm_response:
-            functions = list(
-                map(lambda x: x.split("```")[0].strip(), llm_response.split("```rust"))
-            )[1:]
-            return functions
-
-        # Method 3: Look for function definitions
-        func_pattern = r"(fn\s+\w+\s*(?:<[^>]*>)?\s*\([^)]*\)[^{]*{.*?})"
-        func_matches = re.findall(func_pattern, llm_response, re.DOTALL)
-        if func_matches:
-            return func_matches
-
-        # If no code blocks found, return the entire response
-        return [llm_response.strip()] if llm_response.strip() else []
-
-    def validate_syntax(self, code: str) -> Tuple[bool, Optional[str]]:
-        """Validate Rust syntax using rustc."""
-        import subprocess
-        import tempfile
-        import os
-
-        try:
-            # Write code to temporary file
-            with tempfile.NamedTemporaryFile(mode="w", suffix=".rs", delete=False) as f:
-                # Wrap in a main function if it's just a function definition
-                if code.strip().startswith("fn") and "fn main" not in code:
-                    f.write(f"{code}\n\nfn main() {{}}")
-                else:
-                    f.write(code)
-                temp_path = f.name
-
-            # Use rustc to check syntax
-            result = subprocess.run(
-                [
-                    "rustc",
-                    "--crate-type",
-                    "lib",
-                    "--emit",
-                    "metadata",
-                    "-Z",
-                    "no-codegen",
-                    temp_path,
-                ],
-                capture_output=True,
-                text=True,
-                env={
-                    **os.environ,
-                    "RUSTC_BOOTSTRAP": "1",
-                },  # Enable unstable features
+when appropriate and avoid unnecessary clones.""",
+                    "multiple_versions_note": """Each version should be a complete, valid Rust function that follows
+ownership and borrowing rules."""
+                }
             )
+        )
 
-            # Clean up
-            os.unlink(temp_path)
 
-            if result.returncode == 0:
-                return True, None
-            else:
-                # Extract relevant error message
-                error_lines = result.stderr.strip().split("\n")
-                relevant_errors = [
-                    line for line in error_lines if "error" in line.lower()
-                ]
-                error_msg = (
-                    "\n".join(relevant_errors) if relevant_errors else result.stderr
-                )
-                return False, f"Syntax error: {error_msg}"
 
-        except FileNotFoundError:
-            # rustc not available, skip validation
-            return True, None
-        except Exception as e:
-            return False, f"Validation error: {str(e)}"

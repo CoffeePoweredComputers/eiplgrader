@@ -196,7 +196,7 @@ class CodeTester:
             # Create a mock test object for result tracking
             mock_test = type(
                 "MockTest",
-                (),
+                (unittest.TestCase,),
                 {
                     "function_call": test_result.get("function_call", "N/A"),
                     "expected_output": test_case["expected"],
@@ -207,9 +207,10 @@ class CodeTester:
             if test_result["passed"]:
                 result.addSuccess(mock_test)
             else:
-                # Create a mock error tuple
+                # Create a proper exception for the failure
                 error_msg = test_result.get("error", "Test failed")
-                result.addFailure(mock_test, (None, error_msg, None))
+                exc = AssertionError(error_msg)
+                result.addFailure(mock_test, (type(exc), exc, None))
 
         # Clean up
         executor.cleanup()

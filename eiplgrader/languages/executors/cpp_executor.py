@@ -105,6 +105,12 @@ namespace json_parse {
                 // String value
                 valueStart++;
                 valueEnd = json.find('"', valueStart);
+                if (valueEnd != std::string::npos) {
+                    result[key] = json.substr(valueStart, valueEnd - valueStart);
+                    pos = valueEnd + 1; // Move past the closing quote
+                } else {
+                    break;
+                }
             } else if (json[pos] == '[') {
                 // Array value
                 int bracketCount = 1;
@@ -114,15 +120,16 @@ namespace json_parse {
                     else if (json[valueEnd] == ']') bracketCount--;
                     valueEnd++;
                 }
+                result[key] = json.substr(valueStart, valueEnd - valueStart);
+                pos = valueEnd;
             } else {
                 // Number or boolean
                 while (valueEnd < json.length() && json[valueEnd] != ',' && json[valueEnd] != '}') {
                     valueEnd++;
                 }
+                result[key] = json.substr(valueStart, valueEnd - valueStart);
+                pos = valueEnd;
             }
-            
-            result[key] = json.substr(valueStart, valueEnd - valueStart);
-            pos = valueEnd;
         }
         
         return result;
@@ -139,7 +146,7 @@ std::string to_json(const T& value) {
 
 template<>
 std::string to_json(const std::string& value) {
-    return "\\"" + value + "\\"";
+    return '"' + value + '"';
 }
 
 template<>
