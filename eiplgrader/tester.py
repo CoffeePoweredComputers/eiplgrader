@@ -4,7 +4,8 @@ import importlib
 import importlib.util
 import os
 from copy import deepcopy
-from typing import List, Dict, Any, Union
+from typing import List, Dict, Any, Union, Optional
+from .languages import language_registry
 
 
 class CodeTestResult(unittest.TestResult):
@@ -140,12 +141,14 @@ class CodeTester:
         test_cases: List[Dict[str, Any]],
         inplace: str = "0",
         function_name: str = "foo",
+        language: str = "python",
     ):
         self.code = code
         self.test_cases = test_cases
         self.current_test = None
         self.inplace = inplace
         self.function_name = function_name
+        self.language = language
 
     def run_tests(
         self, suppress_output: bool = False
@@ -160,7 +163,63 @@ class CodeTester:
         raise ValueError("Code must be a string or a list of strings")
 
     def _run_test(self, code: str, suppress_output: bool = False) -> CodeTestResult:
+        # Get the language executor
+        executor = language_registry.get_executor(self.language)
+        if not executor:
+            raise ValueError(f"Unsupported language: {self.language}")
 
+        # For backward compatibility with Python-specific testing
+        if self.language == "python":
+            # Use the old Python-specific implementation
+            return self._run_python_test(code, suppress_output)
+
+        # For other languages, use the new executor-based approach
+        result = CodeTestResult()
+
+        for test_case in self.test_cases:
+            if not isinstance(test_case, dict):
+                raise ValueError("Test case must be a dictionary")
+
+            if "parameters" not in test_case:
+                raise ValueError("Test case must contain 'parameters' key")
+
+            if "expected" not in test_case:
+                raise ValueError("Test case must contain 'expected' key")
+
+            # Add metadata to test case
+            test_case["function_name"] = self.function_name
+            test_case["inplace"] = self.inplace
+
+            # Execute the test
+            test_result = executor.execute_test(code, test_case)
+
+            # Create a mock test object for result tracking
+            mock_test = type(
+                "MockTest",
+                (),
+                {
+                    "function_call": test_result.get("function_call", "N/A"),
+                    "expected_output": test_case["expected"],
+                    "actual_output": test_result.get("actual", None),
+                },
+            )()
+
+            if test_result["passed"]:
+                result.addSuccess(mock_test)
+            else:
+                # Create a mock error tuple
+                error_msg = test_result.get("error", "Test failed")
+                result.addFailure(mock_test, (None, error_msg, None))
+
+        # Clean up
+        executor.cleanup()
+
+        return result
+
+    def _run_python_test(
+        self, code: str, suppress_output: bool = False
+    ) -> CodeTestResult:
+        """Legacy Python-specific test runner for backward compatibility"""
         with tempfile.NamedTemporaryFile(delete=False, suffix=".py") as temp_file:
             temp_file.write(code.encode("utf-8"))
             temp_file_path = temp_file.name

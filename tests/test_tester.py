@@ -56,7 +56,6 @@ def foo(num1, num2):
         results = tester.run_tests()
         self.assertIsInstance(results, list)
         self.assertEqual(len(results), 2)
-        print(results)
         self.assertTrue(results[0].wasSuccessful())
         self.assertTrue(results[1].wasSuccessful())
 
@@ -90,6 +89,47 @@ def foo(a):
         tester = CodeTester(code, test_cases, function_name="foo")
         with self.assertRaises(ValueError):
             tester.run_tests()
+
+    def test_function_with_side_effects(self):
+        code = """
+def foo(lst):
+    lst.append(4)
+    return len(lst)
+"""
+        input_list = [1, 2, 3]
+        test_cases = [
+            {"parameters": {"lst": input_list}, "expected": 4},
+        ]
+        tester = CodeTester(code, test_cases, function_name="foo")
+        result = tester.run_tests()
+        self.assertTrue(result.wasSuccessful())
+        self.assertEqual(result.test_results[0]["actual_output"], 4)
+
+    def test_function_with_complex_output(self):
+        code = """
+def foo():
+    return {"a": 1, "b": [2, 3]}
+"""
+        test_cases = [
+            {"parameters": {}, "expected": {"a": 1, "b": [2, 3]}},
+        ]
+        tester = CodeTester(code, test_cases, function_name="foo")
+        result = tester.run_tests()
+        self.assertTrue(result.wasSuccessful())
+        self.assertEqual(result.test_results[0]["actual_output"], {"a": 1, "b": [2, 3]})
+
+    def test_function_with_none_output(self):
+        code = """
+def foo():
+    return None
+"""
+        test_cases = [
+            {"parameters": {}, "expected": None},
+        ]
+        tester = CodeTester(code, test_cases, function_name="foo")
+        result = tester.run_tests()
+        self.assertTrue(result.wasSuccessful())
+        self.assertIsNone(result.test_results[0]["actual_output"])
 
 
 if __name__ == "__main__":

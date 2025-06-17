@@ -1,8 +1,9 @@
+from typing import List, Dict, Any, Optional, Union
 import json
-import os
-from typing import List, Dict, Any, Optional
-
 import openai
+import os
+import requests
+from .languages import language_registry
 
 DEFAULT_STUDENT_MODEL = """
 Pretend you are an introductory CS student learning python for the very first
@@ -16,8 +17,9 @@ according to the following prompt:
 
 Create a function {function_name} that {prompt}
 
-Include only the function and no additional test cases or code.
-Respond with the code for the function {function_name} in the following format:
+Include only the function and no additional test cases, code, or comments.
+Respond with the code for the function {function_name} in the following format
+which has the code wrapped in markdown of a python code block:
 
 ```python
 <code here>
@@ -29,9 +31,9 @@ Create a function based on the following function name: def {function_name}({par
 pass. You are given the following assumptions about the arguments:
 {assumptions}.
 
-Generate the code only and generate it to be surrounded with
-markdown. it is very important that you use the provided
-function name when generating the code. For example:
+Generate the code only and generate it to be surrounded with markdown of a
+python code block. it is very important that you use the provided function name
+when generating the code. For example:
 
 ```python
 def {function_name}({params}):
@@ -78,24 +80,30 @@ DEFAULT_SEGMENTATION_RESPONSE_FORMAT = {
     },
 }
 
-ALLOWED_CLIENTS = [
-    "openai",
-    "anthropic",
-    "meta",
-]
+ALLOWED_CLIENTS = ["openai", "anthropic", "meta", "ollama"]
 
 
 ALLOWED_MODELS_OPEN_AI: List[str] = ["gpt-4o", "gpt-4", "gpt-4.5", "gpt-4.1"]
 ALLOWED_MODELS_ANTHROPIC: List[str] = []
 ALLOWED_MODELS_META: List[str] = []
+# ALLOWED_MODELS_OLLAMA: List[str] = [ "llama3.1", "llama3.2", "llama3.2:1b", "deepseek-r1", "codellama" ]
+ALLOWED_MODELS_OLLAMA: List[str] = ["codellama:instruct", "stable-code:instruct"]
 
 
 class CodeGenerator:
 
-    def __init__(self, api_key: str, client_type: str = "openai"):
+    def __init__(
+        self,
+        api_key: str,
+        client_type: str = "openai",
+        ollama_base_url: str = "http://localhost:11434",
+        language: str = "python",
+    ) -> None:
         self.api_key: str = api_key
         self.client_type: str = client_type
         self.model_request: Optional["ModelRequest"] = None
+        self.ollama_base_url: str = ollama_base_url
+        self.language: str = language
 
         if client_type == "openai":
             self.client = openai.OpenAI(api_key=api_key)
@@ -105,6 +113,8 @@ class CodeGenerator:
         elif client_type == "meta":
             # Initialize meta client when implemented
             pass
+        elif client_type == "ollama":
+            self.client = None
         else:
             raise ValueError(
                 f"Invalid client type: {client_type}. Allowed types are: {ALLOWED_CLIENTS}"
@@ -121,6 +131,7 @@ class CodeGenerator:
         temperature: float = 1.0,
         model: str = "gpt-4o",
         function_name: str = "foo",
+        language: Optional[str] = None,
     ) -> Dict[str, Any]:
 
         if temperature < 0 or temperature > 1:
@@ -135,17 +146,25 @@ class CodeGenerator:
                 "may lead to non-deterministic grading."
             )
 
+        # Use language parameter or instance default
+        lang = language or self.language
+        adapter = language_registry.get_adapter(lang)
+
+        if not adapter:
+            raise ValueError(f"Unsupported language: {lang}")
+
         self._validate_model(model)
 
         self.model_request = self._create_model_request(model, temperature, num_to_gen)
 
-        prompt = self._create_prompt(
-            student_response,
-            gen_type,
-            params,
-            assumptions,
-            function_name,
-            num_to_gen,
+        # Use language adapter to create prompt
+        prompt = adapter.generate_prompt(
+            student_response=student_response,
+            function_name=function_name,
+            gen_type=gen_type,
+            params=params,
+            assumptions=assumptions,
+            num_to_gen=num_to_gen,
         )
 
         if self.model_request is None or not isinstance(
@@ -161,13 +180,17 @@ class CodeGenerator:
             )
 
         if not segmentation_few_shot_file:
-            return {"code": code_response}
+            return {"code": code_response, "language": lang}
 
         segmentation_results = self._run_segmentation(
             student_response, code_response, segmentation_few_shot_file
         )
 
-        result = {"code": code_response, "segmentation": segmentation_results}
+        result = {
+            "code": code_response,
+            "segmentation": segmentation_results,
+            "language": lang,
+        }
         return result
 
     def _validate_model(self, model: str) -> None:
@@ -180,6 +203,8 @@ class CodeGenerator:
             allowed_models = ALLOWED_MODELS_ANTHROPIC
         elif self.client_type == "meta":
             allowed_models = ALLOWED_MODELS_META
+        elif self.client_type == "ollama":
+            allowed_models = ALLOWED_MODELS_OLLAMA
 
         if model not in allowed_models:
             model_list = ", ".join(allowed_models)
@@ -187,7 +212,9 @@ class CodeGenerator:
                 f"Invalid model: {model}. Allowed models for {self.client_type} are: {model_list}"
             )
 
-    def _create_model_request(self, model: str, temperature: float, num_to_gen: int):
+    def _create_model_request(
+        self, model: str, temperature: float, num_to_gen: int
+    ) -> "ModelRequest":
         """Create a ModelRequest object based on client type."""
 
         if self.client_type == "openai":
@@ -199,8 +226,13 @@ class CodeGenerator:
         if self.client_type == "meta":
             return MetaModelRequest(self.client, model, temperature, num_to_gen)
 
+        if self.client_type == "ollama":
+            return OllamaModelRequest(
+                self.ollama_base_url, model, temperature, num_to_gen
+            )
+
         raise ValueError(
-            f"Invalid client type: {self.client_type}. Allowed types are: openai, anthropic, meta"
+            f"Invalid client type: {self.client_type}. Allowed types are: openai, anthropic, meta, ollama"
         )
 
     def _create_prompt(
@@ -331,7 +363,9 @@ class ModelRequest:
     and provides common properties needed by all model request implementations.
     """
 
-    def __init__(self, client, model: str, temperature: float, num_to_gen: int):
+    def __init__(
+        self, client: Any, model: str, temperature: float, num_to_gen: int
+    ) -> None:
         """Initialize a ModelRequest.
 
         Args:
@@ -381,7 +415,7 @@ class OpenAIModelRequest(ModelRequest):
 
         return self._process_function_response(response)
 
-    def _process_function_response(self, response) -> List[str]:
+    def _process_function_response(self, response: Any) -> List[str]:
         """Process the function generation response from OpenAI API."""
 
         response = response.choices[0].message.content
@@ -460,7 +494,7 @@ class OpenAIModelRequest(ModelRequest):
 
         return segmentation_messages
 
-    def _process_segmentation_response(self, response) -> Dict[str, Any]:
+    def _process_segmentation_response(self, response: Any) -> Dict[str, Any]:
         """Process the segmentation response from OpenAI API."""
 
         segmentation_content = response.choices[0].message.content
@@ -506,3 +540,131 @@ class MetaModelRequest(ModelRequest):
     ) -> Dict[str, Any]:
         """Make a request to the Meta API for code segmentation (not yet implemented)."""
         raise NotImplementedError("Meta API support not yet implemented")
+
+
+class OllamaModelRequest(ModelRequest):
+    """Model request implementation for Ollama API."""
+
+    def __init__(
+        self, ollama_base_url: str, model: str, temperature: float, num_to_gen: int
+    ) -> None:
+        super().__init__(None, model, temperature, num_to_gen)
+        self.ollama_base_url = ollama_base_url
+
+    def request_function_generation(self, prompt: str) -> List[str]:
+        """Make a request to the Ollama API for function generation."""
+        url = f"{self.ollama_base_url}/api/generate"
+
+        payload = {
+            "model": self.model,
+            "prompt": prompt,
+            "temperature": self.temperature,
+            "stream": False,
+        }
+
+        try:
+            response = requests.post(url, json=payload)
+            response.raise_for_status()
+            result = response.json()
+
+            # Extract the generated code from the response
+            generated_text = result.get("response", "")
+
+            # Extract code blocks from markdown
+            code_blocks = []
+            current_block = []
+            in_code_block = False
+
+            for line in generated_text.split("\n"):
+                if line.startswith("```python"):
+                    in_code_block = True
+                    continue
+                elif line.startswith("```") and in_code_block:
+                    in_code_block = False
+                    if current_block:
+                        code_blocks.append("\n".join(current_block))
+                        current_block = []
+                    continue
+
+                if in_code_block:
+                    current_block.append(line)
+
+            # If no code blocks found, return the entire response
+            if not code_blocks:
+                return [generated_text.strip()]
+
+            return code_blocks
+
+        except requests.exceptions.RequestException as e:
+            raise RuntimeError(f"Error making request to Ollama API: {str(e)}")
+
+    def request_segmentation(
+        self, student_response: str, code: str, segmentation_examples: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Make a request to the Ollama API for code segmentation."""
+        url = f"{self.ollama_base_url}/api/generate"
+
+        # Format the prompt for segmentation
+        prompt = self._format_segmentation_prompt(
+            student_response, code, segmentation_examples
+        )
+
+        payload = {
+            "model": self.model,
+            "prompt": prompt,
+            "temperature": self.temperature,
+            "stream": False,
+        }
+
+        try:
+            response = requests.post(url, json=payload)
+            response.raise_for_status()
+            result = response.json()
+
+            # Extract the JSON response
+            response_text = result.get("response", "")
+
+            # Try to parse the JSON response
+            try:
+                # Find JSON content between curly braces
+                json_start = response_text.find("{")
+                json_end = response_text.rfind("}") + 1
+                if json_start >= 0 and json_end > json_start:
+                    json_str = response_text[json_start:json_end]
+                    return json.loads(json_str)
+                else:
+                    raise ValueError("No valid JSON found in response")
+            except json.JSONDecodeError as e:
+                raise ValueError(f"Failed to parse JSON response: {str(e)}")
+
+        except requests.exceptions.RequestException as e:
+            raise RuntimeError(f"Error making request to Ollama API: {str(e)}")
+
+    def _format_segmentation_prompt(
+        self, student_response: str, code: str, segmentation_examples: Dict[str, Any]
+    ) -> str:
+        """Format the prompt for code segmentation."""
+        prompt = f"""Please analyze the following code and provide a structured explanation of its components.
+
+Student Response:
+{student_response}
+
+Generated Code:
+{code}
+
+Please provide your analysis in the following JSON format:
+{{
+    "groups": [
+        {{
+            "explanation_portion": "Explanation of this code section",
+            "code": "The relevant code section"
+        }}
+    ]
+}}
+
+Example format from previous analysis:
+{json.dumps(segmentation_examples, indent=2)}
+
+Please ensure your response is valid JSON and follows the exact format shown above."""
+
+        return prompt
