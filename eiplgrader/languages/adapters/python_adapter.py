@@ -1,136 +1,104 @@
-"""Python language adapter using unified architecture."""
+"""Python language adapter."""
 
-from typing import List, Optional, Tuple, Dict, Any
 import re
 import ast
-from ..base import UnifiedLanguageAdapter
-from ..spec import LanguageSpec, FunctionPatterns, TemplateOverrides
+from typing import List
+from ..base import LanguageAdapter, LanguageConfig
 
 
-class PythonAdapter(UnifiedLanguageAdapter):
-    """Python language adapter - configuration driven"""
+class PythonAdapter(LanguageAdapter):
+    """Python language adapter with 4 core methods."""
 
-    def get_spec(self) -> LanguageSpec:
-        return LanguageSpec(
-            # Core configuration
+    def get_config(self) -> LanguageConfig:
+        """Return Python language configuration."""
+        return LanguageConfig(
             name="python",
             display_name="Python",
             file_extensions=[".py"],
             run_command=["python3"],
-            # Enhanced specification
-            code_block_tag="python",
-            student_model_template="You also don't know about type annotations.",
-            # Function patterns
-            function_patterns=FunctionPatterns(
-                definition_regex=r"(def\s+\w+\s*\([^)]*\):.*?)(?=def\s+\w+\s*\(|$)",
-                name_capture_group=1,
-                supports_default_params=True,
-                supports_varargs=True,
-            ),
-            # Validation
-            validation_strategy="parser",
-            # Template overrides
-            template_overrides=TemplateOverrides(
-                custom_templates={
-                    "function_example": "<code here>",
-                    "language_specific_instructions": "Respond with the code for the function {function_name} in the following format which has the code wrapped in markdown of a python code block:\n\n```python\n<code here>\n```",
-                }
-            ),
+            test_timeout=30
         )
 
-    def _generate_prompt_impl(
+    def generate_prompt(
         self,
         student_response: str,
         function_name: str,
         gen_type: str = "cgbg",
         **kwargs,
     ) -> str:
-        """Implementation method for prompt generation."""
-        # This is a fallback - the spec-based system should handle this
+        """Generate Python-specific prompt for LLM."""
         if gen_type == "cgbg":
-            return f"Generate a Python function {function_name} that {student_response}"
+            return f"""Pretend you are an introductory CS student learning Python for the very first time. You also don't know about type annotations.
+
+Create a function, called {function_name},
+according to the following prompt:
+
+Create a function {function_name} that {student_response}
+
+Include only the function and no additional test cases, code, or comments.
+Respond with the code for the function {function_name} in the following format
+which has the code wrapped in markdown of a python code block:
+
+```python
+def {function_name}():
+    pass
+```"""
+        
+        elif gen_type == "redef":
+            function_signature = kwargs.get("function_signature", f"def {function_name}():")
+            assumptions = kwargs.get("assumptions", "")
+            
+            return f"""Pretend you are an introductory CS student learning Python for the very first time. You also don't know about type annotations.
+
+Create a function based on the following function signature: {function_signature}
+You are given the following assumptions about the arguments:
+{assumptions}.
+
+Generate the code only and generate it to be surrounded with markdown of a
+python code block. It is very important that you use the provided function name
+when generating the code. For example:
+
+```python
+{function_signature}
+    pass
+```"""
+        
         else:
             return f"Generate a Python function named {function_name}"
 
-    def _extract_code_impl(self, llm_response: str) -> List[str]:
-        """Implementation method for code extraction."""
-        # Extract Python code blocks
+    def extract_code(self, llm_response: str) -> List[str]:
+        """Extract Python code blocks from LLM response."""
         patterns = [
             r"```python\n(.*?)\n```",
-            r"```py\n(.*?)\n```",
-            r"```\n(.*?)\n```",  # Generic code block
+            r"```py\n(.*?)\n```", 
+            r"```\n(.*?)\n```",
         ]
-
+        
         for pattern in patterns:
             matches = re.findall(pattern, llm_response, re.DOTALL)
             if matches:
                 return [match.strip() for match in matches]
-
-        # If no code blocks found, return the response as-is
+        
+        # If no code blocks found, return entire response
         return [llm_response.strip()] if llm_response.strip() else []
 
-    def _extract_functions_impl(self, code: str) -> List[Dict[str, Any]]:
-        """Implementation method for function extraction."""
-        functions = []
-        try:
-            tree = ast.parse(code)
-            for node in ast.walk(tree):
-                if isinstance(node, ast.FunctionDef):
-                    func_dict = {
-                        "name": node.name,
-                        "signature": f"def {node.name}(...)",
-                        "start_line": node.lineno,
-                        "end_line": getattr(node, "end_lineno", node.lineno),
-                        "code": ast.get_source_segment(code, node)
-                        or f"def {node.name}(...): ...",
-                    }
-                    functions.append(func_dict)
-        except SyntaxError:
-            # Fallback to regex if AST parsing fails
-            pattern = r"def\s+(\w+)\s*\([^)]*\):"
-            lines = code.split("\n")
-            for i, line in enumerate(lines):
-                match = re.search(pattern, line)
-                if match:
-                    func_name = match.group(1)
-                    func_dict = {
-                        "name": func_name,
-                        "signature": line.strip(),
-                        "start_line": i + 1,
-                        "code": line.strip(),
-                    }
-                    functions.append(func_dict)
-
-        return functions
-
-    def _validate_syntax_impl(self, code: str) -> Tuple[bool, Optional[str]]:
-        """Implementation method for syntax validation."""
-        try:
-            ast.parse(code)
-            return True, None
-        except SyntaxError as e:
-            return False, f"Syntax error: {e}"
-        except Exception as e:
-            return False, f"Validation error: {e}"
-
-    def _normalize_code_impl(self, code: str) -> str:
-        """Implementation method for code normalization."""
-        # Remove comments and docstrings
-        lines = code.split("\n")
-        normalized_lines = []
-        in_multiline_comment = False
-
-        for line in lines:
-            # Remove single-line comments
-            if "#" in line:
-                line = line[: line.index("#")]
-
-            # Skip empty lines
-            line = line.strip()
-            if line:
-                normalized_lines.append(line)
-
-        # Join and normalize whitespace
-        code = " ".join(normalized_lines)
-        code = re.sub(r"\s+", " ", code)
-        return code.strip()
+    def normalize_code(self, code: str) -> str:
+        """Normalize Python code by removing comments and standardizing format."""
+        lines = []
+        for line in code.split('\n'):
+            # Remove comments (everything after #)
+            if '#' in line:
+                line = line[:line.index('#')]
+            
+            # Skip empty lines and whitespace-only lines
+            stripped = line.strip()
+            if stripped:
+                lines.append(stripped)
+        
+        # Join lines and normalize whitespace
+        if not lines:
+            return ""
+        
+        normalized = ' '.join(lines)
+        normalized = re.sub(r'\s+', ' ', normalized)
+        return normalized.strip()

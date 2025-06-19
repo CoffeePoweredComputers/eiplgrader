@@ -1,43 +1,58 @@
-"""Central registry for language implementations."""
+"""Simple registry for language adapters."""
 
-from typing import Dict, Type, Optional, List, Union
-from .base import LanguageAdapter, LanguageExecutor, UnifiedLanguageAdapter
+from typing import Dict, Type, List, Optional, Any
+from .base import LanguageAdapter
 
 
 class LanguageRegistry:
-    """Central registry for language implementations"""
+    """Simple registry for language implementations."""
 
     def __init__(self) -> None:
-        self._adapters: Dict[
-            str, Union[Type[LanguageAdapter], Type[UnifiedLanguageAdapter]]
-        ] = {}
-        self._executors: Dict[str, Type[LanguageExecutor]] = {}
+        self._adapters: Dict[str, Type[LanguageAdapter]] = {}
 
-    def register(
-        self,
-        language: str,
-        adapter: Union[Type[LanguageAdapter], Type[UnifiedLanguageAdapter]],
-        executor: Type[LanguageExecutor],
-    ) -> None:
-        """Register a language implementation"""
-        self._adapters[language.lower()] = adapter
-        self._executors[language.lower()] = executor
+    def register(self, name: str, adapter_class: Type[LanguageAdapter]) -> None:
+        """Register a language adapter."""
+        self._adapters[name.lower()] = adapter_class
 
-    def get_adapter(
-        self, language: str
-    ) -> Optional[Union[LanguageAdapter, UnifiedLanguageAdapter]]:
-        """Get adapter instance for language"""
-        adapter_class = self._adapters.get(language.lower())
+    def get_adapter(self, name: str) -> Optional[LanguageAdapter]:
+        """Get adapter instance for language."""
+        adapter_class = self._adapters.get(name.lower())
         return adapter_class() if adapter_class else None
 
-    def get_executor(self, language: str) -> Optional[LanguageExecutor]:
-        """Get executor instance for language"""
-        executor_class = self._executors.get(language.lower())
-        return executor_class() if executor_class else None
+    def get_executor(self, name: str) -> Optional[Any]:
+        """Get executor instance for language."""
+        # Import executors dynamically to avoid circular imports
+        executor_mapping = {
+            "python": "python_executor.PythonExecutor",
+            "javascript": "javascript_executor.JavaScriptExecutor",
+            "java": "java_executor.JavaExecutor",
+            "c": "c_executor.CExecutor",
+            "cpp": "cpp_executor.CppExecutor",
+            "go": "go_executor.GoExecutor",
+            "rust": "rust_executor.RustExecutor",
+        }
+        
+        executor_path = executor_mapping.get(name.lower())
+        if not executor_path:
+            return None
+            
+        module_name, class_name = executor_path.rsplit(".", 1)
+        try:
+            # Import the executor module dynamically
+            from importlib import import_module
+            module = import_module(f".executors.{module_name}", package="eiplgrader.languages")
+            executor_class = getattr(module, class_name)
+            return executor_class()
+        except (ImportError, AttributeError):
+            return None
 
     def list_languages(self) -> List[str]:
-        """List all registered languages"""
+        """List all registered languages."""
         return sorted(self._adapters.keys())
+
+    def is_supported(self, name: str) -> bool:
+        """Check if language is supported."""
+        return name.lower() in self._adapters
 
 
 # Global registry instance

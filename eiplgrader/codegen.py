@@ -6,41 +6,6 @@ import openai
 import requests
 from .languages import language_registry
 
-DEFAULT_STUDENT_MODEL = """
-Pretend you are an introductory CS student learning python for the very first
-time. You have a rudimentary understanding of functions, loops, variables, and
-conditionals. You also don't know about type annotations.
-"""
-
-DEFAULT_SYSTEM_PROMPT_CGBG = """
-Create a function, called {function_name},
-according to the following prompt:
-
-Create a function {function_name} that {prompt}
-
-Include only the function and no additional test cases, code, or comments.
-Respond with the code for the function {function_name} in the following format
-which has the code wrapped in markdown of a python code block:
-
-```python
-<code here>
-```
-"""
-
-DEFAULT_SYSTEM_PROMPT_REDEF = """
-Create a function based on the following function name: def {function_name}({params}):
-pass. You are given the following assumptions about the arguments:
-{assumptions}.
-
-Generate the code only and generate it to be surrounded with markdown of a
-python code block. it is very important that you use the provided function name
-when generating the code. For example:
-
-```python
-def {function_name}({params}):
-    pass
-```
-"""
 
 DEFAULT_SYSTEM_PROMPT_ROBUSTNESS = """
 Generate {num_to_gen} different versions of this function with these formatting
@@ -136,14 +101,19 @@ class CodeGenerator:
         language: Optional[str] = None,
     ) -> Dict[str, Any]:
 
+        if gen_type not in ["cgbg", "redef"]:
+            raise ValueError(
+                f"Invalid gen_type: {gen_type}. Allowed types are: 'cgbg', 'redef'"
+            )
+
         if temperature < 0 or temperature > 1:
             raise ValueError(
                 f"Invalid temperature: {temperature}. Temperature must be between 0 and 1"
             )
 
-        if temperature < 1:
+        if temperature > 0:
             print(
-                f"WARNING: Low temperature ({temperature}) may lead to "
+                f"WARNING: Temperatures higher than 0 ({temperature}) may lead to "
                 "non-deterministic responses. Doing this is discouraged as it "
                 "may lead to non-deterministic grading."
             )
@@ -159,7 +129,7 @@ class CodeGenerator:
 
         self.model_request = self._create_model_request(model, temperature, num_to_gen)
 
-        # if the student is defining the function then we use the student
+        # NOTE: if the student is defining the function then we use the student
         # response as the function name
         if gen_type == "redef":
             function_name = student_response
@@ -173,6 +143,11 @@ class CodeGenerator:
             assumptions=assumptions,
             num_to_gen=num_to_gen,
         )
+
+        if num_to_gen > 1:
+            prompt += DEFAULT_SYSTEM_PROMPT_ROBUSTNESS.format(
+                num_to_gen=num_to_gen
+            )
 
         if self.model_request is None or not isinstance(
             self.model_request, ModelRequest
@@ -244,42 +219,6 @@ class CodeGenerator:
         raise ValueError(
             f"Invalid client type: {self.client_type}. Allowed types are: openai, anthropic, meta, ollama"
         )
-
-    def _create_prompt(
-        self,
-        student_response: str,
-        gen_type: str,
-        params: str,
-        assumptions: str,
-        function_name: str = "foo",
-        num_to_gen: int = 1,
-    ) -> str:
-        """Create the prompt based on generation type and other parameters."""
-
-        if gen_type not in ["cgbg", "redef"]:
-            raise ValueError(
-                f"Invalid gen_type: {gen_type}. Allowed types are: 'cgbg', 'redef'"
-            )
-
-        system_prompt = DEFAULT_STUDENT_MODEL
-
-        if gen_type == "redef":
-            system_prompt += DEFAULT_SYSTEM_PROMPT_REDEF.format(
-                function_name=student_response,
-                params=params if params else "",
-                assumptions=assumptions if assumptions else "",
-            )
-        else:
-            system_prompt += DEFAULT_SYSTEM_PROMPT_CGBG.format(
-                function_name=function_name, prompt=student_response
-            )
-
-        if num_to_gen > 1:
-            system_prompt += DEFAULT_SYSTEM_PROMPT_ROBUSTNESS.format(
-                num_to_gen=num_to_gen
-            )
-
-        return system_prompt
 
     def _run_segmentation(
         self,

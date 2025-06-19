@@ -19,6 +19,7 @@ class JavaExecutor(CompiledLanguageExecutor):
         function_name = test_case.get("function_name", "foo")
         params = test_case.get("parameters", {})
         inplace_mode = test_case.get("inplace", "0")
+        param_types = test_case.get("param_types", {})
 
         # Extract the Solution class content
         # Check if code already has proper structure
@@ -45,7 +46,11 @@ class JavaExecutor(CompiledLanguageExecutor):
 
         for i, param_name in enumerate(param_names):
             param_value = params[param_name]
-            java_type = self._infer_java_type(param_value)
+            # Check if type hint provided, otherwise infer
+            if param_name in param_types:
+                java_type = param_types[param_name]
+            else:
+                java_type = self._infer_java_type(param_value, param_name)
             parse_code = self._get_parse_code(
                 param_name, f"args[{i}]", java_type, param_value
             )
@@ -121,7 +126,7 @@ public class Test {{
 
         return test_harness
 
-    def _infer_java_type(self, value: Any) -> str:
+    def _infer_java_type(self, value: Any, param_name: str = None) -> str:
         """Infer Java type from Python value."""
         if isinstance(value, bool):
             return "boolean"
@@ -138,6 +143,18 @@ public class Test {{
                 return "double[]"
             elif value and isinstance(value[0], str):
                 return "String[]"
+            elif not value:
+                # Empty array - try to infer from parameter name
+                if param_name:
+                    param_lower = param_name.lower()
+                    if any(hint in param_lower for hint in ['string', 'str', 'text', 'word']):
+                        return "String[]"
+                    elif any(hint in param_lower for hint in ['double', 'float', 'decimal']):
+                        return "double[]"
+                    elif any(hint in param_lower for hint in ['bool', 'boolean', 'flag']):
+                        return "boolean[]"
+                # Default to int[] for numeric contexts
+                return "int[]"
             else:
                 return "Object[]"
         else:
@@ -156,21 +173,39 @@ public class Test {{
         elif java_type == "String":
             return f"String {var_name} = {arg_expr};"
         elif java_type == "int[]":
-            return f"""String[] {var_name}_parts = {arg_expr}.split(",");
-        int[] {var_name} = new int[{var_name}_parts.length];
-        for (int i = 0; i < {var_name}_parts.length; i++) {{
-            {var_name}[i] = Integer.parseInt({var_name}_parts[i].trim());
+            return f"""String {var_name}_str = {arg_expr};
+        int[] {var_name};
+        if ({var_name}_str.isEmpty()) {{
+            {var_name} = new int[0];
+        }} else {{
+            String[] {var_name}_parts = {var_name}_str.split(",");
+            {var_name} = new int[{var_name}_parts.length];
+            for (int i = 0; i < {var_name}_parts.length; i++) {{
+                {var_name}[i] = Integer.parseInt({var_name}_parts[i].trim());
+            }}
         }}"""
         elif java_type == "double[]":
-            return f"""String[] {var_name}_parts = {arg_expr}.split(",");
-        double[] {var_name} = new double[{var_name}_parts.length];
-        for (int i = 0; i < {var_name}_parts.length; i++) {{
-            {var_name}[i] = Double.parseDouble({var_name}_parts[i].trim());
+            return f"""String {var_name}_str = {arg_expr};
+        double[] {var_name};
+        if ({var_name}_str.isEmpty()) {{
+            {var_name} = new double[0];
+        }} else {{
+            String[] {var_name}_parts = {var_name}_str.split(",");
+            {var_name} = new double[{var_name}_parts.length];
+            for (int i = 0; i < {var_name}_parts.length; i++) {{
+                {var_name}[i] = Double.parseDouble({var_name}_parts[i].trim());
+            }}
         }}"""
         elif java_type == "String[]":
-            return f"""String[] {var_name} = {arg_expr}.split(",");
-        for (int i = 0; i < {var_name}.length; i++) {{
-            {var_name}[i] = {var_name}[i].trim();
+            return f"""String {var_name}_str = {arg_expr};
+        String[] {var_name};
+        if ({var_name}_str.isEmpty()) {{
+            {var_name} = new String[0];
+        }} else {{
+            {var_name} = {var_name}_str.split(",");
+            for (int i = 0; i < {var_name}.length; i++) {{
+                {var_name}[i] = {var_name}[i].trim();
+            }}
         }}"""
         else:
             return f"Object {var_name} = {arg_expr};"
@@ -230,20 +265,23 @@ public class Test {{
 
     def execute_test(self, code: str, test_case: Dict[str, Any]) -> Dict[str, Any]:
         """Compile and execute Java test."""
+        # Prepare code with test harness
+        prepared_code = self.prepare_code(code, test_case)
+        
         # Check if we need to use a simpler version without Gson
-        if "import com.google.gson.Gson" in code:
+        if "import com.google.gson.Gson" in prepared_code:
             # Try with Gson first
-            result = self._execute_with_gson(code, test_case)
+            result = self._execute_with_gson(prepared_code, test_case)
             if (
                 result.get("error", "").startswith("Compilation failed")
                 and "gson" in result.get("error", "").lower()
             ):
                 # Fallback to simple JSON
-                code = self._convert_to_simple_json(code)
-                return self._execute_with_simple_json(code, test_case)
+                prepared_code = self._convert_to_simple_json(prepared_code)
+                return self._execute_with_simple_json(prepared_code, test_case)
             return result
         else:
-            return self._execute_with_simple_json(code, test_case)
+            return self._execute_with_simple_json(prepared_code, test_case)
 
     def _execute_with_gson(
         self, code: str, test_case: Dict[str, Any]
@@ -422,7 +460,7 @@ public class Test {{
         code = code.replace("import com.google.gson.Gson;", "")
 
         # Replace Gson toJson with simple implementation
-        simple_json = """    private static String toJson(Object obj) {
+        simple_json = r"""    private static String toJson(Object obj) {
         if (obj == null) return "null";
         if (obj instanceof Boolean || obj instanceof Number) return obj.toString();
         if (obj instanceof String) return "\"" + obj + "\"";
