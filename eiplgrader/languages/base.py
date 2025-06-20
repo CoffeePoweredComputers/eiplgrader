@@ -8,7 +8,7 @@ from typing import List, Optional, Dict, Any
 @dataclass
 class LanguageConfig:
     """Configuration for a language implementation."""
-    
+
     name: str
     display_name: str
     file_extensions: List[str]

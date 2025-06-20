@@ -251,57 +251,6 @@ result = go_generator.generate_code(
 generated_code = result["code"]
 print(f"Generated Go code: {generated_code[0]}")
 
-# ============================================================================
-# Example 8: Advanced Python Function with Complex Logic
-# ============================================================================
-print("\n\n8. Advanced Python Function with Complex Logic")
-print("-" * 50)
-
-result = code_generator.generate_code(
-    student_response="analyze_text",  # Function name
-    gen_type="redef",
-    function_name="analyze_text",
-    assumptions="Takes a string of text and returns a dictionary with 'word_count', 'char_count', and 'sentence_count'"
-)
-
-generated_code = result["code"]
-print(f"Generated code: {generated_code[0]}")
-
-test_cases = [
-    {
-        "parameters": {"text": "Hello world. This is a test."}, 
-        "expected": {"word_count": 6, "char_count": 28, "sentence_count": 2}
-    },
-    {
-        "parameters": {"text": "Single sentence"}, 
-        "expected": {"word_count": 2, "char_count": 15, "sentence_count": 1}
-    },
-    {
-        "parameters": {"text": ""}, 
-        "expected": {"word_count": 0, "char_count": 0, "sentence_count": 0}
-    },
-]
-
-code_tester = CodeTester(
-    code=generated_code[0],
-    test_cases=test_cases,
-    function_name="analyze_text",
-    language="python"
-)
-test_result = code_tester.run_tests()
-print(f"Tests passed: {test_result.successes}/{test_result.testsRun}")
-
-# Show detailed results for debugging
-if test_result.failures > 0 or test_result.errors > 0:
-    print("\nDetailed test results:")
-    for result in test_result.test_results:
-        print(f"Test: {result['function_call']}")
-        print(f"  Expected: {result['expected_output']}")
-        print(f"  Got: {result['actual_output']}")
-        print(f"  Pass: {result['pass']}")
-        if result['error']:
-            print(f"  Error: {result['error']}")
-
 print("\n" + "="*80)
 print("FUNCTION REDEFINITION EXAMPLES COMPLETE")
 print("="*80)
@@ -313,3 +262,4 @@ print("4. Use params to specify function signature details")
 print("5. Generate multiple implementations for comparison")
 print("6. Test edge cases and boundary conditions")
 print("7. Works across all supported programming languages")
+

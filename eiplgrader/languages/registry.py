@@ -31,16 +31,19 @@ class LanguageRegistry:
             "go": "go_executor.GoExecutor",
             "haskell": "haskell_executor.HaskellExecutor",
         }
-        
+
         executor_path = executor_mapping.get(name.lower())
         if not executor_path:
             return None
-            
+
         module_name, class_name = executor_path.rsplit(".", 1)
         try:
             # Import the executor module dynamically
             from importlib import import_module
-            module = import_module(f".executors.{module_name}", package="eiplgrader.languages")
+
+            module = import_module(
+                f".executors.{module_name}", package="eiplgrader.languages"
+            )
             executor_class = getattr(module, class_name)
             return executor_class()
         except (ImportError, AttributeError):

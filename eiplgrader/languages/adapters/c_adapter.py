@@ -16,7 +16,7 @@ class CAdapter(LanguageAdapter):
             file_extensions=[".c"],
             run_command=["./a.out"],
             compile_command=["gcc", "-o", "a.out"],
-            test_timeout=30
+            test_timeout=30,
         )
 
     def generate_prompt(
@@ -24,6 +24,7 @@ class CAdapter(LanguageAdapter):
         student_response: str,
         function_name: str,
         gen_type: str = "cgbg",
+        num_to_gen: int = 1,
         **kwargs,
     ) -> str:
         """Generate C-specific prompt for LLM."""
@@ -44,11 +45,13 @@ int {function_name}() {{
     return 0;
 }}
 ```"""
-        
+
         elif gen_type == "redef":
-            function_signature = kwargs.get("function_signature", f"int {function_name}()")
+            function_signature = kwargs.get(
+                "function_signature", f"int {function_name}()"
+            )
             assumptions = kwargs.get("assumptions", "")
-            
+
             return f"""Pretend you are an introductory CS student learning C for the very first time. You know basic C syntax, pointers, and memory management.
 
 Create a function based on the following function signature: {function_signature}
@@ -64,7 +67,7 @@ when generating the code. For example:
     return 0;
 }}
 ```"""
-        
+
         else:
             return f"Generate a C function named {function_name}"
 
@@ -74,34 +77,34 @@ when generating the code. For example:
             r"```c\n(.*?)\n```",
             r"```\n(.*?)\n```",
         ]
-        print(llm_response) 
+        print(llm_response)
         for pattern in patterns:
             matches = re.findall(pattern, llm_response, re.DOTALL)
             if matches:
                 return [match.strip() for match in matches]
-        
+
         # If no code blocks found, return entire response
         return [llm_response.strip()] if llm_response.strip() else []
 
     def normalize_code(self, code: str) -> str:
         """Normalize C code by removing comments and standardizing format."""
         # Remove single-line comments
-        code = re.sub(r'//.*', '', code)
-        
+        code = re.sub(r"//.*", "", code)
+
         # Remove multi-line comments
-        code = re.sub(r'/\*.*?\*/', '', code, flags=re.DOTALL)
-        
+        code = re.sub(r"/\*.*?\*/", "", code, flags=re.DOTALL)
+
         # Remove empty lines and normalize whitespace
         lines = []
-        for line in code.split('\n'):
+        for line in code.split("\n"):
             stripped = line.strip()
             if stripped:
                 lines.append(stripped)
-        
+
         # Join lines and normalize whitespace
         if not lines:
             return ""
-        
-        normalized = ' '.join(lines)
-        normalized = re.sub(r'\s+', ' ', normalized)
+
+        normalized = " ".join(lines)
+        normalized = re.sub(r"\s+", " ", normalized)
         return normalized.strip()

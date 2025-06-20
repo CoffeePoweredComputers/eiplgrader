@@ -9,11 +9,11 @@ from .go_adapter import GoAdapter
 from .haskell_adapter import HaskellAdapter
 
 __all__ = [
-    "PythonAdapter", 
-    "JavaScriptAdapter", 
-    "JavaAdapter", 
-    "CAdapter", 
-    "CppAdapter", 
+    "PythonAdapter",
+    "JavaScriptAdapter",
+    "JavaAdapter",
+    "CAdapter",
+    "CppAdapter",
     "GoAdapter",
     "HaskellAdapter",
 ]

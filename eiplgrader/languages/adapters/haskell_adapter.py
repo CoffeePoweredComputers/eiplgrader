@@ -14,9 +14,9 @@ class HaskellAdapter(LanguageAdapter):
             name="haskell",
             display_name="Haskell",
             file_extensions=[".hs"],
-            run_command=None,  # Haskell is compiled, no interpreter
+            run_command=[],  # Haskell is compiled, no interpreter
             compile_command=["ghc"],
-            test_timeout=30
+            test_timeout=30,
         )
 
     def generate_prompt(
@@ -24,6 +24,7 @@ class HaskellAdapter(LanguageAdapter):
         student_response: str,
         function_name: str,
         gen_type: str = "cgbg",
+        num_to_gen: int = 1,
         **kwargs,
     ) -> str:
         """Generate Haskell-specific prompt for LLM."""
@@ -43,11 +44,11 @@ which has the code wrapped in markdown of a haskell code block:
 ```haskell
 {function_name} x = x
 ```"""
-        
+
         elif gen_type == "redef":
             function_signature = kwargs.get("function_signature", f"{function_name} =")
             assumptions = kwargs.get("assumptions", "")
-            
+
             return f"""Pretend you are an introductory CS student learning Haskell for the very first time. You know basic Haskell syntax, pattern matching, and recursion.
 
 Create a function based on the following function signature: {function_signature}
@@ -62,7 +63,7 @@ when generating the code. For example:
 {function_signature}
     -- implementation here
 ```"""
-        
+
         else:
             return f"Generate a Haskell function named {function_name}"
 
@@ -73,54 +74,56 @@ when generating the code. For example:
             r"```hs\n(.*?)\n```",
             r"```\n(.*?)\n```",
         ]
-        
+
         for pattern in patterns:
             matches = re.findall(pattern, llm_response, re.DOTALL)
             if matches:
                 return [match.strip() for match in matches]
-        
+
         # If no code blocks found, return entire response
         return [llm_response.strip()] if llm_response.strip() else []
 
     def normalize_code(self, code: str) -> str:
         """Normalize Haskell code by removing comments and standardizing format."""
         lines = []
-        
+
         # Process each line
-        for line in code.split('\n'):
+        for line in code.split("\n"):
             # Remove single-line comments (-- comment)
-            if '--' in line:
+            if "--" in line:
                 # Handle string literals that might contain --
                 in_string = False
                 comment_start = -1
                 i = 0
                 while i < len(line):
-                    if line[i] == '"' and (i == 0 or line[i-1] != '\\'):
+                    if line[i] == '"' and (i == 0 or line[i - 1] != "\\"):
                         in_string = not in_string
-                    elif not in_string and i < len(line) - 1 and line[i:i+2] == '--':
+                    elif (
+                        not in_string and i < len(line) - 1 and line[i : i + 2] == "--"
+                    ):
                         comment_start = i
                         break
                     i += 1
-                
+
                 if comment_start >= 0:
                     line = line[:comment_start]
-            
+
             # Skip empty lines and whitespace-only lines
             stripped = line.strip()
             if stripped:
                 lines.append(stripped)
-        
+
         # Join lines and normalize whitespace
         if not lines:
             return ""
-        
+
         # For multi-line functions, preserve some structure
-        normalized = ' '.join(lines)
-        
+        normalized = " ".join(lines)
+
         # Remove multiple spaces but preserve structure around operators
-        normalized = re.sub(r'\s+', ' ', normalized)
-        
+        normalized = re.sub(r"\s+", " ", normalized)
+
         # Remove {- -} style block comments
-        normalized = re.sub(r'{-.*?-}', '', normalized, flags=re.DOTALL)
-        
+        normalized = re.sub(r"{-.*?-}", "", normalized, flags=re.DOTALL)
+
         return normalized.strip()

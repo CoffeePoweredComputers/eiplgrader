@@ -4,7 +4,7 @@ import json
 import os
 import subprocess
 import tempfile
-from typing import Dict, Any, Tuple
+from typing import Dict, Any, Tuple, Optional
 from ..executors.base_executors import CompiledLanguageExecutor
 
 
@@ -126,7 +126,7 @@ public class Test {{
 
         return test_harness
 
-    def _infer_java_type(self, value: Any, param_name: str = None) -> str:
+    def _infer_java_type(self, value: Any, param_name: Optional[str] = None) -> str:
         """Infer Java type from Python value."""
         if isinstance(value, bool):
             return "boolean"
@@ -147,11 +147,18 @@ public class Test {{
                 # Empty array - try to infer from parameter name
                 if param_name:
                     param_lower = param_name.lower()
-                    if any(hint in param_lower for hint in ['string', 'str', 'text', 'word']):
+                    if any(
+                        hint in param_lower
+                        for hint in ["string", "str", "text", "word"]
+                    ):
                         return "String[]"
-                    elif any(hint in param_lower for hint in ['double', 'float', 'decimal']):
+                    elif any(
+                        hint in param_lower for hint in ["double", "float", "decimal"]
+                    ):
                         return "double[]"
-                    elif any(hint in param_lower for hint in ['bool', 'boolean', 'flag']):
+                    elif any(
+                        hint in param_lower for hint in ["bool", "boolean", "flag"]
+                    ):
                         return "boolean[]"
                 # Default to int[] for numeric contexts
                 return "int[]"
@@ -267,7 +274,7 @@ public class Test {{
         """Compile and execute Java test."""
         # Prepare code with test harness
         prepared_code = self.prepare_code(code, test_case)
-        
+
         # Check if we need to use a simpler version without Gson
         if "import com.google.gson.Gson" in prepared_code:
             # Try with Gson first

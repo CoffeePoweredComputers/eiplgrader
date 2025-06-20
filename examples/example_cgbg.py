@@ -41,7 +41,8 @@ code_generator = CodeGenerator(api_key, language="python")
 result = code_generator.generate_code(
     student_response="that adds two numbers and returns the result",
     function_name="add_numbers",
-    gen_type="cgbg"  # Explicitly specify CGBG mode
+    gen_type="cgbg",  # Explicitly specify CGBG mode
+    temperature=0.0   # Deterministic output
 )
 
 generated_code = result["code"]
@@ -71,7 +72,8 @@ print("-" * 50)
 
 result = code_generator.generate_code(
     student_response="that takes a list of numbers and returns the sum of all even numbers",
-    function_name="sum_even_numbers"
+    function_name="sum_even_numbers",
+    temperature=0.0
 )
 
 generated_code = result["code"]
@@ -103,7 +105,8 @@ js_generator = CodeGenerator(api_key, language="javascript")
 
 result = js_generator.generate_code(
     student_response="that counts the number of vowels in a string (a, e, i, o, u)",
-    function_name="countVowels"
+    function_name="countVowels",
+    temperature=0.0
 )
 
 generated_code = result["code"]
@@ -135,7 +138,8 @@ java_generator = CodeGenerator(api_key, language="java")
 
 result = java_generator.generate_code(
     student_response="that finds the second largest number in an array of integers",
-    function_name="findSecondLargest"
+    function_name="findSecondLargest",
+    temperature=0.0
 )
 
 generated_code = result["code"]
@@ -157,26 +161,38 @@ test_result = code_tester.run_tests()
 print(f"Tests passed: {test_result.successes}/{test_result.testsRun}")
 
 # ============================================================================
-# Example 5: C++ CGBG - Algorithm Implementation
+# Example 5: C++ CGBG - Algorithm Implementation (Code Generation Only)
 # ============================================================================
-print("\n\n5. C++ CGBG - Algorithm Implementation")
+print("\n\n5. C CGBG - Algorithm Implementation")
 print("-" * 50)
 
-cpp_generator = CodeGenerator(api_key, language="cpp")
+cpp_generator = CodeGenerator(api_key, language="c")
 
 result = cpp_generator.generate_code(
     student_response="that implements bubble sort to sort an array of integers in ascending order",
-    function_name="bubbleSort"
+    function_name="bubbleSort",
+    temperature=0.0
 )
 
 generated_code = result["code"]
 print(f"Generated C++ code: {generated_code[0]}")
 
-# Note: C++ testing would require compilation
-print("Note: C++ code requires compilation before testing")
+test_cases = [
+    {"parameters": {"arr": [3, 1, 4, 1, 5], "n": 5}, "expected": None},  # In-place sort
+]
+
+code_tester = CodeTester(
+    code=generated_code[0],
+    test_cases=test_cases,
+    function_name="bubbleSort",
+    language="cpp",
+    inplace="1"  # Bubble sort modifies array in-place
+)
+test_result = code_tester.run_tests()
+print(f"Tests passed: {test_result.successes}/{test_result.testsRun}")
 
 # ============================================================================
-# Example 6: Go CGBG - Concurrent Processing
+# Example 6: Go CGBG - String Processing
 # ============================================================================
 print("\n\n6. Go CGBG - String Processing")
 print("-" * 50)
@@ -185,22 +201,52 @@ go_generator = CodeGenerator(api_key, language="go")
 
 result = go_generator.generate_code(
     student_response="that checks if a string is a palindrome (reads the same forwards and backwards)",
-    function_name="isPalindrome"
+    function_name="isPalindrome",
+    temperature=0.0
 )
 
 generated_code = result["code"]
 print(f"Generated Go code: {generated_code[0]}")
 
+test_cases = [
+    {"parameters": {"s": "racecar"}, "expected": True},
+    {"parameters": {"s": "hello"}, "expected": False},
+    {"parameters": {"s": "a"}, "expected": True},
+    {"parameters": {"s": ""}, "expected": True},
+]
+
+code_tester = CodeTester(
+    code=generated_code[0],
+    test_cases=test_cases,
+    function_name="isPalindrome",
+    language="go"
+)
+test_result = code_tester.run_tests()
+print(f"Tests passed: {test_result.successes}/{test_result.testsRun}")
+
+# Show errors if any
+if test_result.failures > 0 or test_result.errors > 0:
+    print("Go test failures:")
+    for result in test_result.test_results:
+        if not result["pass"]:
+            print(f"  Test: {result.get('function_call', 'Unknown')}")
+            print(f"  Expected: {result['expected_output']}")
+            print(f"  Got: {result['actual_output']}")
+            if result['error']:
+                print(f"  Error: {result['error']}")
+            print()
+
 # ============================================================================
 # Example 7: Multiple Code Generation for Robustness
 # ============================================================================
-print("\n\n7. Multiple Code Generation for Robustness Testing")
+print("\n\n7. Multiple Code Generation (Python) for Robustness Testing")
 print("-" * 50)
 
 result = code_generator.generate_code(
     student_response="that calculates the factorial of a non-negative integer",
     function_name="factorial",
-    num_to_gen=3  # Generate 3 different implementations
+    num_to_gen=3,  # Generate 3 different implementations
+    temperature=0.0
 )
 
 generated_codes = result["code"]
@@ -233,37 +279,6 @@ for i, code in enumerate(generated_codes):
             if not result["pass"]:
                 print(f"  {result['function_call']}: expected {result['expected_output']}, got {result['actual_output']}")
 
-# ============================================================================
-# Example 8: Complex Problem - Fibonacci Sequence
-# ============================================================================
-print("\n\n8. Complex Problem - Fibonacci Sequence")
-print("-" * 50)
-
-result = code_generator.generate_code(
-    student_response="that calculates the nth number in the Fibonacci sequence where F(0)=0, F(1)=1, and F(n)=F(n-1)+F(n-2)",
-    function_name="fibonacci"
-)
-
-generated_code = result["code"]
-print(f"Generated code: {generated_code[0]}")
-
-test_cases = [
-    {"parameters": {"n": 0}, "expected": 0},   # F(0) = 0
-    {"parameters": {"n": 1}, "expected": 1},   # F(1) = 1
-    {"parameters": {"n": 2}, "expected": 1},   # F(2) = 1
-    {"parameters": {"n": 5}, "expected": 5},   # F(5) = 5
-    {"parameters": {"n": 8}, "expected": 21},  # F(8) = 21
-]
-
-code_tester = CodeTester(
-    code=generated_code[0],
-    test_cases=test_cases,
-    function_name="fibonacci",
-    language="python"
-)
-test_result = code_tester.run_tests()
-print(f"Tests passed: {test_result.successes}/{test_result.testsRun}")
-
 print("\n" + "="*80)
 print("CGBG EXAMPLES COMPLETE")
 print("="*80)
@@ -274,3 +289,11 @@ print("3. Use realistic test cases that cover edge cases")
 print("4. Generate multiple implementations for robustness")
 print("5. Test across different programming languages")
 print("6. Handle both simple and complex algorithmic problems")
+print("\nLanguage Testing Status:")
+print("✅ Python: Fully functional (interpretation)")
+print("✅ JavaScript: Fully functional (Node.js)")
+print("✅ Java: Fully functional (compilation)")
+print("✅ Go: Functional (JSON input fixed)")
+print("🔧 C++: Testing enabled (may need refinement)")
+print("🔧 C: Code generation only (testing in development)")
+print("🔧 Haskell: Code generation only (testing in development)")

@@ -16,7 +16,7 @@ class PythonAdapter(LanguageAdapter):
             display_name="Python",
             file_extensions=[".py"],
             run_command=["python3"],
-            test_timeout=30
+            test_timeout=30,
         )
 
     def generate_prompt(
@@ -24,6 +24,7 @@ class PythonAdapter(LanguageAdapter):
         student_response: str,
         function_name: str,
         gen_type: str = "cgbg",
+        num_to_gen: int = 1,
         **kwargs,
     ) -> str:
         """Generate Python-specific prompt for LLM."""
@@ -43,11 +44,13 @@ which has the code wrapped in markdown of a python code block:
 def {function_name}():
     pass
 ```"""
-        
+
         elif gen_type == "redef":
-            function_signature = kwargs.get("function_signature", f"def {function_name}():")
+            function_signature = kwargs.get(
+                "function_signature", f"def {function_name}():"
+            )
             assumptions = kwargs.get("assumptions", "")
-            
+
             return f"""Pretend you are an introductory CS student learning Python for the very first time. You also don't know about type annotations.
 
 Create a function based on the following function signature: {function_signature}
@@ -62,7 +65,7 @@ when generating the code. For example:
 {function_signature}
     pass
 ```"""
-        
+
         else:
             return f"Generate a Python function named {function_name}"
 
@@ -70,35 +73,35 @@ when generating the code. For example:
         """Extract Python code blocks from LLM response."""
         patterns = [
             r"```python\n(.*?)\n```",
-            r"```py\n(.*?)\n```", 
+            r"```py\n(.*?)\n```",
             r"```\n(.*?)\n```",
         ]
-        
+
         for pattern in patterns:
             matches = re.findall(pattern, llm_response, re.DOTALL)
             if matches:
                 return [match.strip() for match in matches]
-        
+
         # If no code blocks found, return entire response
         return [llm_response.strip()] if llm_response.strip() else []
 
     def normalize_code(self, code: str) -> str:
         """Normalize Python code by removing comments and standardizing format."""
         lines = []
-        for line in code.split('\n'):
+        for line in code.split("\n"):
             # Remove comments (everything after #)
-            if '#' in line:
-                line = line[:line.index('#')]
-            
+            if "#" in line:
+                line = line[: line.index("#")]
+
             # Skip empty lines and whitespace-only lines
             stripped = line.strip()
             if stripped:
                 lines.append(stripped)
-        
+
         # Join lines and normalize whitespace
         if not lines:
             return ""
-        
-        normalized = ' '.join(lines)
-        normalized = re.sub(r'\s+', ' ', normalized)
+
+        normalized = " ".join(lines)
+        normalized = re.sub(r"\s+", " ", normalized)
         return normalized.strip()

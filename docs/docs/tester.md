@@ -72,6 +72,8 @@ Each language has its own adapter and executor that handle language-specific com
 ### Testing a Single Function
 
 ```python
+from eiplgrader.tester import CodeTester
+
 code = """
 def foo(a, b):
     return a + b
@@ -91,6 +93,8 @@ test_result = code_tester.run_tests()
 When testing multiple functions (e.g., from `num_to_gen > 1`), the tester automatically handles testing each variant:
 
 ```python
+from eiplgrader.tester import CodeTester
+
 code_variants = [
     "def foo(a, b):\n    return a + b",
     "def foo(a, b):\n    sum = a + b\n    return sum"
@@ -110,6 +114,8 @@ test_results = code_tester.run_tests()  # Returns a list of results, one per var
 For functions that modify their inputs in-place:
 
 ```python
+from eiplgrader.tester import CodeTester
+
 code = """
 def foo(lst):
     lst.append(5)
@@ -126,6 +132,8 @@ test_result = code_tester.run_tests()
 ### Testing Code in Different Languages
 
 ```python
+from eiplgrader.tester import CodeTester
+
 # JavaScript example
 javascript_code = """
 function foo(a, b) {

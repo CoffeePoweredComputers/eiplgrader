@@ -145,9 +145,7 @@ class CodeGenerator:
         )
 
         if num_to_gen > 1:
-            prompt += DEFAULT_SYSTEM_PROMPT_ROBUSTNESS.format(
-                num_to_gen=num_to_gen
-            )
+            prompt += DEFAULT_SYSTEM_PROMPT_ROBUSTNESS.format(num_to_gen=num_to_gen)
 
         if self.model_request is None or not isinstance(
             self.model_request, ModelRequest

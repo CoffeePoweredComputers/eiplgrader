@@ -16,7 +16,7 @@ class JavaAdapter(LanguageAdapter):
             file_extensions=[".java"],
             run_command=["java"],
             compile_command=["javac"],
-            test_timeout=30
+            test_timeout=30,
         )
 
     def generate_prompt(
@@ -24,6 +24,7 @@ class JavaAdapter(LanguageAdapter):
         student_response: str,
         function_name: str,
         gen_type: str = "cgbg",
+        num_to_gen: int = 1,
         **kwargs,
     ) -> str:
         """Generate Java-specific prompt for LLM."""
@@ -44,11 +45,13 @@ public static int {function_name}() {{
     return 0;
 }}
 ```"""
-        
+
         elif gen_type == "redef":
-            function_signature = kwargs.get("function_signature", f"public static void {function_name}()")
+            function_signature = kwargs.get(
+                "function_signature", f"public static void {function_name}()"
+            )
             assumptions = kwargs.get("assumptions", "")
-            
+
             return f"""Pretend you are an introductory CS student learning Java for the very first time. You know basic Java syntax and object-oriented concepts.
 
 Create a method based on the following method signature: {function_signature}
@@ -64,7 +67,7 @@ when generating the code. For example:
     // implementation here
 }}
 ```"""
-        
+
         else:
             return f"Generate a Java method named {function_name}"
 
@@ -74,34 +77,34 @@ when generating the code. For example:
             r"```java\n(.*?)\n```",
             r"```\n(.*?)\n```",
         ]
-        
+
         for pattern in patterns:
             matches = re.findall(pattern, llm_response, re.DOTALL)
             if matches:
                 return [match.strip() for match in matches]
-        
+
         # If no code blocks found, return entire response
         return [llm_response.strip()] if llm_response.strip() else []
 
     def normalize_code(self, code: str) -> str:
         """Normalize Java code by removing comments and standardizing format."""
         # Remove single-line comments
-        code = re.sub(r'//.*', '', code)
-        
+        code = re.sub(r"//.*", "", code)
+
         # Remove multi-line comments
-        code = re.sub(r'/\*.*?\*/', '', code, flags=re.DOTALL)
-        
+        code = re.sub(r"/\*.*?\*/", "", code, flags=re.DOTALL)
+
         # Remove empty lines and normalize whitespace
         lines = []
-        for line in code.split('\n'):
+        for line in code.split("\n"):
             stripped = line.strip()
             if stripped:
                 lines.append(stripped)
-        
+
         # Join lines and normalize whitespace
         if not lines:
             return ""
-        
-        normalized = ' '.join(lines)
-        normalized = re.sub(r'\s+', ' ', normalized)
+
+        normalized = " ".join(lines)
+        normalized = re.sub(r"\s+", " ", normalized)
         return normalized.strip()

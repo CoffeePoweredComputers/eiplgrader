@@ -6,7 +6,7 @@ from typing import Dict, Any
 from ..executors.base_executors import InterpretedLanguageExecutor
 
 
-class JavascriptExecutor(InterpretedLanguageExecutor):
+class JavaScriptExecutor(InterpretedLanguageExecutor):
     """Executor for JavaScript language code testing."""
 
     def __init__(self):

@@ -26,7 +26,7 @@ class GoExecutor(CompiledLanguageExecutor):
             code = "package main\n\n" + code
 
         # Add necessary imports if not present
-        imports_needed = ["fmt", "encoding/json", "os"]
+        imports_needed = ["fmt", "encoding/json", "os", "bufio"]
         if "error" in code and "errors" not in code:
             imports_needed.append("errors")
 
@@ -46,8 +46,11 @@ class GoExecutor(CompiledLanguageExecutor):
         main_code = f"""
 func main() {{
     // Read test parameters from stdin
+    scanner := bufio.NewScanner(os.Stdin)
     var input string
-    fmt.Scanln(&input)
+    if scanner.Scan() {{
+        input = scanner.Text()
+    }}
     
     var params map[string]interface{{}}
     err := json.Unmarshal([]byte(input), &params)

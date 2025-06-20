@@ -52,7 +52,7 @@ pip install eiplgrader
 
 An example script is provided in
 the
-[example.py](https://github.com/CoffeePoweredComputers/eiplgrader/blob/master/example.py)
+[example.py](https://github.com/CoffeePoweredComputers/eiplgrader/blob/master/examples/example.py)
 script in the repository.
 
 
