@@ -28,7 +28,7 @@ class GoAdapter(LanguageAdapter):
     ) -> str:
         """Generate Go-specific prompt for LLM."""
         if gen_type == "cgbg":
-            return f"""Pretend you are an introductory CS student learning Go for the very first time. You know basic Go syntax, goroutines, and channels.
+            return f"""Pretend you are an introductory CS student learning Go for the very first time. You know basic Go syntax, goroutines, and channels. Do not use overly complex features unless absolutely necessary. Additionally, do not do multiple complex operations on a single line. Break operations into multiple lines wherever possible.
 
 Create a function, called {function_name},
 according to the following prompt:

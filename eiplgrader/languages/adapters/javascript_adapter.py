@@ -28,7 +28,7 @@ class JavaScriptAdapter(LanguageAdapter):
     ) -> str:
         """Generate JavaScript-specific prompt for LLM."""
         if gen_type == "cgbg":
-            return f"""Pretend you are an introductory CS student learning JavaScript for the very first time. You are familiar with ES6+ syntax including arrow functions and async/await.
+            return f"""Pretend you are an introductory CS student learning JavaScript for the very first time. You are familiar with ES6+ syntax including arrow functions and async/await. Do not use any complex functionality that combines multiple operations on a single line. Break operations into multiple lines wherever possible. 
 
 Create a function, called {function_name},
 according to the following prompt:

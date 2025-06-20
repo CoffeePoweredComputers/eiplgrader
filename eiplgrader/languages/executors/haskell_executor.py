@@ -40,32 +40,46 @@ showList' xs = "[" ++ intercalate ", " (map show xs) ++ "]"
 showString' :: String -> String
 showString' s = "\"" ++ s ++ "\""
 
--- Helper to parse simple JSON arrays
-parseIntList :: String -> Maybe [Int]
-parseIntList s = case dropWhile (/= '[') s of
-    ('[':rest) -> parseInts $ takeWhile (/= ']') rest
-    _ -> Nothing
-  where
-    parseInts str = sequence $ map readMaybe $ filter (not . null) $ splitOn ',' str
-    splitOn c s = case dropWhile (== ' ') s of
-        "" -> []
-        s' -> w : splitOn c s''
-            where (w, s'') = break (== c) s'
+-- Super simple JSON parsing (no external libraries)
+extractValue :: String -> String -> String
+extractValue key json = 
+    let searchStr = '"' : key ++ "":"
+        afterKey = dropWhile (not . (searchStr `isPrefixOf`)) $ words json
+    in case afterKey of
+        (w:_) -> takeWhile (`notElem` ",}") $ dropWhile (`elem` ": ") $ drop (length searchStr) w
+        [] -> error $ "Key not found: " ++ key
 
--- Helper to parse simple JSON objects with string keys
-parseParam :: Read a => String -> String -> Maybe a
-parseParam key jsonStr = 
-    case dropWhile (/= '"') $ dropWhile (/= ':') $ dropWhile (/= key) jsonStr of
-        (':':' ':rest) -> readMaybe $ takeWhile (/= ',') $ takeWhile (/= '}') rest
-        (':':rest) -> readMaybe $ takeWhile (/= ',') $ takeWhile (/= '}') rest
-        _ -> Nothing
+getInt :: String -> String -> Int
+getInt key json = read $ extractValue key json
 
-parseStringParam :: String -> String -> Maybe String
-parseStringParam key jsonStr = 
-    case dropWhile (/= '"') $ dropWhile (/= ':') $ dropWhile (/= key) jsonStr of
-        (':':' ':'"':rest) -> Just $ takeWhile (/= '"') rest
-        (':':'"':rest) -> Just $ takeWhile (/= '"') rest
-        _ -> Nothing
+getString :: String -> String -> String  
+getString key json = 
+    let val = extractValue key json
+    in if head val == '"' && last val == '"' 
+       then init $ tail val  -- Remove quotes
+       else val
+
+getDouble :: String -> String -> Double
+getDouble key json = read $ extractValue key json
+
+getIntArray :: String -> String -> [Int]
+getIntArray key json = 
+    let val = extractValue key json
+        cleaned = filter (`notElem` "[],") val
+    in map read $ words cleaned
+
+getBool :: String -> String -> Bool
+getBool key json = 
+    let val = extractValue key json
+    in case val of
+        "true" -> True
+        "false" -> False
+        _ -> error $ "Invalid bool value: " ++ val
+
+isPrefixOf :: Eq a => [a] -> [a] -> Bool
+isPrefixOf [] _ = True
+isPrefixOf _ [] = False
+isPrefixOf (x:xs) (y:ys) = x == y && isPrefixOf xs ys
 
 """
 
@@ -82,19 +96,15 @@ parseStringParam key jsonStr =
         # Generate parameter parsing code
         for i, (name, value) in enumerate(zip(param_names, param_values)):
             if isinstance(value, int):
-                prepared_code += (
-                    f'    let Just {name} = parseParam "{name}" inputStr :: Maybe Int\n'
-                )
+                prepared_code += f'    let {name} = getInt "{name}" inputStr\n'
             elif isinstance(value, float):
-                prepared_code += f'    let Just {name} = parseParam "{name}" inputStr :: Maybe Double\n'
+                prepared_code += f'    let {name} = getDouble "{name}" inputStr\n'
             elif isinstance(value, str):
-                prepared_code += (
-                    f'    let Just {name} = parseStringParam "{name}" inputStr\n'
-                )
+                prepared_code += f'    let {name} = getString "{name}" inputStr\n'
             elif isinstance(value, bool):
-                prepared_code += f'    let Just {name} = parseParam "{name}" inputStr :: Maybe Bool\n'
+                prepared_code += f'    let {name} = getBool "{name}" inputStr\n'
             elif isinstance(value, list) and all(isinstance(x, int) for x in value):
-                prepared_code += f"    let Just {name} = parseIntList $ dropWhile (/= '[') $ dropWhile (/= ':') $ dropWhile (/= '{name}') inputStr\n"
+                prepared_code += f'    let {name} = getIntArray "{name}" inputStr\n'
             elif isinstance(value, list):
                 # For now, handle other list types as strings
                 prepared_code += f"    let {name} = {value}\n"

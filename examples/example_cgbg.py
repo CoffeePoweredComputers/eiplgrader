@@ -178,13 +178,24 @@ generated_code = result["code"]
 print(f"Generated C code: {generated_code[0]}")
 
 test_cases = [
-    {"parameters": {"arr": [3, 1, 4, 1, 5], "n": 5}, "expected": [1, 1, 3, 4, 5]},  # In-place sort
+    {
+        "parameters": {
+            "arr": [3, 1, 4, 1, 5], 
+            "n": 5
+        }, 
+        "expected": [1, 1, 3, 4, 5]
+    },  # In-place sort
 ]
 
 code_tester = CodeTester(
     code=generated_code[0],
     test_cases=test_cases,
     function_name="bubbleSort",
+    parameter_types={
+        "arr": "int[]",  # Array of integers
+        "n": "int"       # Size of the array
+    },
+    expected_type="int[]",  # Expecting an array of integers
     language="c",
     inplace="1"  # Bubble sort modifies array in-place
 )

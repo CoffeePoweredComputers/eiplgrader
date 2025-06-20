@@ -43,9 +43,29 @@ Test cases must be provided as a list of dictionaries, each containing:
         "param2": value2,
         # ...
     },
-    "expected": expected_result
+    "expected": expected_result,
+    # Optional: explicit type information (recommended for compiled languages)
+    "parameter_types": {
+        "param1": "int",
+        "param2": "string",
+        # ...
+    },
+    "expected_type": "int"  # Type of expected result
 }
 ```
+
+### Supported Type Strings
+
+For compiled languages (C, C++, Java, Haskell), you can specify explicit types:
+
+- **Basic types**: `"int"`, `"double"`, `"float"`, `"string"`, `"bool"`
+- **Array types**: `"int[]"`, `"double[]"`, `"string[]"`
+- **Language-specific types**: 
+  - Java: `"Integer"`, `"String"`, `"Boolean"`
+  - C/C++: `"char*"`, `"int*"`
+  - Haskell: `"Int"`, `"Double"`, `"String"`, `"[Int]"`
+
+When `parameter_types` is provided, the executor uses explicit type handling instead of runtime type inference, making execution more reliable and faster.
 
 ## In-place Operation Modes
 

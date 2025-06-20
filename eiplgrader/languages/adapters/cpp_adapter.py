@@ -29,7 +29,7 @@ class CppAdapter(LanguageAdapter):
     ) -> str:
         """Generate C++-specific prompt for LLM."""
         if gen_type == "cgbg":
-            return f"""Pretend you are an introductory CS student learning C++ for the very first time. You know basic C++ syntax, object-oriented programming, and STL containers.
+            return f"""Pretend you are an introductory CS student learning C++ for the very first time. You know basic C++ syntax, object-oriented programming, and STL containers. Do not use auto unless it is absolutely needed. Additionally, do not do mutliple complex operations on a single line. Break operations into multiple lines wherever possible.
 
 Create a function, called {function_name},
 according to the following prompt:

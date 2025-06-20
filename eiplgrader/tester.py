@@ -92,6 +92,7 @@ class CodeTester:
         self.function_name = function_name
         self.language = language
 
+
     def run_tests(self) -> Union[CodeTestResult, List[CodeTestResult]]:
         """Run tests on the provided code and return results."""
         if isinstance(self.code, list):

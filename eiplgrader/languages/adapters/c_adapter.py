@@ -29,7 +29,7 @@ class CAdapter(LanguageAdapter):
     ) -> str:
         """Generate C-specific prompt for LLM."""
         if gen_type == "cgbg":
-            return f"""Pretend you are an introductory CS student learning C for the very first time. You know basic C syntax, pointers, and memory management.
+            return f"""Pretend you are an introductory CS student learning C for the very first time. You know basic C syntax, pointers, and memory management. Do not do things in a single line. Break operations into multiple lines wherever possible.
 
 Create a function, called {function_name},
 according to the following prompt:

@@ -29,7 +29,7 @@ class PythonAdapter(LanguageAdapter):
     ) -> str:
         """Generate Python-specific prompt for LLM."""
         if gen_type == "cgbg":
-            return f"""Pretend you are an introductory CS student learning Python for the very first time. You also don't know about type annotations.
+            return f"""Pretend you are an introductory CS student learning Python for the very first time. You also don't know about type annotations. Do not use list comprehension, lambda's or maps --- use iteration instead. Additionally, do not consolidate multiple complex operations into a single line. Break things into multiple distinct lines wherever possible.
 
 Create a function, called {function_name},
 according to the following prompt:
