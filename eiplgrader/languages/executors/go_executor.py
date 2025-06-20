@@ -180,7 +180,7 @@ class GoExecutor(CompiledLanguageExecutor):
                 try:
                     # Try to parse as JSON string
                     result["actual"] = json.loads(output)
-                except:
+                except Exception:
                     # If it fails, use the raw output
                     result["actual"] = output
 
