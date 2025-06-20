@@ -7,14 +7,14 @@ import os
 import json
 from copy import deepcopy
 from typing import Dict, Any
-from ..base import InterpretedLanguageExecutor
+from .base_executors import InterpretedLanguageExecutor
 
 
 class PythonExecutor(InterpretedLanguageExecutor):
     """Executor for Python language code testing."""
 
     def __init__(self):
-        super().__init__()
+        super().__init__(interpreter_cmd=["python"], file_ext=".py")
         self.temp_module = None
         self.temp_files = []
 
@@ -28,7 +28,7 @@ class PythonExecutor(InterpretedLanguageExecutor):
         """Execute Python code with test case."""
         # Auto-infer types if not provided
         test_case = self.validate_or_infer_types(test_case)
-        
+
         try:
             # Write code to temporary file
             with tempfile.NamedTemporaryFile(delete=False, suffix=".py") as temp_file:

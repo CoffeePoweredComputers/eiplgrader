@@ -10,7 +10,9 @@ class CExecutor(CompiledLanguageExecutor):
     """Executor for C language code testing."""
 
     def __init__(self):
-        super().__init__(compile_cmd=["gcc"], run_cmd=None, file_ext=".c", use_json_input=False)
+        super().__init__(
+            compile_cmd=["gcc"], run_cmd=None, file_ext=".c", use_json_input=False
+        )
 
     def prepare_code(self, code: str, test_case: Dict[str, Any]) -> str:
         """Prepare C code for execution with test harness."""
@@ -29,8 +31,7 @@ class CExecutor(CompiledLanguageExecutor):
 
         if errors:
             error_msg = "Missing required type information:\n"
-            for error in errors:
-                error_msg += f"- {error}\n"
+            error_msg += "\n".join(f"- {error}" for error in errors) + "\n"
             error_msg += "\nTest case must include:\n"
             error_msg += "{\n"
             error_msg += '    "parameters": {...},\n'
@@ -42,7 +43,7 @@ class CExecutor(CompiledLanguageExecutor):
 
         # Validate all parameters have types
         for param_name in parameters:
-            if param_name not in parameter_types:
+            if parameter_types is None or param_name not in parameter_types:
                 raise ValueError(
                     f"Missing required type information:\n- parameter_types['{param_name}'] not provided"
                 )
@@ -64,7 +65,7 @@ class CExecutor(CompiledLanguageExecutor):
         param_names = list(parameters.keys())
 
         for name in param_names:
-            param_type = parameter_types.get(name)
+            param_type = parameter_types.get(name) if parameter_types else None
             value = parameters[name]
             main_code += self._generate_param_declaration(name, param_type, value)
 
@@ -72,9 +73,9 @@ class CExecutor(CompiledLanguageExecutor):
         main_code += self._generate_function_call(
             function_name,
             param_names,
-            expected_type,
+            expected_type or "",
             inplace_mode,
-            parameter_types,
+            parameter_types or {},
             parameters,
         )
 
@@ -86,10 +87,13 @@ class CExecutor(CompiledLanguageExecutor):
         # Combine everything
         return code + "\n" + main_code
 
-
-    def _generate_param_declaration(self, name: str, c_type: str, value: Any) -> str:
+    def _generate_param_declaration(
+        self, name: str, c_type: str | None, value: Any
+    ) -> str:
         """Generate parameter declaration with embedded value."""
-        if c_type == "int":
+        if c_type is None:
+            return f"    // Unknown type for {name}\n"
+        elif c_type == "int":
             return f"    int {name} = {value};\n"
         elif c_type == "double":
             return f"    double {name} = {value};\n"

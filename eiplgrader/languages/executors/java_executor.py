@@ -12,7 +12,12 @@ class JavaExecutor(CompiledLanguageExecutor):
     """Executor for Java language code testing."""
 
     def __init__(self):
-        super().__init__(compile_cmd=["javac"], run_cmd=["java"], file_ext=".java", use_json_input=False)
+        super().__init__(
+            compile_cmd=["javac"],
+            run_cmd=["java"],
+            file_ext=".java",
+            use_json_input=False,
+        )
 
     def prepare_code(self, code: str, test_case: Dict[str, Any]) -> str:
         """Prepare Java code for execution with test harness."""
@@ -49,61 +54,81 @@ class JavaExecutor(CompiledLanguageExecutor):
 
         for param_name in param_names:
             param_value = params[param_name]
-            java_type = self._map_to_java_type(param_types[param_name])
-            declaration = self._generate_param_declaration(param_name, java_type, param_value)
+            java_type = param_types[param_name]
+            declaration = self._generate_param_declaration(
+                param_name, java_type, param_value
+            )
             param_declarations.append(declaration)
 
         # Build function call based on inplace mode
         if inplace_mode == "0":
             # Normal function call - returns a value
             function_call = f"Solution.{function_name}({', '.join(param_names)})"
-            result_handling = self._generate_output(expected_type, function_call, is_direct_call=True)
+            result_handling = self._generate_output(
+                expected_type, function_call, is_direct_call=True
+            )
         elif inplace_mode == "1":
             # In-place modification (for arrays/lists)
             if param_names:
                 first_param = param_names[0]
-                other_params = ", ".join(param_names[1:]) if len(param_names) > 1 else ""
+                other_params = (
+                    ", ".join(param_names[1:]) if len(param_names) > 1 else ""
+                )
                 if other_params:
-                    function_call = f"Solution.{function_name}({first_param}, {other_params})"
+                    function_call = (
+                        f"Solution.{function_name}({first_param}, {other_params})"
+                    )
                 else:
                     function_call = f"Solution.{function_name}({first_param})"
                 result_handling = f"        {function_call};\n"
-                first_type = self._map_to_java_type(param_types[first_param])
+                first_type = param_types[first_param]
                 result_handling += self._generate_output(first_type, first_param)
             else:
                 function_call = f"Solution.{function_name}()"
-                result_handling = f"        {function_call};\n        System.out.println(\"null\");"
+                result_handling = (
+                    f'        {function_call};\n        System.out.println("null");'
+                )
         elif inplace_mode == "2":
             # Both modifies and returns
             if param_names:
                 first_param = param_names[0]
-                other_params = ", ".join(param_names[1:]) if len(param_names) > 1 else ""
+                other_params = (
+                    ", ".join(param_names[1:]) if len(param_names) > 1 else ""
+                )
                 if other_params:
-                    function_call = f"Solution.{function_name}({first_param}, {other_params})"
+                    function_call = (
+                        f"Solution.{function_name}({first_param}, {other_params})"
+                    )
                 else:
                     function_call = f"Solution.{function_name}({first_param})"
-                result_handling = self._generate_output(expected_type, function_call, is_direct_call=True)
+                result_handling = self._generate_output(
+                    expected_type, function_call, is_direct_call=True
+                )
             else:
                 function_call = f"Solution.{function_name}()"
-                result_handling = self._generate_output(expected_type, function_call, is_direct_call=True)
+                result_handling = self._generate_output(
+                    expected_type, function_call, is_direct_call=True
+                )
         else:
-            result_handling = '        System.out.println("Error: Invalid inplace mode");'
+            result_handling = (
+                '        System.out.println("Error: Invalid inplace mode");'
+            )
 
         # Build complete test harness with embedded values
         # Properly indent method code
         if method_code:
             # Add proper indentation if not already present
             indented_method = []
-            for line in method_code.split('\n'):
+            for line in method_code.split("\n"):
                 if line.strip():  # Non-empty line
-                    if not line.startswith('    '):
-                        indented_method.append('    ' + line)
+                    if not line.startswith("    "):
+                        indented_method.append("    " + line)
                     else:
                         indented_method.append(line)
                 else:
                     indented_method.append(line)
-            method_code = '\n'.join(indented_method)
-            
+            method_code = "\n".join(indented_method)
+
         test_harness = f"""import java.util.*;
 
 class Solution {{
@@ -121,19 +146,6 @@ public class Test {{
 }}"""
 
         return test_harness
-
-    def _map_to_java_type(self, type_str: str) -> str:
-        """Map standard type string to Java type."""
-        type_mapping = {
-            "int": "int",
-            "double": "double",
-            "string": "String",
-            "bool": "boolean",
-            "int[]": "int[]",
-            "double[]": "double[]",
-            "string[]": "String[]",
-        }
-        return type_mapping.get(type_str, type_str)
 
     def _generate_param_declaration(self, name: str, java_type: str, value: Any) -> str:
         """Generate parameter declaration with embedded value."""
@@ -157,7 +169,9 @@ public class Test {{
         else:
             return f"        // Unsupported type: {java_type} {name}\n"
 
-    def _generate_output(self, java_type: str, expr: str, is_direct_call: bool = False) -> str:
+    def _generate_output(
+        self, java_type: str, expr: str, is_direct_call: bool = False
+    ) -> str:
         """Generate output code for a Java expression."""
         if is_direct_call:
             # Wrap the expression in a variable assignment
@@ -200,7 +214,7 @@ public class Test {{
                 return f"        Object result = {expr};\n        System.out.println(result);\n"
         else:
             # Direct output of variable
-            if java_type == "int" or java_type == "double" or java_type == "boolean":
+            if java_type in ("int", "double", "boolean"):
                 return f"        System.out.println({expr});\n"
             elif java_type == "String":
                 return f'        System.out.println("\\"" + {expr} + "\\"");\n'
@@ -236,7 +250,7 @@ public class Test {{
         output_dir = os.path.dirname(code_path)
         cmd = ["javac", "-d", output_dir, code_path]
         result = subprocess.run(cmd, capture_output=True, text=True)
-        
+
         if result.returncode == 0:
             return True, output_dir, ""
         else:

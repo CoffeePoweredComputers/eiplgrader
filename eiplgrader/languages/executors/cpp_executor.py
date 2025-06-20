@@ -20,7 +20,7 @@ class CppExecutor(CompiledLanguageExecutor):
         """Prepare C++ code for execution with test harness."""
         # Use common validation
         self.validate_types_provided(test_case)
-        
+
         function_name = test_case.get("function_name", "foo")
         parameters = test_case.get("parameters", {})
         parameter_types = test_case.get("parameter_types", {})
@@ -102,7 +102,6 @@ class CppExecutor(CompiledLanguageExecutor):
         main_code += "    return 0;\n}\n"
 
         return code + "\n" + main_code
-
 
     def _generate_param_declaration(
         self, name: str, param_type: str, value: Any

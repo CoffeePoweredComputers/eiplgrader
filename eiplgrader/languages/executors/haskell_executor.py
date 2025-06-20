@@ -11,13 +11,15 @@ class HaskellExecutor(CompiledLanguageExecutor):
     """Executor for Haskell language code testing."""
 
     def __init__(self):
-        super().__init__(compile_cmd=["ghc"], run_cmd=None, file_ext=".hs", use_json_input=False)
+        super().__init__(
+            compile_cmd=["ghc"], run_cmd=None, file_ext=".hs", use_json_input=False
+        )
 
     def prepare_code(self, code: str, test_case: Dict[str, Any]) -> str:
         """Prepare Haskell code for execution with test harness."""
         # Use common validation
         self.validate_types_provided(test_case)
-        
+
         function_name = test_case.get("function_name", "foo")
         parameters = test_case.get("parameters", {})
         parameter_types = test_case.get("parameter_types", {})
@@ -40,7 +42,7 @@ class HaskellExecutor(CompiledLanguageExecutor):
 
         # Generate parameter declarations with embedded values
         param_names = list(parameters.keys())
-        
+
         for name, value in parameters.items():
             param_type = parameter_types[name]
             prepared_code += self._generate_param_declaration(name, param_type, value)
@@ -60,19 +62,21 @@ class HaskellExecutor(CompiledLanguageExecutor):
             prepared_code += "    print result\n"
         elif expected_type == "String":
             prepared_code += '    putStrLn $ "\\"" ++ result ++ "\\""\n'
-        elif expected_type.startswith("["):
+        elif expected_type and expected_type.startswith("["):
             prepared_code += "    print result\n"
         else:
             prepared_code += "    print result\n"
 
         return prepared_code
 
-    def _generate_param_declaration(self, name: str, param_type: str, value: Any) -> str:
+    def _generate_param_declaration(
+        self, name: str, param_type: str, value: Any
+    ) -> str:
         """Generate parameter declaration with embedded value."""
         if param_type == "Int":
             return f"    let {name} = {value} :: Int\n"
         elif param_type == "String":
-            escaped_value = value.replace('\\', '\\\\').replace('"', '\\"')
+            escaped_value = value.replace("\\", "\\\\").replace('"', '\\"')
             return f'    let {name} = "{escaped_value}" :: String\n'
         elif param_type == "Bool":
             haskell_bool = "True" if value else "False"
@@ -84,7 +88,9 @@ class HaskellExecutor(CompiledLanguageExecutor):
         elif param_type == "[Double]" and isinstance(value, list):
             return f"    let {name} = {value} :: [Double]\n"
         elif param_type == "[String]" and isinstance(value, list):
-            values_str = ", ".join(f'"{v.replace("\\", "\\\\").replace("\"", "\\\"")}"' for v in value)
+            values_str = ", ".join(
+                f'"{v.replace("\\", "\\\\").replace("\"", "\\\"")}"' for v in value
+            )
             return f"    let {name} = [{values_str}] :: [String]\n"
         else:
             return f"    let {name} = {value} :: {param_type}\n"

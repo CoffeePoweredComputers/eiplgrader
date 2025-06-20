@@ -198,6 +198,18 @@ test_cases = [
         "expected": [1, 1, 3, 4, 5],
         "expected_type": "int*"
     },  # In-place sort
+    {
+        "parameters": {
+            "arr": [-15, -42, -317, -2, -100], 
+            "n": 5
+        },
+        "parameter_types": {
+            "arr": "int*",
+            "n": "int"
+        },
+        "expected": [-317, -100, -42, -15, -2],
+        "expected_type": "int*"
+    }
 ]
 
 code_tester = CodeTester(
@@ -387,5 +399,5 @@ print("✅ C++: Fully functional (types required)")
 print("✅ C: Fully functional (types required)")
 print("✅ Haskell: Fully functional (types required)")
 print("\nType Requirements Summary:")
-print("- Dynamic languages (Python, JS, Go): Types optional, inferred from values")
-print("- Static languages (C, C++, Java, Haskell): Types required")
+print("- JSON-capable languages (Python, JS, Go): Types optional, inferred from values")
+print("- Non-JSON languages (C, C++, Java, Haskell): Exact native types required")

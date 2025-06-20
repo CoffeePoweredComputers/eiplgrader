@@ -81,8 +81,7 @@ class LanguageExecutor(ABC):
 
         if errors:
             error_msg = "Missing required type information:\n"
-            for error in errors:
-                error_msg += f"- {error}\n"
+            error_msg += "\n".join(f"- {error}" for error in errors) + "\n"
             error_msg += "\nTest case must include:\n"
             error_msg += "{\n"
             error_msg += '    "parameters": {...},\n'
@@ -121,27 +120,13 @@ class LanguageExecutor(ABC):
             return "List"
         return "unknown"
 
-    def format_array_output(self, arr: List[Any], language: str) -> str:
-        """Format array output for different languages."""
-        if language in ["python", "go"]:
-            return str(arr)
-        elif language == "javascript":
-            return str(arr).replace("'", '"')
-        elif language == "java":
-            return str(arr).replace("'", "")
-        elif language in ["c", "cpp"]:
-            return "{" + ", ".join(str(x) for x in arr) + "}"
-        elif language == "haskell":
-            return str(arr)
-        return str(arr)
-
 
 class InterpretedLanguageExecutor(LanguageExecutor):
     """Base class for interpreted languages (Python, JavaScript)."""
-    
+
     def __init__(self):
         self.requires_types = False
-    
+
     def validate_or_infer_types(self, test_case: Dict[str, Any]) -> Dict[str, Any]:
         """Validate types if provided, or infer them from values."""
         # For interpreted languages, types are optional
@@ -149,27 +134,27 @@ class InterpretedLanguageExecutor(LanguageExecutor):
             test_case["parameter_types"] = {}
             for param_name, value in test_case.get("parameters", {}).items():
                 test_case["parameter_types"][param_name] = self.infer_type(value)
-        
+
         if "expected_type" not in test_case:
             test_case["expected_type"] = self.infer_type(test_case.get("expected"))
-        
+
         return test_case
 
 
 class CompiledLanguageExecutor(LanguageExecutor):
     """Base class for compiled languages (C, C++, Java, Go, Haskell)."""
-    
+
     def __init__(self):
         self.requires_types = True
         self.temp_dir = tempfile.mkdtemp()
-    
+
     def cleanup(self) -> None:
         """Clean up temporary directory."""
-        if hasattr(self, 'temp_dir') and os.path.exists(self.temp_dir):
+        if hasattr(self, "temp_dir") and os.path.exists(self.temp_dir):
             for file in os.listdir(self.temp_dir):
                 os.remove(os.path.join(self.temp_dir, file))
             os.rmdir(self.temp_dir)
-    
+
     def get_type_mapping(self, type_str: str, language: str) -> str:
         """Map generic type strings to language-specific types."""
         mappings = {
@@ -220,11 +205,11 @@ class CompiledLanguageExecutor(LanguageExecutor):
                 "bool": "Bool",
                 "List[int]": "[Int]",
                 "int[]": "[Int]",
-            }
+            },
         }
-        
+
         return mappings.get(language, {}).get(type_str, type_str)
-    
+
     def format_value(self, value: Any, type_str: str, language: str) -> str:
         """Format a value for embedding in code."""
         if isinstance(value, bool):
