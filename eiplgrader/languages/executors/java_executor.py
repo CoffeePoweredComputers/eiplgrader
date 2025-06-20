@@ -4,7 +4,7 @@ import json
 import os
 import subprocess
 import tempfile
-from typing import Dict, Any, Tuple, Optional
+from typing import Dict, Any, Tuple
 from ..executors.base_executors import CompiledLanguageExecutor
 
 
