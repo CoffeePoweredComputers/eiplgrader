@@ -161,16 +161,47 @@ test_result = code_tester.run_tests()
 print(f"Tests passed: {test_result.successes}/{test_result.testsRun}")
 
 # ============================================================================
-# Example 5: C++ CGBG - Algorithm Implementation (Code Generation Only)
+# Example 5: C CGBG - Algorithm Implementation
 # ============================================================================
 print("\n\n5. C CGBG - Algorithm Implementation")
 print("-" * 50)
 
-cpp_generator = CodeGenerator(api_key, language="c")
+c_generator = CodeGenerator(api_key, language="c")
 
-result = cpp_generator.generate_code(
+result = c_generator.generate_code(
     student_response="that implements bubble sort to sort an array of integers in ascending order",
     function_name="bubbleSort",
+    temperature=0.0
+)
+
+generated_code = result["code"]
+print(f"Generated C code: {generated_code[0]}")
+
+test_cases = [
+    {"parameters": {"arr": [3, 1, 4, 1, 5], "n": 5}, "expected": [1, 1, 3, 4, 5]},  # In-place sort
+]
+
+code_tester = CodeTester(
+    code=generated_code[0],
+    test_cases=test_cases,
+    function_name="bubbleSort",
+    language="c",
+    inplace="1"  # Bubble sort modifies array in-place
+)
+test_result = code_tester.run_tests()
+print(f"Tests passed: {test_result.successes}/{test_result.testsRun}")
+
+# ============================================================================
+# Example 6: C++ CGBG - STL Vector Operations
+# ============================================================================
+print("\\n\\n6. C++ CGBG - STL Vector Operations")
+print("-" * 50)
+
+cpp_generator = CodeGenerator(api_key, language="cpp")
+
+result = cpp_generator.generate_code(
+    student_response="that takes a vector of integers and returns a new vector containing only the unique elements in sorted order using STL algorithms",
+    function_name="getUniqueElements",
     temperature=0.0
 )
 
@@ -178,23 +209,24 @@ generated_code = result["code"]
 print(f"Generated C++ code: {generated_code[0]}")
 
 test_cases = [
-    {"parameters": {"arr": [3, 1, 4, 1, 5], "n": 5}, "expected": None},  # In-place sort
+    {"parameters": {"vec": [3, 1, 4, 1, 5, 3, 2]}, "expected": [1, 2, 3, 4, 5]},
+    {"parameters": {"vec": [5, 5, 5]}, "expected": [5]},
+    {"parameters": {"vec": [1, 2, 3]}, "expected": [1, 2, 3]},
 ]
 
 code_tester = CodeTester(
     code=generated_code[0],
     test_cases=test_cases,
-    function_name="bubbleSort",
-    language="cpp",
-    inplace="1"  # Bubble sort modifies array in-place
+    function_name="getUniqueElements",
+    language="cpp"
 )
 test_result = code_tester.run_tests()
 print(f"Tests passed: {test_result.successes}/{test_result.testsRun}")
 
 # ============================================================================
-# Example 6: Go CGBG - String Processing
+# Example 7: Go CGBG - String Processing
 # ============================================================================
-print("\n\n6. Go CGBG - String Processing")
+print("\n\n7. Go CGBG - String Processing")
 print("-" * 50)
 
 go_generator = CodeGenerator(api_key, language="go")
@@ -237,9 +269,9 @@ if test_result.failures > 0 or test_result.errors > 0:
             print()
 
 # ============================================================================
-# Example 7: Multiple Code Generation for Robustness
+# Example 8: Multiple Code Generation for Robustness
 # ============================================================================
-print("\n\n7. Multiple Code Generation (Python) for Robustness Testing")
+print("\n\n8. Multiple Code Generation (Python) for Robustness Testing")
 print("-" * 50)
 
 result = code_generator.generate_code(
@@ -293,7 +325,7 @@ print("\nLanguage Testing Status:")
 print("✅ Python: Fully functional (interpretation)")
 print("✅ JavaScript: Fully functional (Node.js)")
 print("✅ Java: Fully functional (compilation)")
-print("✅ Go: Functional (JSON input fixed)")
-print("🔧 C++: Testing enabled (may need refinement)")
-print("🔧 C: Code generation only (testing in development)")
-print("🔧 Haskell: Code generation only (testing in development)")
+print("✅ Go: Fully functional (JSON input fixed)")
+print("✅ C++: Fully functional (STL operations)")
+print("✅ C: Fully functional (improved robustness)")
+print("🔧 Haskell: Code generation only (GHC installation issue)")

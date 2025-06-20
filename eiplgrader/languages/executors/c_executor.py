@@ -28,12 +28,20 @@ class CExecutor(CompiledLanguageExecutor):
 
         # Generate main function with test harness
         main_code = """
+#define BUFFER_SIZE 8192
+
 int main() {
     // Read test parameters from stdin as JSON
-    char buffer[4096];
+    char buffer[BUFFER_SIZE];
     if (fgets(buffer, sizeof(buffer), stdin) == NULL) {
         fprintf(stderr, "Error reading input\\n");
         return 1;
+    }
+    
+    // Remove trailing newline if present
+    size_t len = strlen(buffer);
+    if (len > 0 && buffer[len-1] == '\\n') {
+        buffer[len-1] = '\\0';
     }
     
     // Simple JSON parsing for basic types
@@ -48,18 +56,46 @@ int main() {
         ):
             if c_type == "int":
                 main_code += f"    int {name};\n"
-                main_code += f'    sscanf(strstr(buffer, "\\"{name}\\":") + strlen("\\"{name}\\":"), "%d", &{name});\n'
+                main_code += f'    char* {name}_pos = strstr(buffer, "\\"{name}\\":");\n'
+                main_code += f'    if ({name}_pos == NULL) {{\n'
+                main_code += f'        fprintf(stderr, "Error: Missing field \'{name}\'\\\\n");\n'
+                main_code += f'        return 1;\n'
+                main_code += f'    }}\n'
+                main_code += f'    if (sscanf({name}_pos + strlen("\\"{name}\\":"), "%d", &{name}) != 1) {{\n'
+                main_code += f'        fprintf(stderr, "Error: Failed to parse int field \'{name}\'\\\\n");\n'
+                main_code += f'        return 1;\n'
+                main_code += f'    }}\n'
             elif c_type == "double":
                 main_code += f"    double {name};\n"
-                main_code += f'    sscanf(strstr(buffer, "\\"{name}\\":") + strlen("\\"{name}\\":"), "%lf", &{name});\n'
+                main_code += f'    char* {name}_pos = strstr(buffer, "\\"{name}\\":");\n'
+                main_code += f'    if ({name}_pos == NULL) {{\n'
+                main_code += f'        fprintf(stderr, "Error: Missing field \'{name}\'\\\\n");\n'
+                main_code += f'        return 1;\n'
+                main_code += f'    }}\n'
+                main_code += f'    if (sscanf({name}_pos + strlen("\\"{name}\\":"), "%lf", &{name}) != 1) {{\n'
+                main_code += f'        fprintf(stderr, "Error: Failed to parse double field \'{name}\'\\\\n");\n'
+                main_code += f'        return 1;\n'
+                main_code += f'    }}\n'
             elif c_type == "char*":
                 main_code += f"    char {name}[256];\n"
-                main_code += f'    char* {name}_start = strstr(buffer, "\\"{name}\\": \\"") + strlen("\\"{name}\\": \\"");\n'
+                main_code += f'    char* {name}_field = strstr(buffer, "\\"{name}\\": \\"");\n'
+                main_code += f'    if ({name}_field == NULL) {{\n'
+                main_code += f'        fprintf(stderr, "Error: Missing string field \'{name}\'\\\\n");\n'
+                main_code += f'        return 1;\n'
+                main_code += f'    }}\n'
+                main_code += f'    char* {name}_start = {name}_field + strlen("\\"{name}\\": \\"");\n'
                 main_code += f"    char* {name}_end = strchr({name}_start, '\\\"');\n"
-                main_code += (
-                    f"    strncpy({name}, {name}_start, {name}_end - {name}_start);\n"
-                )
-                main_code += f"    {name}[{name}_end - {name}_start] = '\\0';\n"
+                main_code += f'    if ({name}_end == NULL) {{\n'
+                main_code += f'        fprintf(stderr, "Error: Unterminated string for field \'{name}\'\\\\n");\n'
+                main_code += f'        return 1;\n'
+                main_code += f'    }}\n'
+                main_code += f"    size_t {name}_len = {name}_end - {name}_start;\n"
+                main_code += f"    if ({name}_len >= sizeof({name})) {{\n"
+                main_code += f'        fprintf(stderr, "Error: String too long for field \'{name}\'\\\\n");\n'
+                main_code += f'        return 1;\n'
+                main_code += f'    }}\n'
+                main_code += f"    strncpy({name}, {name}_start, {name}_len);\n"
+                main_code += f"    {name}[{name}_len] = '\\0';\n"
             elif c_type == "int*":
                 # For arrays, we'll parse them manually
                 if isinstance(value, list):
@@ -67,13 +103,24 @@ int main() {
                     main_code += f"    int {name}[{array_size}];\n"
                     # Simple array parsing - assume format like [1, 2, 3]
                     main_code += f"    // Parse array {name}\n"
-                    main_code += f'    char* {name}_ptr = strstr(buffer, "\\"{name}\\": [") + strlen("\\"{name}\\": [");\n'
+                    main_code += f'    char* {name}_field = strstr(buffer, "\\"{name}\\": [");\n'
+                    main_code += f'    if ({name}_field == NULL) {{\n'
+                    main_code += f'        fprintf(stderr, "Error: Missing array field \'{name}\'\\\\n");\n'
+                    main_code += f'        return 1;\n'
+                    main_code += f'    }}\n'
+                    main_code += f'    char* {name}_ptr = {name}_field + strlen("\\"{name}\\": [");\n'
                     for j in range(array_size):
                         if j > 0:
-                            main_code += (
-                                f"    {name}_ptr = strchr({name}_ptr, ',') + 1;\n"
-                            )
-                        main_code += f'    sscanf({name}_ptr, "%d", &{name}[{j}]);\n'
+                            main_code += f"    {name}_ptr = strchr({name}_ptr, ',');\n"
+                            main_code += f'    if ({name}_ptr == NULL) {{\n'
+                            main_code += f'        fprintf(stderr, "Error: Insufficient elements in array \'{name}\'\\\\n");\n'
+                            main_code += f'        return 1;\n'
+                            main_code += f'    }}\n'
+                            main_code += f"    {name}_ptr++;\n"
+                        main_code += f'    if (sscanf({name}_ptr, "%d", &{name}[{j}]) != 1) {{\n'
+                        main_code += f'        fprintf(stderr, "Error: Failed to parse element {j} of array \'{name}\'\\\\n");\n'
+                        main_code += f'        return 1;\n'
+                        main_code += f'    }}\n'
 
         # Generate function call based on inplace mode
         if inplace_mode == "0":

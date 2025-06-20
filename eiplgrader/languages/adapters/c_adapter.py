@@ -77,7 +77,7 @@ when generating the code. For example:
             r"```c\n(.*?)\n```",
             r"```\n(.*?)\n```",
         ]
-        print(llm_response)
+
         for pattern in patterns:
             matches = re.findall(pattern, llm_response, re.DOTALL)
             if matches:
