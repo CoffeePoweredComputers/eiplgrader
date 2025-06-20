@@ -14,38 +14,20 @@ class JavaScriptExecutor(InterpretedLanguageExecutor):
 
     def prepare_code(self, code: str, test_case: Dict[str, Any]) -> str:
         """Prepare JavaScript code for execution with test harness."""
-        # Validate required type information using standardized error message
-        errors = []
+        # For JavaScript, types are optional - infer if not provided
         if "parameter_types" not in test_case:
-            errors.append("parameter_types not provided")
+            test_case["parameter_types"] = {}
+            for param_name, value in test_case.get("parameters", {}).items():
+                test_case["parameter_types"][param_name] = self.infer_type(value)
+        
         if "expected_type" not in test_case:
-            errors.append("expected_type not provided")
-
-        if errors:
-            error_msg = "Missing required type information:\n"
-            for error in errors:
-                error_msg += f"- {error}\n"
-            error_msg += "\nTest case must include:\n"
-            error_msg += "{\n"
-            error_msg += '    "parameters": {...},\n'
-            error_msg += '    "parameter_types": {"param1": "type1", ...},\n'
-            error_msg += '    "expected": ...,\n'
-            error_msg += '    "expected_type": "type"\n'
-            error_msg += "}"
-            raise ValueError(error_msg)
+            test_case["expected_type"] = self.infer_type(test_case.get("expected"))
 
         function_name = test_case.get("function_name", "foo")
         parameters = test_case.get("parameters", {})
         parameter_types = test_case["parameter_types"]  # Required field
         expected_type = test_case["expected_type"]  # Required field
         inplace_mode = test_case.get("inplace", "0")
-
-        # Validate all parameters have types
-        for param_name in parameters:
-            if param_name not in parameter_types:
-                raise ValueError(
-                    f"Missing required type information:\n- parameter_types['{param_name}'] not provided"
-                )
 
         # Build the test harness
         harness = f"""

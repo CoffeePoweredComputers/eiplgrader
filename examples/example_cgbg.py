@@ -29,6 +29,9 @@ if not api_key:
 print("="*80)
 print("CGBG (CODE GENERATION BASED GRADING) EXAMPLES")
 print("="*80)
+print("\nNOTE: Type annotations are now optional for Python, JavaScript, and Go!")
+print("      Type annotations are still required for C, C++, Java, and Haskell.")
+print("="*80)
 
 # ============================================================================
 # Example 1: Basic Python CGBG
@@ -48,11 +51,12 @@ result = code_generator.generate_code(
 generated_code = result["code"]
 print(f"Generated code: {generated_code[0]}")
 
+# For Python, types are optional and will be inferred!
 test_cases = [
-    {"parameters": {"a": 1, "b": 2}, "parameter_types": {"a": "int", "b": "int"}, "expected": 3, "expected_type": "int"},
-    {"parameters": {"a": 5, "b": 7}, "parameter_types": {"a": "int", "b": "int"}, "expected": 12, "expected_type": "int"},
-    {"parameters": {"a": -1, "b": 1}, "parameter_types": {"a": "int", "b": "int"}, "expected": 0, "expected_type": "int"},
-    {"parameters": {"a": 0, "b": 0}, "parameter_types": {"a": "int", "b": "int"}, "expected": 0, "expected_type": "int"},
+    {"parameters": {"a": 1, "b": 2}, "expected": 3},
+    {"parameters": {"a": 5, "b": 7}, "expected": 12},
+    {"parameters": {"a": -1, "b": 1}, "expected": 0},
+    {"parameters": {"a": 0, "b": 0}, "expected": 0},
 ]
 
 code_tester = CodeTester(
@@ -79,11 +83,12 @@ result = code_generator.generate_code(
 generated_code = result["code"]
 print(f"Generated code: {generated_code[0]}")
 
+# Types are inferred from the values!
 test_cases = [
-    {"parameters": {"numbers": [1, 2, 3, 4, 5, 6]}, "parameter_types": {"numbers": "List[int]"}, "expected": 12, "expected_type": "int"},  # 2+4+6
-    {"parameters": {"numbers": [1, 3, 5]}, "parameter_types": {"numbers": "List[int]"}, "expected": 0, "expected_type": "int"},           # No even numbers
-    {"parameters": {"numbers": [2, 4, 6, 8]}, "parameter_types": {"numbers": "List[int]"}, "expected": 20, "expected_type": "int"},       # All even
-    {"parameters": {"numbers": []}, "parameter_types": {"numbers": "List[int]"}, "expected": 0, "expected_type": "int"},                  # Empty list
+    {"parameters": {"numbers": [1, 2, 3, 4, 5, 6]}, "expected": 12},  # 2+4+6
+    {"parameters": {"numbers": [1, 3, 5]}, "expected": 0},           # No even numbers
+    {"parameters": {"numbers": [2, 4, 6, 8]}, "expected": 20},       # All even
+    {"parameters": {"numbers": []}, "expected": 0},                  # Empty list
 ]
 
 code_tester = CodeTester(
@@ -112,11 +117,12 @@ result = js_generator.generate_code(
 generated_code = result["code"]
 print(f"Generated JavaScript code: {generated_code[0]}")
 
+# JavaScript also supports type inference!
 test_cases = [
-    {"parameters": {"str": "hello"}, "parameter_types": {"str": "string"}, "expected": 2, "expected_type": "int"},      # e, o
-    {"parameters": {"str": "programming"}, "parameter_types": {"str": "string"}, "expected": 3, "expected_type": "int"}, # o, a, i
-    {"parameters": {"str": "xyz"}, "parameter_types": {"str": "string"}, "expected": 0, "expected_type": "int"},        # No vowels
-    {"parameters": {"str": "AEIOU"}, "parameter_types": {"str": "string"}, "expected": 5, "expected_type": "int"},      # All vowels uppercase
+    {"parameters": {"str": "hello"}, "expected": 2},      # e, o
+    {"parameters": {"str": "programming"}, "expected": 3}, # o, a, i
+    {"parameters": {"str": "xyz"}, "expected": 0},        # No vowels
+    {"parameters": {"str": "AEIOU"}, "expected": 5},      # All vowels uppercase
 ]
 
 code_tester = CodeTester(
@@ -131,8 +137,9 @@ print(f"Tests passed: {test_result.successes}/{test_result.testsRun}")
 # ============================================================================
 # Example 4: Java CGBG - Array Operations
 # ============================================================================
-print("\n\n4. Java CGBG - Array Operations")
+print("\n\n4. Java CGBG - Array Operations (REQUIRES TYPE ANNOTATIONS)")
 print("-" * 50)
+print("Note: Java is statically typed and requires explicit type annotations")
 
 java_generator = CodeGenerator(api_key, language="java")
 
@@ -163,8 +170,9 @@ print(f"Tests passed: {test_result.successes}/{test_result.testsRun}")
 # ============================================================================
 # Example 5: C CGBG - Algorithm Implementation
 # ============================================================================
-print("\n\n5. C CGBG - Algorithm Implementation")
+print("\n\n5. C CGBG - Algorithm Implementation (REQUIRES TYPE ANNOTATIONS)")
 print("-" * 50)
+print("Note: C is statically typed and requires explicit type annotations")
 
 c_generator = CodeGenerator(api_key, language="c")
 
@@ -184,11 +192,11 @@ test_cases = [
             "n": 5
         },
         "parameter_types": {
-            "arr": "int[]",
+            "arr": "int*",
             "n": "int"
         },
         "expected": [1, 1, 3, 4, 5],
-        "expected_type": "int[]"
+        "expected_type": "int*"
     },  # In-place sort
 ]
 
@@ -205,8 +213,9 @@ print(f"Tests passed: {test_result.successes}/{test_result.testsRun}")
 # ============================================================================
 # Example 6: C++ CGBG - STL Vector Operations
 # ============================================================================
-print("\\n\\n6. C++ CGBG - STL Vector Operations")
+print("\n\n6. C++ CGBG - STL Vector Operations (REQUIRES TYPE ANNOTATIONS)")
 print("-" * 50)
+print("Note: C++ is statically typed and requires explicit type annotations")
 
 cpp_generator = CodeGenerator(api_key, language="cpp")
 
@@ -235,10 +244,11 @@ test_result = code_tester.run_tests()
 print(f"Tests passed: {test_result.successes}/{test_result.testsRun}")
 
 # ============================================================================
-# Example 7: Go CGBG - String Processing
+# Example 7: Go CGBG - String Processing (NO TYPES REQUIRED!)
 # ============================================================================
-print("\n\n7. Go CGBG - String Processing")
+print("\n\n7. Go CGBG - String Processing (TYPES OPTIONAL!)")
 print("-" * 50)
+print("Note: Go now supports type inference from values like Python/JS!")
 
 go_generator = CodeGenerator(api_key, language="go")
 
@@ -251,11 +261,12 @@ result = go_generator.generate_code(
 generated_code = result["code"]
 print(f"Generated Go code: {generated_code[0]}")
 
+# Go now supports type inference! No need to specify types.
 test_cases = [
-    {"parameters": {"s": "racecar"}, "parameter_types": {"s": "string"}, "expected": True, "expected_type": "bool"},
-    {"parameters": {"s": "hello"}, "parameter_types": {"s": "string"}, "expected": False, "expected_type": "bool"},
-    {"parameters": {"s": "a"}, "parameter_types": {"s": "string"}, "expected": True, "expected_type": "bool"},
-    {"parameters": {"s": ""}, "parameter_types": {"s": "string"}, "expected": True, "expected_type": "bool"},
+    {"parameters": {"s": "racecar"}, "expected": True},
+    {"parameters": {"s": "hello"}, "expected": False},
+    {"parameters": {"s": "a"}, "expected": True},
+    {"parameters": {"s": ""}, "expected": True},
 ]
 
 code_tester = CodeTester(
@@ -280,9 +291,43 @@ if test_result.failures > 0 or test_result.errors > 0:
             print()
 
 # ============================================================================
-# Example 8: Multiple Code Generation for Robustness
+# Example 8: Haskell CGBG - Functional Programming
 # ============================================================================
-print("\n\n8. Multiple Code Generation (Python) for Robustness Testing")
+print("\n\n8. Haskell CGBG - Functional Programming (REQUIRES TYPE ANNOTATIONS)")
+print("-" * 50)
+print("Note: Haskell is statically typed and requires explicit Haskell type annotations")
+
+haskell_generator = CodeGenerator(api_key, language="haskell")
+
+result = haskell_generator.generate_code(
+    student_response="that takes a list of integers and returns the list with all elements doubled using map",
+    function_name="doubleAll",
+    temperature=0.0
+)
+
+generated_code = result["code"]
+print(f"Generated Haskell code: {generated_code[0]}")
+
+# Haskell requires explicit types with proper Haskell type names
+test_cases = [
+    {"parameters": {"xs": [1, 2, 3]}, "parameter_types": {"xs": "[Int]"}, "expected": [2, 4, 6], "expected_type": "[Int]"},
+    {"parameters": {"xs": [0, -1, 5]}, "parameter_types": {"xs": "[Int]"}, "expected": [0, -2, 10], "expected_type": "[Int]"},
+    {"parameters": {"xs": []}, "parameter_types": {"xs": "[Int]"}, "expected": [], "expected_type": "[Int]"},
+]
+
+code_tester = CodeTester(
+    code=generated_code[0],
+    test_cases=test_cases,
+    function_name="doubleAll",
+    language="haskell"
+)
+test_result = code_tester.run_tests()
+print(f"Tests passed: {test_result.successes}/{test_result.testsRun}")
+
+# ============================================================================
+# Example 9: Multiple Code Generation for Robustness
+# ============================================================================
+print("\n\n9. Multiple Code Generation (Python) for Robustness Testing")
 print("-" * 50)
 
 result = code_generator.generate_code(
@@ -295,11 +340,12 @@ result = code_generator.generate_code(
 generated_codes = result["code"]
 print(f"Generated {len(generated_codes)} different implementations")
 
+# Python with type inference - clean and simple!
 test_cases = [
-    {"parameters": {"n": 0}, "parameter_types": {"n": "int"}, "expected": 1, "expected_type": "int"},   # Edge case: 0! = 1
-    {"parameters": {"n": 1}, "parameter_types": {"n": "int"}, "expected": 1, "expected_type": "int"},   # Base case
-    {"parameters": {"n": 5}, "parameter_types": {"n": "int"}, "expected": 120, "expected_type": "int"}, # 5! = 5*4*3*2*1
-    {"parameters": {"n": 3}, "parameter_types": {"n": "int"}, "expected": 6, "expected_type": "int"},   # 3! = 3*2*1
+    {"parameters": {"n": 0}, "expected": 1},   # Edge case: 0! = 1
+    {"parameters": {"n": 1}, "expected": 1},   # Base case
+    {"parameters": {"n": 5}, "expected": 120}, # 5! = 5*4*3*2*1
+    {"parameters": {"n": 3}, "expected": 6},   # 3! = 3*2*1
 ]
 
 # Test all generated variants
@@ -333,10 +379,13 @@ print("4. Generate multiple implementations for robustness")
 print("5. Test across different programming languages")
 print("6. Handle both simple and complex algorithmic problems")
 print("\nLanguage Testing Status:")
-print("✅ Python: Fully functional (interpretation)")
-print("✅ JavaScript: Fully functional (Node.js)")
-print("✅ Java: Fully functional (compilation)")
-print("✅ Go: Fully functional (JSON input fixed)")
-print("✅ C++: Fully functional (STL operations)")
-print("✅ C: Fully functional (improved robustness)")
-print("🔧 Haskell: Code generation only (GHC installation issue)")
+print("✅ Python: Fully functional (type inference supported)")
+print("✅ JavaScript: Fully functional (type inference supported)")
+print("✅ Go: Fully functional (type inference supported)")
+print("✅ Java: Fully functional (types required)")
+print("✅ C++: Fully functional (types required)")
+print("✅ C: Fully functional (types required)")
+print("✅ Haskell: Fully functional (types required)")
+print("\nType Requirements Summary:")
+print("- Dynamic languages (Python, JS, Go): Types optional, inferred from values")
+print("- Static languages (C, C++, Java, Haskell): Types required")

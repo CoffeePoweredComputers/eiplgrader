@@ -12,41 +12,18 @@ class JavaExecutor(CompiledLanguageExecutor):
     """Executor for Java language code testing."""
 
     def __init__(self):
-        super().__init__(compile_cmd=["javac"], run_cmd=["java"], file_ext=".java")
+        super().__init__(compile_cmd=["javac"], run_cmd=["java"], file_ext=".java", use_json_input=False)
 
     def prepare_code(self, code: str, test_case: Dict[str, Any]) -> str:
         """Prepare Java code for execution with test harness."""
-        # Validate required type information using standardized error message
-        errors = []
-        if "parameter_types" not in test_case:
-            errors.append("parameter_types not provided")
-        if "expected_type" not in test_case:
-            errors.append("expected_type not provided")
-
-        if errors:
-            error_msg = "Missing required type information:\n"
-            for error in errors:
-                error_msg += f"- {error}\n"
-            error_msg += "\nTest case must include:\n"
-            error_msg += "{\n"
-            error_msg += '    "parameters": {...},\n'
-            error_msg += '    "parameter_types": {"param1": "type1", ...},\n'
-            error_msg += '    "expected": ...,\n'
-            error_msg += '    "expected_type": "type"\n'
-            error_msg += "}"
-            raise ValueError(error_msg)
+        # Use common validation
+        self.validate_types_provided(test_case)
 
         function_name = test_case.get("function_name", "foo")
         params = test_case.get("parameters", {})
         inplace_mode = test_case.get("inplace", "0")
         param_types = test_case["parameter_types"]  # Required field
-
-        # Validate all parameters have types
-        for param_name in params:
-            if param_name not in param_types:
-                raise ValueError(
-                    f"Missing required type information:\n- parameter_types['{param_name}'] not provided"
-                )
+        expected_type = test_case["expected_type"]  # Required field
 
         # Extract the Solution class content
         # Check if code already has proper structure
@@ -58,7 +35,7 @@ class JavaExecutor(CompiledLanguageExecutor):
         import re
 
         solution_match = re.search(
-            r"public\s+class\s+Solution\s*\{(.*?)\}", code, re.DOTALL
+            r"public\s+class\s+Solution\s*\{(.*)\}(?:\s*$)", code, re.DOTALL
         )
         if solution_match:
             method_code = solution_match.group(1).strip()
@@ -66,86 +43,77 @@ class JavaExecutor(CompiledLanguageExecutor):
             # Assume the code is just the method
             method_code = code.strip()
 
-        # Build parameter parsing code
+        # Build parameter declarations with embedded values
         param_names = list(params.keys())
         param_declarations = []
-        param_list = []
 
-        for i, param_name in enumerate(param_names):
+        for param_name in param_names:
             param_value = params[param_name]
-            # Type must be explicitly provided
-            if param_name not in param_types:
-                raise ValueError(
-                    f"Missing required type information:\n- parameter_types['{param_name}'] not provided"
-                )
-            java_type = param_types[param_name]
-            parse_code = self._get_parse_code(
-                param_name, f"args[{i}]", java_type, param_value
-            )
-            param_declarations.append(f"        {parse_code}")
-            param_list.append(param_name)
+            java_type = self._map_to_java_type(param_types[param_name])
+            declaration = self._generate_param_declaration(param_name, java_type, param_value)
+            param_declarations.append(declaration)
 
         # Build function call based on inplace mode
         if inplace_mode == "0":
             # Normal function call - returns a value
-            function_call = f"Solution.{function_name}({', '.join(param_list)})"
-            result_handling = f"""        Object result = {function_call};
-        System.out.println(toJson(result));"""
+            function_call = f"Solution.{function_name}({', '.join(param_names)})"
+            result_handling = self._generate_output(expected_type, function_call, is_direct_call=True)
         elif inplace_mode == "1":
             # In-place modification (for arrays/lists)
-            if param_list:
-                first_param = param_list[0]
-                other_params = ", ".join(param_list[1:]) if len(param_list) > 1 else ""
+            if param_names:
+                first_param = param_names[0]
+                other_params = ", ".join(param_names[1:]) if len(param_names) > 1 else ""
                 if other_params:
-                    function_call = (
-                        f"Solution.{function_name}({first_param}, {other_params})"
-                    )
+                    function_call = f"Solution.{function_name}({first_param}, {other_params})"
                 else:
                     function_call = f"Solution.{function_name}({first_param})"
-                result_handling = f"""        {function_call};
-        System.out.println(toJson({first_param}));"""
+                result_handling = f"        {function_call};\n"
+                first_type = self._map_to_java_type(param_types[first_param])
+                result_handling += self._generate_output(first_type, first_param)
             else:
                 function_call = f"Solution.{function_name}()"
-                result_handling = f"""        Object result = {function_call};
-        System.out.println(toJson(result));"""
+                result_handling = f"        {function_call};\n        System.out.println(\"null\");"
         elif inplace_mode == "2":
             # Both modifies and returns
-            if param_list:
-                first_param = param_list[0]
-                other_params = ", ".join(param_list[1:]) if len(param_list) > 1 else ""
+            if param_names:
+                first_param = param_names[0]
+                other_params = ", ".join(param_names[1:]) if len(param_names) > 1 else ""
                 if other_params:
-                    function_call = (
-                        f"Solution.{function_name}({first_param}, {other_params})"
-                    )
+                    function_call = f"Solution.{function_name}({first_param}, {other_params})"
                 else:
                     function_call = f"Solution.{function_name}({first_param})"
-                result_handling = f"""        Object result = {function_call};
-        System.out.println(toJson(result != null ? result : {first_param}));"""
+                result_handling = self._generate_output(expected_type, function_call, is_direct_call=True)
             else:
                 function_call = f"Solution.{function_name}()"
-                result_handling = f"""        Object result = {function_call};
-        System.out.println(toJson(result));"""
+                result_handling = self._generate_output(expected_type, function_call, is_direct_call=True)
         else:
-            result_handling = (
-                '        System.out.println("Error: Invalid inplace mode");'
-            )
+            result_handling = '        System.out.println("Error: Invalid inplace mode");'
 
-        # Build complete test harness
+        # Build complete test harness with embedded values
+        # Properly indent method code
+        if method_code:
+            # Add proper indentation if not already present
+            indented_method = []
+            for line in method_code.split('\n'):
+                if line.strip():  # Non-empty line
+                    if not line.startswith('    '):
+                        indented_method.append('    ' + line)
+                    else:
+                        indented_method.append(line)
+                else:
+                    indented_method.append(line)
+            method_code = '\n'.join(indented_method)
+            
         test_harness = f"""import java.util.*;
-import com.google.gson.Gson;
 
 class Solution {{
-    {method_code}
+{method_code}
 }}
 
 public class Test {{
-    private static String toJson(Object obj) {{
-        return new Gson().toJson(obj);
-    }}
-    
     public static void main(String[] args) {{
-        // Parse command line arguments
-{chr(10).join(param_declarations)}
+        // Test parameters
+{''.join(param_declarations)}
         
         // Call function and handle result
 {result_handling}
@@ -154,148 +122,135 @@ public class Test {{
 
         return test_harness
 
-    def _infer_java_type(self, value: Any, param_name: Optional[str] = None) -> str:
-        """DEPRECATED: Type inference is no longer allowed.
+    def _map_to_java_type(self, type_str: str) -> str:
+        """Map standard type string to Java type."""
+        type_mapping = {
+            "int": "int",
+            "double": "double",
+            "string": "String",
+            "bool": "boolean",
+            "int[]": "int[]",
+            "double[]": "double[]",
+            "string[]": "String[]",
+        }
+        return type_mapping.get(type_str, type_str)
 
-        This method should not be used. All types must be explicitly provided
-        in test_case['parameter_types'].
-        """
-        raise ValueError(
-            "Type inference is not allowed. All parameter types must be explicitly "
-            "provided in test_case['parameter_types']"
-        )
-
-    def _get_parse_code(
-        self, var_name: str, arg_expr: str, java_type: str, _value: Any
-    ) -> str:
-        """Generate code to parse command line argument into Java type."""
+    def _generate_param_declaration(self, name: str, java_type: str, value: Any) -> str:
+        """Generate parameter declaration with embedded value."""
         if java_type == "int":
-            return f"int {var_name} = Integer.parseInt({arg_expr});"
+            return f"        int {name} = {value};\n"
         elif java_type == "double":
-            return f"double {var_name} = Double.parseDouble({arg_expr});"
+            return f"        double {name} = {value};\n"
         elif java_type == "boolean":
-            return f"boolean {var_name} = Boolean.parseBoolean({arg_expr});"
+            return f"        boolean {name} = {str(value).lower()};\n"
         elif java_type == "String":
-            return f"String {var_name} = {arg_expr};"
-        elif java_type == "int[]":
-            return f"""String {var_name}_str = {arg_expr};
-        int[] {var_name};
-        if ({var_name}_str.isEmpty()) {{
-            {var_name} = new int[0];
-        }} else {{
-            String[] {var_name}_parts = {var_name}_str.split(",");
-            {var_name} = new int[{var_name}_parts.length];
-            for (int i = 0; i < {var_name}_parts.length; i++) {{
-                {var_name}[i] = Integer.parseInt({var_name}_parts[i].trim());
-            }}
-        }}"""
-        elif java_type == "double[]":
-            return f"""String {var_name}_str = {arg_expr};
-        double[] {var_name};
-        if ({var_name}_str.isEmpty()) {{
-            {var_name} = new double[0];
-        }} else {{
-            String[] {var_name}_parts = {var_name}_str.split(",");
-            {var_name} = new double[{var_name}_parts.length];
-            for (int i = 0; i < {var_name}_parts.length; i++) {{
-                {var_name}[i] = Double.parseDouble({var_name}_parts[i].trim());
-            }}
-        }}"""
-        elif java_type == "String[]":
-            return f"""String {var_name}_str = {arg_expr};
-        String[] {var_name};
-        if ({var_name}_str.isEmpty()) {{
-            {var_name} = new String[0];
-        }} else {{
-            {var_name} = {var_name}_str.split(",");
-            for (int i = 0; i < {var_name}.length; i++) {{
-                {var_name}[i] = {var_name}[i].trim();
-            }}
-        }}"""
+            return f'        String {name} = "{value}";\n'
+        elif java_type == "int[]" and isinstance(value, list):
+            values_str = ", ".join(str(v) for v in value)
+            return f"        int[] {name} = new int[] {{{values_str}}};\n"
+        elif java_type == "double[]" and isinstance(value, list):
+            values_str = ", ".join(str(v) for v in value)
+            return f"        double[] {name} = new double[] {{{values_str}}};\n"
+        elif java_type == "String[]" and isinstance(value, list):
+            values_str = ", ".join(f'"{v}"' for v in value)
+            return f"        String[] {name} = new String[] {{{values_str}}};\n"
         else:
-            return f"Object {var_name} = {arg_expr};"
+            return f"        // Unsupported type: {java_type} {name}\n"
+
+    def _generate_output(self, java_type: str, expr: str, is_direct_call: bool = False) -> str:
+        """Generate output code for a Java expression."""
+        if is_direct_call:
+            # Wrap the expression in a variable assignment
+            if java_type == "int":
+                return f"        int result = {expr};\n        System.out.println(result);\n"
+            elif java_type == "double":
+                return f"        double result = {expr};\n        System.out.println(result);\n"
+            elif java_type == "boolean":
+                return f"        boolean result = {expr};\n        System.out.println(result);\n"
+            elif java_type == "String":
+                return f'        String result = {expr};\n        System.out.println("\\"" + result + "\\"");\n'
+            elif java_type == "int[]":
+                return f"""        int[] result = {expr};
+        System.out.print("[");
+        for (int i = 0; i < result.length; i++) {{
+            if (i > 0) System.out.print(",");
+            System.out.print(result[i]);
+        }}
+        System.out.println("]");
+"""
+            elif java_type == "double[]":
+                return f"""        double[] result = {expr};
+        System.out.print("[");
+        for (int i = 0; i < result.length; i++) {{
+            if (i > 0) System.out.print(",");
+            System.out.print(result[i]);
+        }}
+        System.out.println("]");
+"""
+            elif java_type == "String[]":
+                return f"""        String[] result = {expr};
+        System.out.print("[");
+        for (int i = 0; i < result.length; i++) {{
+            if (i > 0) System.out.print(",");
+            System.out.print("\\"" + result[i] + "\\"");
+        }}
+        System.out.println("]");
+"""
+            else:
+                return f"        Object result = {expr};\n        System.out.println(result);\n"
+        else:
+            # Direct output of variable
+            if java_type == "int" or java_type == "double" or java_type == "boolean":
+                return f"        System.out.println({expr});\n"
+            elif java_type == "String":
+                return f'        System.out.println("\\"" + {expr} + "\\"");\n'
+            elif java_type == "int[]":
+                return f"""        System.out.print("[");
+        for (int i = 0; i < {expr}.length; i++) {{
+            if (i > 0) System.out.print(",");
+            System.out.print({expr}[i]);
+        }}
+        System.out.println("]");
+"""
+            elif java_type == "double[]":
+                return f"""        System.out.print("[");
+        for (int i = 0; i < {expr}.length; i++) {{
+            if (i > 0) System.out.print(",");
+            System.out.print({expr}[i]);
+        }}
+        System.out.println("]");
+"""
+            elif java_type == "String[]":
+                return f"""        System.out.print("[");
+        for (int i = 0; i < {expr}.length; i++) {{
+            if (i > 0) System.out.print(",");
+            System.out.print("\\"" + {expr}[i] + "\\"");
+        }}
+        System.out.println("]");
+"""
+            else:
+                return f"        System.out.println({expr});\n"
 
     def compile(self, code_path: str) -> Tuple[bool, str, str]:
-        """Compile Java code with classpath for Gson."""
+        """Compile Java code."""
         output_dir = os.path.dirname(code_path)
-
-        # Try to find Gson in common locations
-        gson_paths = [
-            "/usr/share/java/gson.jar",
-            "/usr/local/share/java/gson.jar",
-            os.path.expanduser(
-                "~/.m2/repository/com/google/code/gson/gson/2.10.1/gson-2.10.1.jar"
-            ),
-            os.path.expanduser(
-                "~/.gradle/caches/modules-2/files-2.1/com.google.code.gson/gson/"
-            ),
-        ]
-
-        gson_jar = None
-        for path in gson_paths:
-            if os.path.exists(path):
-                if os.path.isfile(path):
-                    gson_jar = path
-                    break
-                elif os.path.isdir(path):
-                    # Search for any gson jar in gradle cache
-                    for root, dirs, files in os.walk(path):
-                        for file in files:
-                            if file.startswith("gson") and file.endswith(".jar"):
-                                gson_jar = os.path.join(root, file)
-                                break
-                        if gson_jar:
-                            break
-
-        # Compile with or without Gson
-        if gson_jar:
-            cmd = ["javac", "-cp", f".:{gson_jar}", "-d", output_dir, code_path]
-        else:
-            # Fallback: compile without Gson
-            cmd = ["javac", "-d", output_dir, code_path]
-
+        cmd = ["javac", "-d", output_dir, code_path]
         result = subprocess.run(cmd, capture_output=True, text=True)
-
+        
         if result.returncode == 0:
             return True, output_dir, ""
         else:
-            # If Gson compilation fails, try without it
-            if gson_jar and "gson" in result.stderr.lower():
-                cmd = ["javac", "-d", output_dir, code_path]
-                result = subprocess.run(cmd, capture_output=True, text=True)
-                if result.returncode == 0:
-                    return True, output_dir, ""
-
             return False, "", result.stderr
 
     def execute_test(self, code: str, test_case: Dict[str, Any]) -> Dict[str, Any]:
-        """Compile and execute Java test."""
+        """Override to not send JSON input since we embed values directly."""
         # Prepare code with test harness
         prepared_code = self.prepare_code(code, test_case)
 
-        # Check if we need to use a simpler version without Gson
-        if "import com.google.gson.Gson" in prepared_code:
-            # Try with Gson first
-            result = self._execute_with_gson(prepared_code, test_case)
-            if (
-                result.get("error", "").startswith("Compilation failed")
-                and "gson" in result.get("error", "").lower()
-            ):
-                # Fallback to simple JSON
-                prepared_code = self._convert_to_simple_json(prepared_code)
-                return self._execute_with_simple_json(prepared_code, test_case)
-            return result
-        else:
-            return self._execute_with_simple_json(prepared_code, test_case)
-
-    def _execute_with_gson(
-        self, code: str, test_case: Dict[str, Any]
-    ) -> Dict[str, Any]:
-        """Try to execute with Gson support."""
         # Write to temporary file
         code_path = os.path.join(self.temp_dir, "Test.java")
         with open(code_path, "w") as f:
-            f.write(code)
+            f.write(prepared_code)
 
         # Compile
         success, output_path, error = self.compile(code_path)
@@ -307,36 +262,9 @@ public class Test {{
                 "expected": test_case.get("expected"),
             }
 
-        # Execute
+        # Execute without input since values are embedded
         try:
-            # Build command line arguments
-            params = test_case.get("parameters", {})
-            args = []
-            for param_name, param_value in params.items():
-                if isinstance(param_value, list):
-                    args.append(",".join(map(str, param_value)))
-                else:
-                    args.append(str(param_value))
-
-            # Find Gson jar for runtime
-            gson_jar = None
-            gson_paths = [
-                "/usr/share/java/gson.jar",
-                "/usr/local/share/java/gson.jar",
-                os.path.expanduser(
-                    "~/.m2/repository/com/google/code/gson/gson/2.10.1/gson-2.10.1.jar"
-                ),
-            ]
-            for path in gson_paths:
-                if os.path.exists(path):
-                    gson_jar = path
-                    break
-
-            if gson_jar:
-                cmd = ["java", "-cp", f"{output_path}:{gson_jar}", "Test"] + args
-            else:
-                cmd = ["java", "-cp", output_path, "Test"] + args
-
+            cmd = ["java", "-cp", output_path, "Test"]
             result = subprocess.run(
                 cmd,
                 capture_output=True,
@@ -381,138 +309,3 @@ public class Test {{
                 "actual": None,
                 "expected": test_case.get("expected"),
             }
-
-    def _execute_with_simple_json(
-        self, code: str, test_case: Dict[str, Any]
-    ) -> Dict[str, Any]:
-        """Execute with simple JSON implementation."""
-        # Write to temporary file
-        code_path = os.path.join(self.temp_dir, "Test.java")
-        with open(code_path, "w") as f:
-            f.write(code)
-
-        # Compile
-        success, output_path, error = self.compile(code_path)
-        if not success:
-            return {
-                "passed": False,
-                "error": f"Compilation failed: {error}",
-                "actual": None,
-                "expected": test_case.get("expected"),
-            }
-
-        # Execute
-        try:
-            # Build command line arguments
-            params = test_case.get("parameters", {})
-            args = []
-            for param_name, param_value in params.items():
-                if isinstance(param_value, list):
-                    args.append(",".join(map(str, param_value)))
-                else:
-                    args.append(str(param_value))
-
-            cmd = ["java", "-cp", output_path, "Test"] + args
-
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                timeout=test_case.get("timeout", 30),
-            )
-
-            if result.returncode != 0:
-                return {
-                    "passed": False,
-                    "error": f"Runtime error: {result.stderr}",
-                    "actual": None,
-                    "expected": test_case.get("expected"),
-                }
-
-            # Parse output
-            try:
-                actual = json.loads(result.stdout.strip())
-            except json.JSONDecodeError:
-                actual = result.stdout.strip()
-
-            passed = actual == test_case.get("expected")
-
-            return {
-                "passed": passed,
-                "actual": actual,
-                "expected": test_case.get("expected"),
-                "output": result.stdout,
-            }
-
-        except subprocess.TimeoutExpired:
-            return {
-                "passed": False,
-                "error": "Execution timeout",
-                "actual": None,
-                "expected": test_case.get("expected"),
-            }
-        except Exception as e:
-            return {
-                "passed": False,
-                "error": str(e),
-                "actual": None,
-                "expected": test_case.get("expected"),
-            }
-
-    def _convert_to_simple_json(self, code: str) -> str:
-        """Convert code to use simple JSON serialization instead of Gson."""
-        # Remove Gson import
-        code = code.replace("import com.google.gson.Gson;", "")
-
-        # Replace Gson toJson with simple implementation
-        simple_json = r"""    private static String toJson(Object obj) {
-        if (obj == null) return "null";
-        if (obj instanceof Boolean || obj instanceof Number) return obj.toString();
-        if (obj instanceof String) return "\"" + obj + "\"";
-        if (obj instanceof int[]) {
-            int[] arr = (int[]) obj;
-            StringBuilder sb = new StringBuilder("[");
-            for (int i = 0; i < arr.length; i++) {
-                if (i > 0) sb.append(",");
-                sb.append(arr[i]);
-            }
-            return sb.append("]").toString();
-        }
-        if (obj instanceof double[]) {
-            double[] arr = (double[]) obj;
-            StringBuilder sb = new StringBuilder("[");
-            for (int i = 0; i < arr.length; i++) {
-                if (i > 0) sb.append(",");
-                sb.append(arr[i]);
-            }
-            return sb.append("]").toString();
-        }
-        if (obj instanceof String[]) {
-            String[] arr = (String[]) obj;
-            StringBuilder sb = new StringBuilder("[");
-            for (int i = 0; i < arr.length; i++) {
-                if (i > 0) sb.append(",");
-                sb.append("\"").append(arr[i]).append("\"");
-            }
-            return sb.append("]").toString();
-        }
-        if (obj instanceof List) {
-            List<?> list = (List<?>) obj;
-            StringBuilder sb = new StringBuilder("[");
-            for (int i = 0; i < list.size(); i++) {
-                if (i > 0) sb.append(",");
-                sb.append(toJson(list.get(i)));
-            }
-            return sb.append("]").toString();
-        }
-        return "\"" + obj.toString() + "\"";
-    }"""
-
-        code = code.replace(
-            """    private static String toJson(Object obj) {
-        return new Gson().toJson(obj);
-    }""",
-            simple_json,
-        )
-
-        return code

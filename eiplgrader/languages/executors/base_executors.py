@@ -12,10 +12,11 @@ from ..base import LanguageExecutor
 class CompiledLanguageExecutor(LanguageExecutor):
     """Base executor for compiled languages"""
 
-    def __init__(self, compile_cmd: List[str], run_cmd: List[str], file_ext: str):
+    def __init__(self, compile_cmd: List[str], run_cmd: List[str], file_ext: str, use_json_input: bool = True):
         self.compile_cmd = compile_cmd
         self.run_cmd = run_cmd
         self.file_ext = file_ext
+        self.use_json_input = use_json_input
         self.temp_dir = tempfile.mkdtemp()
 
     def compile(self, code_path: str) -> Tuple[bool, str, str]:
@@ -48,15 +49,24 @@ class CompiledLanguageExecutor(LanguageExecutor):
 
         # Execute
         try:
-            # Pass test parameters as command line args or stdin
-            args_json = json.dumps(test_case.get("parameters", {}))
-            result = subprocess.run(
-                [output_path],
-                input=args_json,
-                capture_output=True,
-                text=True,
-                timeout=test_case.get("timeout", 30),
-            )
+            # Pass test parameters as stdin if needed
+            if self.use_json_input:
+                args_json = json.dumps(test_case.get("parameters", {}))
+                result = subprocess.run(
+                    [output_path],
+                    input=args_json,
+                    capture_output=True,
+                    text=True,
+                    timeout=test_case.get("timeout", 30),
+                )
+            else:
+                # No input needed for embedded values
+                result = subprocess.run(
+                    [output_path],
+                    capture_output=True,
+                    text=True,
+                    timeout=test_case.get("timeout", 30),
+                )
 
             if result.returncode != 0:
                 return {
@@ -109,6 +119,26 @@ class InterpretedLanguageExecutor(LanguageExecutor):
         self.interpreter_cmd = interpreter_cmd
         self.file_ext = file_ext
         self.temp_dir = tempfile.mkdtemp()
+
+    def infer_type(self, value: Any) -> str:
+        """Infer type from a Python value."""
+        if isinstance(value, bool):
+            return "bool"
+        elif isinstance(value, int):
+            return "int"
+        elif isinstance(value, float):
+            return "double"
+        elif isinstance(value, str):
+            return "string"
+        elif isinstance(value, list):
+            if value and isinstance(value[0], int):
+                return "List[int]"
+            elif value and isinstance(value[0], float):
+                return "List[double]"
+            elif value and isinstance(value[0], str):
+                return "List[string]"
+            return "List"
+        return "unknown"
 
     def execute_test(self, code: str, test_case: Dict[str, Any]) -> Dict[str, Any]:
         """Execute test directly"""

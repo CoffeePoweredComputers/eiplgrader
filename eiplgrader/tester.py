@@ -122,8 +122,9 @@ class CodeTester:
             if "expected" not in test_case:
                 raise ValueError("Test case must contain 'expected' key")
 
-            # Type validation for non-Python languages
-            if self.language != "python":
+            # Type validation only for static languages
+            static_languages = ["c", "cpp", "java", "haskell"]
+            if self.language in static_languages:
                 if "parameter_types" not in test_case:
                     raise ValueError(
                         f"Test case missing required 'parameter_types' for {self.language}"

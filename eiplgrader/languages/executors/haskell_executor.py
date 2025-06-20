@@ -11,42 +11,18 @@ class HaskellExecutor(CompiledLanguageExecutor):
     """Executor for Haskell language code testing."""
 
     def __init__(self):
-        super().__init__(compile_cmd=["ghc"], run_cmd=None, file_ext=".hs")
+        super().__init__(compile_cmd=["ghc"], run_cmd=None, file_ext=".hs", use_json_input=False)
 
     def prepare_code(self, code: str, test_case: Dict[str, Any]) -> str:
         """Prepare Haskell code for execution with test harness."""
-        # Validate required type information using standardized error message
-        errors = []
-        if "parameter_types" not in test_case:
-            errors.append("parameter_types not provided")
-        if "expected_type" not in test_case:
-            errors.append("expected_type not provided")
-
-        if errors:
-            error_msg = "Missing required type information:\n"
-            for error in errors:
-                error_msg += f"- {error}\n"
-            error_msg += "\nTest case must include:\n"
-            error_msg += "{\n"
-            error_msg += '    "parameters": {...},\n'
-            error_msg += '    "parameter_types": {"param1": "type1", ...},\n'
-            error_msg += '    "expected": ...,\n'
-            error_msg += '    "expected_type": "type"\n'
-            error_msg += "}"
-            raise ValueError(error_msg)
-
+        # Use common validation
+        self.validate_types_provided(test_case)
+        
         function_name = test_case.get("function_name", "foo")
         parameters = test_case.get("parameters", {})
         parameter_types = test_case.get("parameter_types", {})
         expected_type = test_case.get("expected_type")
         inplace_mode = test_case.get("inplace", "0")
-
-        # Validate all parameters have types
-        for param_name in parameters:
-            if param_name not in parameter_types:
-                raise ValueError(
-                    f"Missing required type information:\n- parameter_types['{param_name}'] not provided"
-                )
 
         # Start building the module
         prepared_code = "module Main where\n\n"
@@ -56,33 +32,18 @@ class HaskellExecutor(CompiledLanguageExecutor):
         # Add the student's code
         prepared_code += code + "\n\n"
 
-        # Generate main function
+        # Generate main function with embedded values
         prepared_code += "main :: IO ()\n"
         prepared_code += "main = do\n"
         prepared_code += "    hSetBuffering stdout NoBuffering\n"
-        prepared_code += "    inputStr <- getLine\n"
+        prepared_code += "    -- Test parameters (embedded values)\n"
 
-        # Parse parameters using explicit types
+        # Generate parameter declarations with embedded values
         param_names = list(parameters.keys())
-
-        # Generate parameter parsing based on explicit types
+        
         for name, value in parameters.items():
             param_type = parameter_types[name]
-
-            # Parse based on type declaration
-            if param_type == "Int":
-                prepared_code += f"    let {name} = read (takeWhile (/= ',') $ dropWhile (/= ':') $ dropWhile (/= '\"') inputStr) :: Int\n"
-            elif param_type == "String":
-                prepared_code += f'    let {name} = "{value}"\n'
-            elif param_type == "Bool":
-                prepared_code += f"    let {name} = {str(value).lower()}\n"
-            elif param_type == "Double":
-                prepared_code += f"    let {name} = {value} :: Double\n"
-            elif param_type == "[Int]":
-                prepared_code += f"    let {name} = {value} :: [Int]\n"
-            else:
-                # For complex types, use the literal value
-                prepared_code += f"    let {name} = {value} :: {param_type}\n"
+            prepared_code += self._generate_param_declaration(name, param_type, value)
 
         # Generate function call
         if param_names:
@@ -98,13 +59,35 @@ class HaskellExecutor(CompiledLanguageExecutor):
         elif expected_type in ["Int", "Double"]:
             prepared_code += "    print result\n"
         elif expected_type == "String":
-            prepared_code += '    putStrLn $ "\\"" ++ result ++ "\\""\\n'
+            prepared_code += '    putStrLn $ "\\"" ++ result ++ "\\""\n'
         elif expected_type.startswith("["):
             prepared_code += "    print result\n"
         else:
             prepared_code += "    print result\n"
 
         return prepared_code
+
+    def _generate_param_declaration(self, name: str, param_type: str, value: Any) -> str:
+        """Generate parameter declaration with embedded value."""
+        if param_type == "Int":
+            return f"    let {name} = {value} :: Int\n"
+        elif param_type == "String":
+            escaped_value = value.replace('\\', '\\\\').replace('"', '\\"')
+            return f'    let {name} = "{escaped_value}" :: String\n'
+        elif param_type == "Bool":
+            haskell_bool = "True" if value else "False"
+            return f"    let {name} = {haskell_bool} :: Bool\n"
+        elif param_type == "Double":
+            return f"    let {name} = {value} :: Double\n"
+        elif param_type == "[Int]" and isinstance(value, list):
+            return f"    let {name} = {value} :: [Int]\n"
+        elif param_type == "[Double]" and isinstance(value, list):
+            return f"    let {name} = {value} :: [Double]\n"
+        elif param_type == "[String]" and isinstance(value, list):
+            values_str = ", ".join(f'"{v.replace("\\", "\\\\").replace("\"", "\\\"")}"' for v in value)
+            return f"    let {name} = [{values_str}] :: [String]\n"
+        else:
+            return f"    let {name} = {value} :: {param_type}\n"
 
     def compile(self, code_path: str) -> Tuple[bool, str, str]:
         """Compile Haskell code, return (success, output_path, error)"""

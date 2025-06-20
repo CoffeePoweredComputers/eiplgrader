@@ -18,21 +18,14 @@ class CppExecutor(CompiledLanguageExecutor):
 
     def prepare_code(self, code: str, test_case: Dict[str, Any]) -> str:
         """Prepare C++ code for execution with test harness."""
+        # Use common validation
+        self.validate_types_provided(test_case)
+        
         function_name = test_case.get("function_name", "foo")
         parameters = test_case.get("parameters", {})
         parameter_types = test_case.get("parameter_types", {})
         expected_type = test_case.get("expected_type", "int")
         inplace_mode = test_case.get("inplace", "0")
-
-        # Validate required type information
-        if not parameter_types:
-            raise ValueError(
-                "Missing required type information:\n- parameter_types not provided"
-            )
-        if not expected_type:
-            raise ValueError(
-                "Missing required type information:\n- expected_type not provided"
-            )
 
         # Ensure necessary headers are included
         necessary_includes = [
@@ -109,6 +102,7 @@ class CppExecutor(CompiledLanguageExecutor):
         main_code += "    return 0;\n}\n"
 
         return code + "\n" + main_code
+
 
     def _generate_param_declaration(
         self, name: str, param_type: str, value: Any

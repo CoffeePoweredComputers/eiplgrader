@@ -69,33 +69,27 @@ code_generator = CodeGenerator(
         )
 generated_code = code_generator.generate_code("that adds two numbers.")
 
-# define your tests with explicit types (recommended)
+# For Python, JavaScript, and Go - types are automatically inferred!
 test_cases = [
-    {
-        "parameters": {"a": 1, "b": 2},
-        "parameter_types": {"a": "int", "b": "int"},
-        "expected": 3,
-        "expected_type": "int"
-    },
-    {
-        "parameters": {"a": -1, "b": 1},
-        "parameter_types": {"a": "int", "b": "int"},
-        "expected": 0,
-        "expected_type": "int"
-    },
-    {
-        "parameters": {"a": -1, "b": -1},
-        "parameter_types": {"a": "int", "b": "int"},
-        "expected": -2,
-        "expected_type": "int"
-    }
+    {"parameters": {"a": 1, "b": 2}, "expected": 3},
+    {"parameters": {"a": -1, "b": 1}, "expected": 0},
+    {"parameters": {"a": -1, "b": -1}, "expected": -2}
 ]
 
-# Legacy format (still supported for Python)
+# For C, C++, Java, and Haskell - explicit types are required
 # test_cases = [
-#     {"parameters": {"a": 1, "b": 2}, "expected": 3},
-#     {"parameters": {"a": -1, "b": 1}, "expected": 0},
-#     {"parameters": {"a": -1, "b": -1}, "expected": -2}
+#     {
+#         "parameters": {"a": 1, "b": 2},
+#         "parameter_types": {"a": "int", "b": "int"},
+#         "expected": 3,
+#         "expected_type": "int"
+#     },
+#     {
+#         "parameters": {"a": -1, "b": 1},
+#         "parameter_types": {"a": "int", "b": "int"},
+#         "expected": 0,
+#         "expected_type": "int"
+#     }
 # ]
 
 # Test the generated code
@@ -125,6 +119,22 @@ When using this tool, please cite the following paper:
     series = {ITiCSE 2024}
 }
 ```
+
+## Supported Programming Languages
+
+EiplGrader can generate and test code in multiple programming languages:
+
+| Language | Type Inference | Type Annotations |
+|----------|---------------|------------------|
+| Python   | ✅ Automatic   | Optional         |
+| JavaScript | ✅ Automatic | Optional         |
+| Go       | ✅ Automatic   | Optional         |
+| Java     | ❌ Not supported | Required      |
+| C++      | ❌ Not supported | Required      |
+| C        | ❌ Not supported | Required      |
+| Haskell  | ❌ Not supported | Required      |
+
+For dynamic languages (Python, JavaScript, Go), test cases can use the simplified format where types are automatically inferred from values. For static languages (Java, C++, C, Haskell), explicit type annotations are required.
 
 ## Python Version
 This package supports Python 3.10, 3.11, 3.12, and 3.13.
