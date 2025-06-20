@@ -1,7 +1,6 @@
 """Python language adapter."""
 
 import re
-import ast
 from typing import List
 from ..base import LanguageAdapter, LanguageConfig
 
