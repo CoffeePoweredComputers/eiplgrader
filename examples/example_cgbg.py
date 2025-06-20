@@ -49,10 +49,10 @@ generated_code = result["code"]
 print(f"Generated code: {generated_code[0]}")
 
 test_cases = [
-    {"parameters": {"a": 1, "b": 2}, "expected": 3},
-    {"parameters": {"a": 5, "b": 7}, "expected": 12},
-    {"parameters": {"a": -1, "b": 1}, "expected": 0},
-    {"parameters": {"a": 0, "b": 0}, "expected": 0},
+    {"parameters": {"a": 1, "b": 2}, "parameter_types": {"a": "int", "b": "int"}, "expected": 3, "expected_type": "int"},
+    {"parameters": {"a": 5, "b": 7}, "parameter_types": {"a": "int", "b": "int"}, "expected": 12, "expected_type": "int"},
+    {"parameters": {"a": -1, "b": 1}, "parameter_types": {"a": "int", "b": "int"}, "expected": 0, "expected_type": "int"},
+    {"parameters": {"a": 0, "b": 0}, "parameter_types": {"a": "int", "b": "int"}, "expected": 0, "expected_type": "int"},
 ]
 
 code_tester = CodeTester(
@@ -80,10 +80,10 @@ generated_code = result["code"]
 print(f"Generated code: {generated_code[0]}")
 
 test_cases = [
-    {"parameters": {"numbers": [1, 2, 3, 4, 5, 6]}, "expected": 12},  # 2+4+6
-    {"parameters": {"numbers": [1, 3, 5]}, "expected": 0},           # No even numbers
-    {"parameters": {"numbers": [2, 4, 6, 8]}, "expected": 20},       # All even
-    {"parameters": {"numbers": []}, "expected": 0},                  # Empty list
+    {"parameters": {"numbers": [1, 2, 3, 4, 5, 6]}, "parameter_types": {"numbers": "List[int]"}, "expected": 12, "expected_type": "int"},  # 2+4+6
+    {"parameters": {"numbers": [1, 3, 5]}, "parameter_types": {"numbers": "List[int]"}, "expected": 0, "expected_type": "int"},           # No even numbers
+    {"parameters": {"numbers": [2, 4, 6, 8]}, "parameter_types": {"numbers": "List[int]"}, "expected": 20, "expected_type": "int"},       # All even
+    {"parameters": {"numbers": []}, "parameter_types": {"numbers": "List[int]"}, "expected": 0, "expected_type": "int"},                  # Empty list
 ]
 
 code_tester = CodeTester(
@@ -113,10 +113,10 @@ generated_code = result["code"]
 print(f"Generated JavaScript code: {generated_code[0]}")
 
 test_cases = [
-    {"parameters": {"str": "hello"}, "expected": 2},      # e, o
-    {"parameters": {"str": "programming"}, "expected": 3}, # o, a, i
-    {"parameters": {"str": "xyz"}, "expected": 0},        # No vowels
-    {"parameters": {"str": "AEIOU"}, "expected": 5},      # All vowels uppercase
+    {"parameters": {"str": "hello"}, "parameter_types": {"str": "string"}, "expected": 2, "expected_type": "int"},      # e, o
+    {"parameters": {"str": "programming"}, "parameter_types": {"str": "string"}, "expected": 3, "expected_type": "int"}, # o, a, i
+    {"parameters": {"str": "xyz"}, "parameter_types": {"str": "string"}, "expected": 0, "expected_type": "int"},        # No vowels
+    {"parameters": {"str": "AEIOU"}, "parameter_types": {"str": "string"}, "expected": 5, "expected_type": "int"},      # All vowels uppercase
 ]
 
 code_tester = CodeTester(
@@ -146,9 +146,9 @@ generated_code = result["code"]
 print(f"Generated Java code: {generated_code[0]}")
 
 test_cases = [
-    {"parameters": {"arr": [1, 5, 3, 9, 2]}, "expected": 5},
-    {"parameters": {"arr": [10, 10, 5]}, "expected": 5},      # Handle duplicates
-    {"parameters": {"arr": [1, 2]}, "expected": 1},           # Minimum case
+    {"parameters": {"arr": [1, 5, 3, 9, 2]}, "parameter_types": {"arr": "int[]"}, "expected": 5, "expected_type": "int"},
+    {"parameters": {"arr": [10, 10, 5]}, "parameter_types": {"arr": "int[]"}, "expected": 5, "expected_type": "int"},      # Handle duplicates
+    {"parameters": {"arr": [1, 2]}, "parameter_types": {"arr": "int[]"}, "expected": 1, "expected_type": "int"},           # Minimum case
 ]
 
 code_tester = CodeTester(
@@ -182,8 +182,13 @@ test_cases = [
         "parameters": {
             "arr": [3, 1, 4, 1, 5], 
             "n": 5
-        }, 
-        "expected": [1, 1, 3, 4, 5]
+        },
+        "parameter_types": {
+            "arr": "int[]",
+            "n": "int"
+        },
+        "expected": [1, 1, 3, 4, 5],
+        "expected_type": "int[]"
     },  # In-place sort
 ]
 
@@ -191,11 +196,6 @@ code_tester = CodeTester(
     code=generated_code[0],
     test_cases=test_cases,
     function_name="bubbleSort",
-    parameter_types={
-        "arr": "int[]",  # Array of integers
-        "n": "int"       # Size of the array
-    },
-    expected_type="int[]",  # Expecting an array of integers
     language="c",
     inplace="1"  # Bubble sort modifies array in-place
 )
@@ -220,9 +220,9 @@ generated_code = result["code"]
 print(f"Generated C++ code: {generated_code[0]}")
 
 test_cases = [
-    {"parameters": {"vec": [3, 1, 4, 1, 5, 3, 2]}, "expected": [1, 2, 3, 4, 5]},
-    {"parameters": {"vec": [5, 5, 5]}, "expected": [5]},
-    {"parameters": {"vec": [1, 2, 3]}, "expected": [1, 2, 3]},
+    {"parameters": {"input": [3, 1, 4, 1, 5, 3, 2]}, "parameter_types": {"input": "std::vector<int>"}, "expected": [1, 2, 3, 4, 5], "expected_type": "std::vector<int>"},
+    {"parameters": {"input": [5, 5, 5]}, "parameter_types": {"input": "std::vector<int>"}, "expected": [5], "expected_type": "std::vector<int>"},
+    {"parameters": {"input": [1, 2, 3]}, "parameter_types": {"input": "std::vector<int>"}, "expected": [1, 2, 3], "expected_type": "std::vector<int>"},
 ]
 
 code_tester = CodeTester(
@@ -252,10 +252,10 @@ generated_code = result["code"]
 print(f"Generated Go code: {generated_code[0]}")
 
 test_cases = [
-    {"parameters": {"s": "racecar"}, "expected": True},
-    {"parameters": {"s": "hello"}, "expected": False},
-    {"parameters": {"s": "a"}, "expected": True},
-    {"parameters": {"s": ""}, "expected": True},
+    {"parameters": {"s": "racecar"}, "parameter_types": {"s": "string"}, "expected": True, "expected_type": "bool"},
+    {"parameters": {"s": "hello"}, "parameter_types": {"s": "string"}, "expected": False, "expected_type": "bool"},
+    {"parameters": {"s": "a"}, "parameter_types": {"s": "string"}, "expected": True, "expected_type": "bool"},
+    {"parameters": {"s": ""}, "parameter_types": {"s": "string"}, "expected": True, "expected_type": "bool"},
 ]
 
 code_tester = CodeTester(
@@ -296,10 +296,10 @@ generated_codes = result["code"]
 print(f"Generated {len(generated_codes)} different implementations")
 
 test_cases = [
-    {"parameters": {"n": 0}, "expected": 1},   # Edge case: 0! = 1
-    {"parameters": {"n": 1}, "expected": 1},   # Base case
-    {"parameters": {"n": 5}, "expected": 120}, # 5! = 5*4*3*2*1
-    {"parameters": {"n": 3}, "expected": 6},   # 3! = 3*2*1
+    {"parameters": {"n": 0}, "parameter_types": {"n": "int"}, "expected": 1, "expected_type": "int"},   # Edge case: 0! = 1
+    {"parameters": {"n": 1}, "parameter_types": {"n": "int"}, "expected": 1, "expected_type": "int"},   # Base case
+    {"parameters": {"n": 5}, "parameter_types": {"n": "int"}, "expected": 120, "expected_type": "int"}, # 5! = 5*4*3*2*1
+    {"parameters": {"n": 3}, "parameter_types": {"n": "int"}, "expected": 6, "expected_type": "int"},   # 3! = 3*2*1
 ]
 
 # Test all generated variants

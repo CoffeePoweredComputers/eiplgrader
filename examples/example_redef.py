@@ -51,9 +51,9 @@ print(f"Generated code for function redefinition: {generated_code[0]}")
 
 # Test assuming it calculates area of a rectangle
 test_cases = [
-    {"parameters": {"length": 5, "width": 3}, "expected": 15},
-    {"parameters": {"length": 10, "width": 2}, "expected": 20},
-    {"parameters": {"length": 1, "width": 1}, "expected": 1},
+    {"parameters": {"length": 5, "width": 3}, "parameter_types": {"length": "int", "width": "int"}, "expected": 15, "expected_type": "int"},
+    {"parameters": {"length": 10, "width": 2}, "parameter_types": {"length": "int", "width": "int"}, "expected": 20, "expected_type": "int"},
+    {"parameters": {"length": 1, "width": 1}, "parameter_types": {"length": "int", "width": "int"}, "expected": 1, "expected_type": "int"},
 ]
 
 code_tester = CodeTester(
@@ -83,10 +83,10 @@ generated_code = result["code"]
 print(f"Generated code: {generated_code[0]}")
 
 test_cases = [
-    {"parameters": {"grades": [85.0, 90.0, 78.0, 92.0]}, "expected": 86.25},
-    {"parameters": {"grades": [100.0, 95.0, 88.0]}, "expected": 94.33333333333333},
-    {"parameters": {"grades": [70.0]}, "expected": 70.0},
-    {"parameters": {"grades": []}, "expected": 0.0},  # Edge case: empty list
+    {"parameters": {"grades": [85.0, 90.0, 78.0, 92.0]}, "parameter_types": {"grades": "List[float]"}, "expected": 86.25, "expected_type": "float"},
+    {"parameters": {"grades": [100.0, 95.0, 88.0]}, "parameter_types": {"grades": "List[float]"}, "expected": 94.33333333333333, "expected_type": "float"},
+    {"parameters": {"grades": [70.0]}, "parameter_types": {"grades": "List[float]"}, "expected": 70.0, "expected_type": "float"},
+    {"parameters": {"grades": []}, "parameter_types": {"grades": "List[float]"}, "expected": 0.0, "expected_type": "float"},  # Edge case: empty list
 ]
 
 code_tester = CodeTester(
@@ -116,11 +116,11 @@ generated_code = result["code"]
 print(f"Generated JavaScript code: {generated_code[0]}")
 
 test_cases = [
-    {"parameters": {"email": "user@example.com"}, "expected": True},
-    {"parameters": {"email": "test.email+tag@domain.co.uk"}, "expected": True},
-    {"parameters": {"email": "invalid.email"}, "expected": False},
-    {"parameters": {"email": "@domain.com"}, "expected": False},
-    {"parameters": {"email": "user@"}, "expected": False},
+    {"parameters": {"email": "user@example.com"}, "parameter_types": {"email": "string"}, "expected": True, "expected_type": "boolean"},
+    {"parameters": {"email": "test.email+tag@domain.co.uk"}, "parameter_types": {"email": "string"}, "expected": True, "expected_type": "boolean"},
+    {"parameters": {"email": "invalid.email"}, "parameter_types": {"email": "string"}, "expected": False, "expected_type": "boolean"},
+    {"parameters": {"email": "@domain.com"}, "parameter_types": {"email": "string"}, "expected": False, "expected_type": "boolean"},
+    {"parameters": {"email": "user@"}, "parameter_types": {"email": "string"}, "expected": False, "expected_type": "boolean"},
 ]
 
 code_tester = CodeTester(
@@ -151,10 +151,10 @@ generated_code = result["code"]
 print(f"Generated Java code: {generated_code[0]}")
 
 test_cases = [
-    {"parameters": {"arr1": [1, 3, 5], "arr2": [2, 4, 6]}, "expected": [1, 2, 3, 4, 5, 6]},
-    {"parameters": {"arr1": [1, 5, 9], "arr2": [2, 3, 8]}, "expected": [1, 2, 3, 5, 8, 9]},
-    {"parameters": {"arr1": [], "arr2": [1, 2, 3]}, "expected": [1, 2, 3]},
-    {"parameters": {"arr1": [1, 2, 3], "arr2": []}, "expected": [1, 2, 3]},
+    {"parameters": {"arr1": [1, 3, 5], "arr2": [2, 4, 6]}, "parameter_types": {"arr1": "int[]", "arr2": "int[]"}, "expected": [1, 2, 3, 4, 5, 6], "expected_type": "int[]"},
+    {"parameters": {"arr1": [1, 5, 9], "arr2": [2, 3, 8]}, "parameter_types": {"arr1": "int[]", "arr2": "int[]"}, "expected": [1, 2, 3, 5, 8, 9], "expected_type": "int[]"},
+    {"parameters": {"arr1": [], "arr2": [1, 2, 3]}, "parameter_types": {"arr1": "int[]", "arr2": "int[]"}, "expected": [1, 2, 3], "expected_type": "int[]"},
+    {"parameters": {"arr1": [1, 2, 3], "arr2": []}, "parameter_types": {"arr1": "int[]", "arr2": "int[]"}, "expected": [1, 2, 3], "expected_type": "int[]"},
 ]
 
 code_tester = CodeTester(
@@ -205,12 +205,12 @@ generated_codes = result["code"]
 print(f"Generated {len(generated_codes)} different implementations")
 
 test_cases = [
-    {"parameters": {"n": 2}, "expected": True},   # Smallest prime
-    {"parameters": {"n": 17}, "expected": True},  # Prime number
-    {"parameters": {"n": 4}, "expected": False},  # Composite number
-    {"parameters": {"n": 1}, "expected": False},  # Edge case: 1 is not prime
-    {"parameters": {"n": 0}, "expected": False},  # Edge case: 0 is not prime
-    {"parameters": {"n": 29}, "expected": True},  # Another prime
+    {"parameters": {"n": 2}, "parameter_types": {"n": "int"}, "expected": True, "expected_type": "bool"},   # Smallest prime
+    {"parameters": {"n": 17}, "parameter_types": {"n": "int"}, "expected": True, "expected_type": "bool"},  # Prime number
+    {"parameters": {"n": 4}, "parameter_types": {"n": "int"}, "expected": False, "expected_type": "bool"},  # Composite number
+    {"parameters": {"n": 1}, "parameter_types": {"n": "int"}, "expected": False, "expected_type": "bool"},  # Edge case: 1 is not prime
+    {"parameters": {"n": 0}, "parameter_types": {"n": "int"}, "expected": False, "expected_type": "bool"},  # Edge case: 0 is not prime
+    {"parameters": {"n": 29}, "parameter_types": {"n": "int"}, "expected": True, "expected_type": "bool"},  # Another prime
 ]
 
 # Test all generated variants

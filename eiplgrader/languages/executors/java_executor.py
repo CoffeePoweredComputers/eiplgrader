@@ -16,10 +16,37 @@ class JavaExecutor(CompiledLanguageExecutor):
 
     def prepare_code(self, code: str, test_case: Dict[str, Any]) -> str:
         """Prepare Java code for execution with test harness."""
+        # Validate required type information using standardized error message
+        errors = []
+        if "parameter_types" not in test_case:
+            errors.append("parameter_types not provided")
+        if "expected_type" not in test_case:
+            errors.append("expected_type not provided")
+
+        if errors:
+            error_msg = "Missing required type information:\n"
+            for error in errors:
+                error_msg += f"- {error}\n"
+            error_msg += "\nTest case must include:\n"
+            error_msg += "{\n"
+            error_msg += '    "parameters": {...},\n'
+            error_msg += '    "parameter_types": {"param1": "type1", ...},\n'
+            error_msg += '    "expected": ...,\n'
+            error_msg += '    "expected_type": "type"\n'
+            error_msg += "}"
+            raise ValueError(error_msg)
+
         function_name = test_case.get("function_name", "foo")
         params = test_case.get("parameters", {})
         inplace_mode = test_case.get("inplace", "0")
-        param_types = test_case.get("param_types", {})
+        param_types = test_case["parameter_types"]  # Required field
+
+        # Validate all parameters have types
+        for param_name in params:
+            if param_name not in param_types:
+                raise ValueError(
+                    f"Missing required type information:\n- parameter_types['{param_name}'] not provided"
+                )
 
         # Extract the Solution class content
         # Check if code already has proper structure
@@ -46,11 +73,12 @@ class JavaExecutor(CompiledLanguageExecutor):
 
         for i, param_name in enumerate(param_names):
             param_value = params[param_name]
-            # Check if type hint provided, otherwise infer
-            if param_name in param_types:
-                java_type = param_types[param_name]
-            else:
-                java_type = self._infer_java_type(param_value, param_name)
+            # Type must be explicitly provided
+            if param_name not in param_types:
+                raise ValueError(
+                    f"Missing required type information:\n- parameter_types['{param_name}'] not provided"
+                )
+            java_type = param_types[param_name]
             parse_code = self._get_parse_code(
                 param_name, f"args[{i}]", java_type, param_value
             )
@@ -127,45 +155,15 @@ public class Test {{
         return test_harness
 
     def _infer_java_type(self, value: Any, param_name: Optional[str] = None) -> str:
-        """Infer Java type from Python value."""
-        if isinstance(value, bool):
-            return "boolean"
-        elif isinstance(value, int):
-            return "int"
-        elif isinstance(value, float):
-            return "double"
-        elif isinstance(value, str):
-            return "String"
-        elif isinstance(value, list):
-            if value and isinstance(value[0], int):
-                return "int[]"
-            elif value and isinstance(value[0], float):
-                return "double[]"
-            elif value and isinstance(value[0], str):
-                return "String[]"
-            elif not value:
-                # Empty array - try to infer from parameter name
-                if param_name:
-                    param_lower = param_name.lower()
-                    if any(
-                        hint in param_lower
-                        for hint in ["string", "str", "text", "word"]
-                    ):
-                        return "String[]"
-                    elif any(
-                        hint in param_lower for hint in ["double", "float", "decimal"]
-                    ):
-                        return "double[]"
-                    elif any(
-                        hint in param_lower for hint in ["bool", "boolean", "flag"]
-                    ):
-                        return "boolean[]"
-                # Default to int[] for numeric contexts
-                return "int[]"
-            else:
-                return "Object[]"
-        else:
-            return "Object"
+        """DEPRECATED: Type inference is no longer allowed.
+
+        This method should not be used. All types must be explicitly provided
+        in test_case['parameter_types'].
+        """
+        raise ValueError(
+            "Type inference is not allowed. All parameter types must be explicitly "
+            "provided in test_case['parameter_types']"
+        )
 
     def _get_parse_code(
         self, var_name: str, arg_expr: str, java_type: str, _value: Any

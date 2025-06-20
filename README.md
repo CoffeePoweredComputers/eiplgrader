@@ -69,13 +69,34 @@ code_generator = CodeGenerator(
         )
 generated_code = code_generator.generate_code("that adds two numbers.")
 
-# define your tests
-
+# define your tests with explicit types (recommended)
 test_cases = [
-    [[1, 2], 3],
-    [[-1, 1], 0],
-    [[-1, -1], -2]
+    {
+        "parameters": {"a": 1, "b": 2},
+        "parameter_types": {"a": "int", "b": "int"},
+        "expected": 3,
+        "expected_type": "int"
+    },
+    {
+        "parameters": {"a": -1, "b": 1},
+        "parameter_types": {"a": "int", "b": "int"},
+        "expected": 0,
+        "expected_type": "int"
+    },
+    {
+        "parameters": {"a": -1, "b": -1},
+        "parameter_types": {"a": "int", "b": "int"},
+        "expected": -2,
+        "expected_type": "int"
+    }
 ]
+
+# Legacy format (still supported for Python)
+# test_cases = [
+#     {"parameters": {"a": 1, "b": 2}, "expected": 3},
+#     {"parameters": {"a": -1, "b": 1}, "expected": 0},
+#     {"parameters": {"a": -1, "b": -1}, "expected": -2}
+# ]
 
 # Test the generated code
 code_tester = CodeTester(generated_code, test_cases)

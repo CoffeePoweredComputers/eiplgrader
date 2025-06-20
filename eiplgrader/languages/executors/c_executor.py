@@ -16,9 +16,36 @@ class CExecutor(CompiledLanguageExecutor):
         """Prepare C code for execution with test harness."""
         function_name = test_case.get("function_name", "foo")
         parameters = test_case.get("parameters", {})
-        parameter_types = test_case.get("parameter_types", {})
-        expected_type = test_case.get("expected_type", "int")
+        parameter_types = test_case.get("parameter_types")
+        expected_type = test_case.get("expected_type")
         inplace_mode = test_case.get("inplace", "0")
+
+        # Validate required type information using standardized error message
+        errors = []
+        if not parameter_types:
+            errors.append("parameter_types not provided")
+        if not expected_type:
+            errors.append("expected_type not provided")
+
+        if errors:
+            error_msg = "Missing required type information:\n"
+            for error in errors:
+                error_msg += f"- {error}\n"
+            error_msg += "\nTest case must include:\n"
+            error_msg += "{\n"
+            error_msg += '    "parameters": {...},\n'
+            error_msg += '    "parameter_types": {"param1": "type1", ...},\n'
+            error_msg += '    "expected": ...,\n'
+            error_msg += '    "expected_type": "type"\n'
+            error_msg += "}"
+            raise ValueError(error_msg)
+
+        # Validate all parameters have types
+        for param_name in parameters:
+            if param_name not in parameter_types:
+                raise ValueError(
+                    f"Missing required type information:\n- parameter_types['{param_name}'] not provided"
+                )
 
         # Ensure code has necessary headers
         if "#include <stdio.h>" not in code:
@@ -51,15 +78,24 @@ int main() {
 
         # Generate parameter parsing based on explicit types
         param_names = list(parameters.keys())
-        
+
         for name in param_names:
-            param_type = parameter_types.get(name, self._infer_c_type(parameters[name]))
+            param_type = parameter_types.get(name)
+            if not param_type:
+                raise ValueError(f"Type required for parameter '{name}'")
             value = parameters[name]
-            
+
             main_code += self._generate_param_parsing(name, param_type, value)
 
         # Generate function call based on inplace mode
-        main_code += self._generate_function_call(function_name, param_names, expected_type, inplace_mode, parameter_types, parameters)
+        main_code += self._generate_function_call(
+            function_name,
+            param_names,
+            expected_type,
+            inplace_mode,
+            parameter_types,
+            parameters,
+        )
 
         main_code += """
     return 0;
@@ -69,33 +105,11 @@ int main() {
         # Combine everything
         return code + "\n" + main_code
 
-    def _infer_c_type(self, value: Any) -> str:
-        """Infer C type from a single parameter value (fallback)."""
-        if isinstance(value, bool):
-            return "int"  # C uses int for bool
-        elif isinstance(value, int):
-            return "int"
-        elif isinstance(value, float):
-            return "double"
-        elif isinstance(value, str):
-            return "string"
-        elif isinstance(value, list):
-            if not value:
-                return "int[]"
-            elif isinstance(value[0], int):
-                return "int[]"
-            elif isinstance(value[0], float):
-                return "double[]"
-            else:
-                return "string[]"
-        else:
-            return "int"
-
     def _map_type_to_c(self, type_str: str) -> str:
         """Map generic type string to C type."""
         type_mapping = {
             "int": "int",
-            "double": "double", 
+            "double": "double",
             "float": "float",
             "string": "char*",
             "bool": "int",
@@ -104,7 +118,7 @@ int main() {
             "float[]": "float*",
             "string[]": "char**",
             "char*": "char*",
-            "int*": "int*"
+            "int*": "int*",
         }
         return type_mapping.get(type_str, "int")
 
@@ -112,61 +126,69 @@ int main() {
         """Generate parameter parsing code for a single parameter."""
         c_type = self._map_type_to_c(param_type)
         code = ""
-        
+
         if c_type == "int":
             code += f"    int {name};\n"
             code += f'    char* {name}_pos = strstr(buffer, "\\"{name}\\":");\n'
             code += f'    if ({name}_pos && sscanf({name}_pos + strlen("\\"{name}\\":"), "%d", &{name}) != 1) {{\n'
-            code += f'        {name} = {value};  // Use default value\n'
-            code += f'    }}\n'
+            code += f"        {name} = {value};  // Use default value\n"
+            code += f"    }}\n"
         elif c_type == "double":
             code += f"    double {name};\n"
             code += f'    char* {name}_pos = strstr(buffer, "\\"{name}\\":");\n'
             code += f'    if ({name}_pos && sscanf({name}_pos + strlen("\\"{name}\\":"), "%lf", &{name}) != 1) {{\n'
-            code += f'        {name} = {value};  // Use default value\n'
-            code += f'    }}\n'
+            code += f"        {name} = {value};  // Use default value\n"
+            code += f"    }}\n"
         elif c_type == "char*":
             code += f'    char {name}[256] = "{value}";  // Default value\n'
             code += f'    char* {name}_field = strstr(buffer, "\\"{name}\\": \\"");\n'
-            code += f'    if ({name}_field) {{\n'
+            code += f"    if ({name}_field) {{\n"
             code += f'        char* {name}_start = {name}_field + strlen("\\"{name}\\": \\"");\n'
             code += f"        char* {name}_end = strchr({name}_start, '\\\"');\n"
-            code += f'        if ({name}_end) {{\n'
+            code += f"        if ({name}_end) {{\n"
             code += f"            size_t {name}_len = {name}_end - {name}_start;\n"
             code += f"            if ({name}_len < sizeof({name})) {{\n"
             code += f"                strncpy({name}, {name}_start, {name}_len);\n"
             code += f"                {name}[{name}_len] = '\\0';\n"
             code += f"            }}\n"
-            code += f'        }}\n'
-            code += f'    }}\n'
+            code += f"        }}\n"
+            code += f"    }}\n"
         elif c_type == "int*" and isinstance(value, list):
             array_size = len(value)
             default_values = ", ".join(str(v) for v in value)
             code += f"    int {name}[{array_size}] = {{{default_values}}};\n"
-            code += f'    // Simplified: using default values for array {name}\n'
-        
+            code += f"    // Simplified: using default values for array {name}\n"
+
         return code
 
-    def _generate_function_call(self, function_name: str, param_names: List[str], 
-                              expected_type: str, inplace_mode: str, 
-                              parameter_types: Dict[str, str], parameters: Dict[str, Any]) -> str:
+    def _generate_function_call(
+        self,
+        function_name: str,
+        param_names: List[str],
+        expected_type: str,
+        inplace_mode: str,
+        parameter_types: Dict[str, str],
+        parameters: Dict[str, Any],
+    ) -> str:
         """Generate function call and output code."""
         code = ""
-        
+
         if inplace_mode == "0":
             # Normal function call
             c_return_type = self._map_type_to_c(expected_type)
             format_spec = self._get_format_spec(c_return_type)
-            
+
             if c_return_type == "int*":
                 # Handle array return
-                code += f"    int* result = {function_name}({', '.join(param_names)});\n"
+                code += (
+                    f"    int* result = {function_name}({', '.join(param_names)});\n"
+                )
                 code += '    printf("[");\n'
-                code += '    // Assume small array for simplicity\n'
-                code += '    for (int i = 0; i < 10 && result[i] != 0; i++) {\n'
+                code += "    // Assume small array for simplicity\n"
+                code += "    for (int i = 0; i < 10 && result[i] != 0; i++) {\n"
                 code += '        if (i > 0) printf(", ");\n'
                 code += '        printf("%d", result[i]);\n'
-                code += '    }\n'
+                code += "    }\n"
                 code += '    printf("]\\n");\n'
             else:
                 code += f"    {c_return_type} result = {function_name}({', '.join(param_names)});\n"
@@ -176,15 +198,21 @@ int main() {
             code += f"    {function_name}({', '.join(param_names)});\n"
             if param_names:
                 first_param = param_names[0]
-                first_type = parameter_types.get(first_param, "int")
+                first_type = parameter_types.get(first_param)
+                if not first_type:
+                    raise ValueError(f"Type required for parameter '{first_param}'")
                 c_type = self._map_type_to_c(first_type)
                 if c_type == "int*":
-                    array_size = len(parameters[first_param]) if isinstance(parameters[first_param], list) else 5
+                    array_size = (
+                        len(parameters[first_param])
+                        if isinstance(parameters[first_param], list)
+                        else 5
+                    )
                     code += '    printf("[");\n'
-                    code += f'    for (int i = 0; i < {array_size}; i++) {{\n'
+                    code += f"    for (int i = 0; i < {array_size}; i++) {{\n"
                     code += '        if (i > 0) printf(", ");\n'
                     code += f'        printf("%d", {first_param}[i]);\n'
-                    code += '    }\n'
+                    code += "    }\n"
                     code += '    printf("]\\n");\n'
                 else:
                     format_spec = self._get_format_spec(c_type)
@@ -197,7 +225,7 @@ int main() {
             format_spec = self._get_format_spec(c_return_type)
             code += f"    {c_return_type} result = {function_name}({', '.join(param_names)});\n"
             code += f'    printf("{format_spec}\\n", result);\n'
-        
+
         return code
 
     def _get_format_spec(self, c_type: str) -> str:
@@ -205,7 +233,7 @@ int main() {
         format_specs = {
             "int": "%d",
             "double": "%.6f",
-            "float": "%.6f", 
-            "char*": '\\"%s\\"'
+            "float": "%.6f",
+            "char*": '\\"%s\\"',
         }
         return format_specs.get(c_type, "%d")

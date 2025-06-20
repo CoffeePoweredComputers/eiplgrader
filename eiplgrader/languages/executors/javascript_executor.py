@@ -14,9 +14,38 @@ class JavaScriptExecutor(InterpretedLanguageExecutor):
 
     def prepare_code(self, code: str, test_case: Dict[str, Any]) -> str:
         """Prepare JavaScript code for execution with test harness."""
+        # Validate required type information using standardized error message
+        errors = []
+        if "parameter_types" not in test_case:
+            errors.append("parameter_types not provided")
+        if "expected_type" not in test_case:
+            errors.append("expected_type not provided")
+
+        if errors:
+            error_msg = "Missing required type information:\n"
+            for error in errors:
+                error_msg += f"- {error}\n"
+            error_msg += "\nTest case must include:\n"
+            error_msg += "{\n"
+            error_msg += '    "parameters": {...},\n'
+            error_msg += '    "parameter_types": {"param1": "type1", ...},\n'
+            error_msg += '    "expected": ...,\n'
+            error_msg += '    "expected_type": "type"\n'
+            error_msg += "}"
+            raise ValueError(error_msg)
+
         function_name = test_case.get("function_name", "foo")
         parameters = test_case.get("parameters", {})
+        parameter_types = test_case["parameter_types"]  # Required field
+        expected_type = test_case["expected_type"]  # Required field
         inplace_mode = test_case.get("inplace", "0")
+
+        # Validate all parameters have types
+        for param_name in parameters:
+            if param_name not in parameter_types:
+                raise ValueError(
+                    f"Missing required type information:\n- parameter_types['{param_name}'] not provided"
+                )
 
         # Build the test harness
         harness = f"""
@@ -28,7 +57,22 @@ class JavaScriptExecutor(InterpretedLanguageExecutor):
     try {{
         // Get test parameters from command line or hardcoded
         const testParams = {json.dumps(parameters)};
-        const args = Object.values(testParams);
+        const paramTypes = {json.dumps(parameter_types)};
+        const expectedType = {json.dumps(expected_type)};
+        
+        // Validate parameter types match expected format
+        const paramNames = Object.keys(testParams);
+        const args = [];
+        
+        for (const paramName of paramNames) {{
+            if (!paramTypes[paramName]) {{
+                console.error(JSON.stringify({{
+                    error: `Missing type for parameter: ${{paramName}}`
+                }}));
+                process.exit(1);
+            }}
+            args.push(testParams[paramName]);
+        }}
         
         // Check if function exists
         if (typeof {function_name} === 'undefined') {{

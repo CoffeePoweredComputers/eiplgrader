@@ -122,10 +122,10 @@ else:
 
 # Test the generated code
 test_cases = [
-    {"parameters": {"numbers": [1, 2, 3, 4, 5]}, "expected": 15},
-    {"parameters": {"numbers": [10, 20, 30]}, "expected": 60},
-    {"parameters": {"numbers": []}, "expected": 0},
-    {"parameters": {"numbers": [-1, 1, -2, 2]}, "expected": 0},
+    {"parameters": {"numbers": [1, 2, 3, 4, 5]}, "parameter_types": {"numbers": "List[int]"}, "expected": 15, "expected_type": "int"},
+    {"parameters": {"numbers": [10, 20, 30]}, "parameter_types": {"numbers": "List[int]"}, "expected": 60, "expected_type": "int"},
+    {"parameters": {"numbers": []}, "parameter_types": {"numbers": "List[int]"}, "expected": 0, "expected_type": "int"},
+    {"parameters": {"numbers": [-1, 1, -2, 2]}, "parameter_types": {"numbers": "List[int]"}, "expected": 0, "expected_type": "int"},
 ]
 
 code_tester = CodeTester(
@@ -167,11 +167,11 @@ else:
 
 # Test the generated code
 test_cases = [
-    {"parameters": {"n": 2}, "expected": True},
-    {"parameters": {"n": 17}, "expected": True},
-    {"parameters": {"n": 4}, "expected": False},
-    {"parameters": {"n": 1}, "expected": False},
-    {"parameters": {"n": 0}, "expected": False},
+    {"parameters": {"n": 2}, "parameter_types": {"n": "int"}, "expected": True, "expected_type": "bool"},
+    {"parameters": {"n": 17}, "parameter_types": {"n": "int"}, "expected": True, "expected_type": "bool"},
+    {"parameters": {"n": 4}, "parameter_types": {"n": "int"}, "expected": False, "expected_type": "bool"},
+    {"parameters": {"n": 1}, "parameter_types": {"n": "int"}, "expected": False, "expected_type": "bool"},
+    {"parameters": {"n": 0}, "parameter_types": {"n": "int"}, "expected": False, "expected_type": "bool"},
 ]
 
 code_tester = CodeTester(
@@ -214,9 +214,9 @@ for impl_idx, (code, seg) in enumerate(zip(generated_codes, segmentations)):
 
 # Test both implementations
 test_cases = [
-    {"parameters": {"lst": [1, 5, 3, 9, 2]}, "expected": 9},
-    {"parameters": {"lst": [-1, -5, -2]}, "expected": -1},
-    {"parameters": {"lst": [42]}, "expected": 42},
+    {"parameters": {"lst": [1, 5, 3, 9, 2]}, "parameter_types": {"lst": "List[int]"}, "expected": 9, "expected_type": "int"},
+    {"parameters": {"lst": [-1, -5, -2]}, "parameter_types": {"lst": "List[int]"}, "expected": -1, "expected_type": "int"},
+    {"parameters": {"lst": [42]}, "parameter_types": {"lst": "List[int]"}, "expected": 42, "expected_type": "int"},
 ]
 
 print(f"\nTesting all {len(generated_codes)} implementations:")
@@ -257,10 +257,10 @@ if segmentation:
 
 # Test the word counting function
 test_cases = [
-    {"parameters": {"sentence": "Hello world this is a test"}, "expected": 6},
-    {"parameters": {"sentence": "  Extra   spaces   everywhere  "}, "expected": 3},
-    {"parameters": {"sentence": "Single"}, "expected": 1},
-    {"parameters": {"sentence": ""}, "expected": 0},
+    {"parameters": {"sentence": "Hello world this is a test"}, "parameter_types": {"sentence": "str"}, "expected": 6, "expected_type": "int"},
+    {"parameters": {"sentence": "  Extra   spaces   everywhere  "}, "parameter_types": {"sentence": "str"}, "expected": 3, "expected_type": "int"},
+    {"parameters": {"sentence": "Single"}, "parameter_types": {"sentence": "str"}, "expected": 1, "expected_type": "int"},
+    {"parameters": {"sentence": ""}, "parameter_types": {"sentence": "str"}, "expected": 0, "expected_type": "int"},
 ]
 
 code_tester = CodeTester(

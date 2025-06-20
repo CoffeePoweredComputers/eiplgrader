@@ -65,3 +65,12 @@ class LanguageExecutor(ABC):
     def cleanup(self) -> None:
         """Clean up any temporary resources."""
         pass
+
+    def validate_types_provided(self, test_case: Dict[str, Any]) -> None:
+        """Validate that required type information is provided.
+        Raises ValueError if types are missing.
+        """
+        if "parameter_types" not in test_case:
+            raise ValueError("Test case missing required 'parameter_types'")
+        if "expected_type" not in test_case:
+            raise ValueError("Test case missing required 'expected_type'")

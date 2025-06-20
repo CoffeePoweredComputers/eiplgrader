@@ -2,6 +2,7 @@
 
 import os
 import json
+import subprocess
 import tempfile
 from typing import Dict, Any, Tuple, List
 from .base_executors import CompiledLanguageExecutor
@@ -19,356 +20,215 @@ class CppExecutor(CompiledLanguageExecutor):
         """Prepare C++ code for execution with test harness."""
         function_name = test_case.get("function_name", "foo")
         parameters = test_case.get("parameters", {})
+        parameter_types = test_case.get("parameter_types", {})
+        expected_type = test_case.get("expected_type", "int")
         inplace_mode = test_case.get("inplace", "0")
 
-        # Add JSON parsing capability using simple string parsing
-        # Since C++ doesn't have built-in JSON, we'll use a simple approach
-        json_parser = """
-// Simple JSON-like parsing helpers
-namespace json_parse {
-    std::vector<int> parse_int_array(const std::string& str) {
-        std::vector<int> result;
-        std::stringstream ss(str);
-        char ch;
-        int num;
-        
-        // Skip opening bracket
-        ss >> ch;
-        if (ch != '[') return result;
-        
-        // Parse numbers
-        while (ss >> num) {
-            result.push_back(num);
-            ss >> ch; // comma or closing bracket
-            if (ch == ']') break;
-        }
-        
-        return result;
-    }
-    
-    std::vector<std::string> parse_string_array(const std::string& str) {
-        std::vector<std::string> result;
-        size_t pos = 1; // Skip opening bracket
-        size_t end = str.find_last_of(']');
-        
-        while (pos < end) {
-            // Skip whitespace and quotes
-            while (pos < end && (str[pos] == ' ' || str[pos] == '"' || str[pos] == ',')) pos++;
-            
-            if (pos >= end) break;
-            
-            // Find end of string
-            size_t start = pos;
-            if (str[pos] == '"') {
-                start++;
-                pos = str.find('"', start);
-            } else {
-                while (pos < end && str[pos] != ',' && str[pos] != ']') pos++;
-            }
-            
-            if (start < pos) {
-                result.push_back(str.substr(start, pos - start));
-            }
-            pos++;
-        }
-        
-        return result;
-    }
-    
-    std::map<std::string, std::string> parse_object(const std::string& json) {
-        std::map<std::string, std::string> result;
-        size_t pos = 1; // Skip opening brace
-        
-        while (pos < json.length() - 1) {
-            // Skip whitespace
-            while (pos < json.length() && (json[pos] == ' ' || json[pos] == ',')) pos++;
-            
-            // Find key
-            size_t keyStart = json.find('"', pos);
-            if (keyStart == std::string::npos) break;
-            size_t keyEnd = json.find('"', keyStart + 1);
-            if (keyEnd == std::string::npos) break;
-            
-            std::string key = json.substr(keyStart + 1, keyEnd - keyStart - 1);
-            
-            // Find value
-            size_t colonPos = json.find(':', keyEnd);
-            if (colonPos == std::string::npos) break;
-            
-            pos = colonPos + 1;
-            while (pos < json.length() && json[pos] == ' ') pos++;
-            
-            size_t valueStart = pos;
-            size_t valueEnd = valueStart;
-            
-            if (json[pos] == '"') {
-                // String value
-                valueStart++;
-                valueEnd = json.find('"', valueStart);
-                if (valueEnd != std::string::npos) {
-                    result[key] = json.substr(valueStart, valueEnd - valueStart);
-                    pos = valueEnd + 1; // Move past the closing quote
-                } else {
-                    break;
-                }
-            } else if (json[pos] == '[') {
-                // Array value
-                int bracketCount = 1;
-                valueEnd = pos + 1;
-                while (valueEnd < json.length() && bracketCount > 0) {
-                    if (json[valueEnd] == '[') bracketCount++;
-                    else if (json[valueEnd] == ']') bracketCount--;
-                    valueEnd++;
-                }
-                result[key] = json.substr(valueStart, valueEnd - valueStart);
-                pos = valueEnd;
-            } else {
-                // Number or boolean
-                while (valueEnd < json.length() && json[valueEnd] != ',' && json[valueEnd] != '}') {
-                    valueEnd++;
-                }
-                result[key] = json.substr(valueStart, valueEnd - valueStart);
-                pos = valueEnd;
-            }
-        }
-        
-        return result;
-    }
-}
+        # Validate required type information
+        if not parameter_types:
+            raise ValueError(
+                "Missing required type information:\n- parameter_types not provided"
+            )
+        if not expected_type:
+            raise ValueError(
+                "Missing required type information:\n- expected_type not provided"
+            )
 
-// Helper to convert various types to JSON string
-template<typename T>
-std::string to_json(const T& value) {
-    std::stringstream ss;
-    ss << value;
-    return ss.str();
-}
-
-template<>
-std::string to_json(const std::string& value) {
-    return '"' + value + '"';
-}
-
-template<>
-std::string to_json(const bool& value) {
-    return value ? "true" : "false";
-}
-
-template<typename T>
-std::string to_json(const std::vector<T>& vec) {
-    std::stringstream ss;
-    ss << "[";
-    for (size_t i = 0; i < vec.size(); ++i) {
-        if (i > 0) ss << ",";
-        ss << to_json(vec[i]);
-    }
-    ss << "]";
-    return ss.str();
-}
-"""
-
-        # Collect all necessary includes
+        # Ensure necessary headers are included
         necessary_includes = [
             "#include <iostream>",
             "#include <vector>",
             "#include <string>",
-            "#include <sstream>",
             "#include <algorithm>",
-            "#include <map>",
-            "#include <cstdlib>",
         ]
 
-        # Find existing includes in the code
-        existing_includes = set()
         lines = code.split("\n")
-        include_section_end = 0
+        includes_to_add = []
 
+        # Find where includes end
+        include_section_end = 0
         for i, line in enumerate(lines):
             if line.strip().startswith("#include"):
-                existing_includes.add(line.strip())
                 include_section_end = i + 1
-            elif (
-                include_section_end > 0
-                and line.strip()
-                and not line.strip().startswith("#")
-            ):
+            elif line.strip() and not line.strip().startswith("//"):
                 break
 
         # Add missing includes
-        includes_to_add = []
+        existing_includes = "\n".join(lines[:include_section_end])
         for inc in necessary_includes:
             if inc not in existing_includes:
                 includes_to_add.append(inc)
 
-        # Rebuild code with all includes and JSON parser
+        # Rebuild code with all includes
         if include_section_end > 0:
-            # Insert missing includes after existing ones
             new_lines = lines[:include_section_end]
             new_lines.extend(includes_to_add)
             new_lines.append("")  # Empty line
-            new_lines.append(json_parser)
             new_lines.extend(lines[include_section_end:])
             code = "\n".join(new_lines)
         else:
-            # No existing includes, add all at the beginning
             all_includes = "\n".join(necessary_includes)
-            code = all_includes + "\n\n" + json_parser + "\n" + code
+            code = all_includes + "\n\n" + code
 
-        # Generate main function with test harness
-        main_code = """
-int main() {
-    // Read JSON input from stdin
-    std::string input;
-    std::getline(std::cin, input);
-    
-    // Parse JSON parameters
-    auto params = json_parse::parse_object(input);
-    
-"""
+        # Generate main function with embedded test values
+        main_code = "\nint main() {\n"
+        main_code += "    // Test case values\n"
 
-        # Generate parameter extraction based on test case
+        # Generate parameter declarations with embedded values
         param_names = list(parameters.keys())
-        param_types = self._infer_cpp_types(parameters)
 
-        for name, cpp_type, value in zip(param_names, param_types, parameters.values()):
-            if cpp_type == "int":
-                main_code += f'    int {name} = std::stoi(params["{name}"]);\n'
-            elif cpp_type == "double":
-                main_code += f'    double {name} = std::stod(params["{name}"]);\n'
-            elif cpp_type == "bool":
-                main_code += f'    bool {name} = (params["{name}"] == "true");\n'
-            elif cpp_type == "std::string":
-                main_code += f'    std::string {name} = params["{name}"];\n'
-            elif cpp_type == "std::vector<int>":
-                main_code += f'    std::vector<int> {name} = json_parse::parse_int_array(params["{name}"]);\n'
-            elif cpp_type == "std::vector<std::string>":
-                main_code += f'    std::vector<std::string> {name} = json_parse::parse_string_array(params["{name}"]);\n'
+        for name in param_names:
+            param_type = parameter_types.get(name)
+            if not param_type:
+                raise ValueError(f"Type required for parameter '{name}'")
+
+            value = parameters[name]
+            main_code += self._generate_param_declaration(name, param_type, value)
+
+        main_code += "\n"
 
         # Generate function call based on inplace mode
         if inplace_mode == "0":
             # Normal function call - function returns a value
-            if param_names:
-                main_code += f"""
-    // Call the function
-    auto result = {function_name}({', '.join(param_names)});
-    
-    // Output result as JSON
-    std::cout << to_json(result) << std::endl;
-"""
-            else:
-                main_code += f"""
-    // Call the function
-    auto result = {function_name}();
-    
-    // Output result as JSON
-    std::cout << to_json(result) << std::endl;
-"""
+            main_code += f"    {expected_type} result = {function_name}({', '.join(param_names)});\n"
+            main_code += self._generate_output(expected_type, "result")
         elif inplace_mode == "1":
             # Function modifies arguments in-place
+            main_code += f"    {function_name}({', '.join(param_names)});\n"
             if param_names:
                 first_param = param_names[0]
-                other_params = (
-                    ", ".join(param_names[1:]) if len(param_names) > 1 else ""
-                )
-
-                if other_params:
-                    main_code += f"""
-    // Call the function (modifies first parameter)
-    {function_name}({first_param}, {other_params});
-    
-    // Output modified parameter as JSON
-    std::cout << to_json({first_param}) << std::endl;
-"""
-                else:
-                    main_code += f"""
-    // Call the function (modifies parameter)
-    {function_name}({first_param});
-    
-    // Output modified parameter as JSON
-    std::cout << to_json({first_param}) << std::endl;
-"""
+                first_type = parameter_types.get(first_param)
+                main_code += self._generate_output(first_type, first_param)
             else:
-                main_code += f"""
-    // Call the function
-    {function_name}();
-    std::cout << "null" << std::endl;
-"""
+                main_code += '    std::cout << "null" << std::endl;\n'
         elif inplace_mode == "2":
-            # Function both modifies in-place and returns a value
-            if param_names:
-                first_param = param_names[0]
-                other_params = (
-                    ", ".join(param_names[1:]) if len(param_names) > 1 else ""
-                )
+            # Function both modifies and returns
+            main_code += f"    {expected_type} result = {function_name}({', '.join(param_names)});\n"
+            main_code += self._generate_output(expected_type, "result")
 
-                if other_params:
-                    main_code += f"""
-    // Call the function (modifies first parameter and returns value)
-    auto result = {function_name}({first_param}, {other_params});
-    
-    // Output return value
-    std::cout << to_json(result) << std::endl;
-"""
-                else:
-                    main_code += f"""
-    // Call the function
-    auto result = {function_name}({first_param});
-    
-    // Output return value
-    std::cout << to_json(result) << std::endl;
-"""
-            else:
-                main_code += f"""
-    // Call the function
-    auto result = {function_name}();
-    std::cout << to_json(result) << std::endl;
-"""
+        main_code += "    return 0;\n}\n"
 
-        main_code += """
-    return 0;
-}
-"""
-
-        # Combine everything
         return code + "\n" + main_code
 
-    def _infer_cpp_types(self, parameters: Dict[str, Any]) -> List[str]:
-        """Infer C++ types from parameter values."""
-        types = []
-        for value in parameters.values():
-            if isinstance(value, bool):
-                types.append("bool")
-            elif isinstance(value, int):
-                types.append("int")
-            elif isinstance(value, float):
-                types.append("double")
-            elif isinstance(value, str):
-                types.append("std::string")
-            elif isinstance(value, list):
-                if not value:
-                    types.append("std::vector<int>")  # Default to int vector
-                elif isinstance(value[0], int):
-                    types.append("std::vector<int>")
-                elif isinstance(value[0], str):
-                    types.append("std::vector<std::string>")
-                elif isinstance(value[0], float):
-                    types.append("std::vector<double>")
-                else:
-                    types.append("std::vector<int>")  # Default
+    def _generate_param_declaration(
+        self, name: str, param_type: str, value: Any
+    ) -> str:
+        """Generate C++ parameter declaration with embedded value."""
+        if param_type in ["int", "long", "short"]:
+            return f"    {param_type} {name} = {value};\n"
+        elif param_type in ["double", "float"]:
+            return f"    {param_type} {name} = {value};\n"
+        elif param_type == "char":
+            return f"    char {name} = '{value}';\n"
+        elif param_type == "bool":
+            cpp_bool = "true" if value else "false"
+            return f"    bool {name} = {cpp_bool};\n"
+        elif param_type in ["std::string", "string"]:
+            return f'    std::string {name} = "{value}";\n'
+        elif "vector" in param_type and isinstance(value, list):
+            # Extract element type
+            if "int" in param_type:
+                values_str = ", ".join(str(v) for v in value)
+            elif "double" in param_type or "float" in param_type:
+                values_str = ", ".join(str(v) for v in value)
+            elif "string" in param_type:
+                values_str = ", ".join(f'"{v}"' for v in value)
+            elif "bool" in param_type:
+                values_str = ", ".join("true" if v else "false" for v in value)
             else:
-                types.append("auto")  # Let compiler deduce
-        return types
-
-    def compile(self, code_path: str) -> Tuple[bool, str, str]:
-        """Compile C++ code with appropriate flags."""
-        output_path = code_path.replace(self.file_ext, "")
-        cmd = self.compile_cmd + ["-o", output_path, code_path, "-std=c++17", "-O2"]
-
-        import subprocess
-
-        result = subprocess.run(cmd, capture_output=True, text=True)
-
-        if result.returncode == 0:
-            return (True, output_path, "")
+                values_str = ", ".join(str(v) for v in value)
+            return f"    {param_type} {name} = {{{values_str}}};\n"
         else:
-            return (False, output_path, result.stderr)
+            # For complex types, generate a comment
+            return f"    // TODO: Initialize {param_type} {name} with value {value}\n"
+
+    def _generate_output(self, cpp_type: str, var_name: str) -> str:
+        """Generate output code for a variable of given type."""
+        if cpp_type in ["int", "double", "float", "long", "short", "char"]:
+            return f"    std::cout << {var_name} << std::endl;\n"
+        elif cpp_type == "bool":
+            return f'    std::cout << ({var_name} ? "true" : "false") << std::endl;\n'
+        elif cpp_type in ["std::string", "string"]:
+            return f'    std::cout << "\\"" << {var_name} << "\\"" << std::endl;\n'
+        elif "vector" in cpp_type:
+            code = f'    std::cout << "[";\n'
+            code += f"    for(size_t i = 0; i < {var_name}.size(); i++) {{\n"
+            code += f'        if(i > 0) std::cout << ",";\n'
+            if "string" in cpp_type:
+                code += f'        std::cout << "\\"" << {var_name}[i] << "\\"";\n'
+            else:
+                code += f"        std::cout << {var_name}[i];\n"
+            code += f"    }}\n"
+            code += f'    std::cout << "]" << std::endl;\n'
+            return code
+        else:
+            return f"    std::cout << {var_name} << std::endl;\n"
+
+    def execute_test(self, code: str, test_case: Dict[str, Any]) -> Dict[str, Any]:
+        """Override to not send JSON input since we embed values directly."""
+        # Prepare code with test harness
+        prepared_code = self.prepare_code(code, test_case)
+
+        # Write to temporary file
+        code_path = os.path.join(self.temp_dir, f"test{self.file_ext}")
+        with open(code_path, "w") as f:
+            f.write(prepared_code)
+
+        # Compile
+        success, output_path, error = self.compile(code_path)
+        if not success:
+            return {
+                "passed": False,
+                "error": f"Compilation failed: {error}",
+                "actual": None,
+                "expected": test_case.get("expected"),
+            }
+
+        # Execute without input since values are embedded
+        try:
+            result = subprocess.run(
+                [output_path],
+                capture_output=True,
+                text=True,
+                timeout=test_case.get("timeout", 30),
+            )
+
+            if result.returncode != 0:
+                return {
+                    "passed": False,
+                    "error": f"Runtime error: {result.stderr}",
+                    "actual": None,
+                    "expected": test_case.get("expected"),
+                }
+
+            # Parse output
+            try:
+                actual = json.loads(result.stdout.strip())
+            except json.JSONDecodeError:
+                actual = result.stdout.strip()
+
+            passed = actual == test_case.get("expected")
+
+            return {
+                "passed": passed,
+                "actual": actual,
+                "expected": test_case.get("expected"),
+                "output": result.stdout.strip(),
+                "error": None if passed else "Test failed",
+                "function_call": f"{test_case.get('function_name')}({test_case.get('parameters')})",
+            }
+
+        except subprocess.TimeoutExpired:
+            return {
+                "passed": False,
+                "error": "Test timed out",
+                "actual": None,
+                "expected": test_case.get("expected"),
+            }
+        except Exception as e:
+            return {
+                "passed": False,
+                "error": str(e),
+                "actual": None,
+                "expected": test_case.get("expected"),
+            }

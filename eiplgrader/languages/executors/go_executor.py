@@ -17,9 +17,38 @@ class GoExecutor(CompiledLanguageExecutor):
 
     def prepare_code(self, code: str, test_case: Dict[str, Any]) -> str:
         """Prepare Go code for execution with test harness."""
+        # Validate required type information using standardized error message
+        errors = []
+        if "parameter_types" not in test_case:
+            errors.append("parameter_types not provided")
+        if "expected_type" not in test_case:
+            errors.append("expected_type not provided")
+
+        if errors:
+            error_msg = "Missing required type information:\n"
+            for error in errors:
+                error_msg += f"- {error}\n"
+            error_msg += "\nTest case must include:\n"
+            error_msg += "{\n"
+            error_msg += '    "parameters": {...},\n'
+            error_msg += '    "parameter_types": {"param1": "type1", ...},\n'
+            error_msg += '    "expected": ...,\n'
+            error_msg += '    "expected_type": "type"\n'
+            error_msg += "}"
+            raise ValueError(error_msg)
+
         function_name = test_case.get("function_name", "foo")
         parameters = test_case.get("parameters", {})
+        parameter_types = test_case.get("parameter_types", {})
+        expected_type = test_case.get("expected_type")
         inplace_mode = test_case.get("inplace", "0")
+
+        # Validate all parameters have types
+        for param_name in parameters:
+            if param_name not in parameter_types:
+                raise ValueError(
+                    f"Missing required type information:\n- parameter_types['{param_name}'] not provided"
+                )
 
         # Ensure code has package declaration
         if not code.strip().startswith("package"):
@@ -59,20 +88,23 @@ func main() {{
         os.Exit(1)
     }}
     
-    // Extract parameters
+    // Extract parameters with explicit types
 """
 
-        # Generate parameter extraction based on test case
+        # Generate parameter extraction based on explicit types
         param_names = list(parameters.keys())
-        param_types = self._infer_go_types(parameters)
 
-        for i, (name, go_type) in enumerate(zip(param_names, param_types)):
+        for name in param_names:
+            go_type = parameter_types[name]
+
             if go_type == "int":
                 main_code += f'    {name} := int(params["{name}"].(float64))\n'
             elif go_type == "float64":
                 main_code += f'    {name} := params["{name}"].({go_type})\n'
             elif go_type == "string":
                 main_code += f'    {name} := params["{name}"].({go_type})\n'
+            elif go_type == "bool":
+                main_code += f'    {name} := params["{name}"].(bool)\n'
             elif go_type == "[]int":
                 main_code += f"""    {name}Raw := params["{name}"].([]interface{{}})
     {name} := make([]int, len({name}Raw))
@@ -87,6 +119,16 @@ func main() {{
         {name}[i] = v.(string)
     }}
 """
+            elif go_type == "[]float64":
+                main_code += f"""    {name}Raw := params["{name}"].([]interface{{}})
+    {name} := make([]float64, len({name}Raw))
+    for i, v := range {name}Raw {{
+        {name}[i] = v.(float64)
+    }}
+"""
+            else:
+                # For other types, use type assertion
+                main_code += f'    {name} := params["{name}"].({go_type})\n'
 
         # Generate function call based on inplace mode
         if inplace_mode == "0":
@@ -177,33 +219,6 @@ func main() {{
 
         # Combine everything
         return code + "\n" + main_code
-
-    def _infer_go_types(self, parameters: Dict[str, Any]) -> List[str]:
-        """Infer Go types from parameter values."""
-        types = []
-        for value in parameters.values():
-            if isinstance(value, bool):
-                types.append("bool")
-            elif isinstance(value, int):
-                types.append("int")
-            elif isinstance(value, float):
-                types.append("float64")
-            elif isinstance(value, str):
-                types.append("string")
-            elif isinstance(value, list):
-                if not value:
-                    types.append("[]interface{}")
-                elif isinstance(value[0], int):
-                    types.append("[]int")
-                elif isinstance(value[0], str):
-                    types.append("[]string")
-                elif isinstance(value[0], float):
-                    types.append("[]float64")
-                else:
-                    types.append("[]interface{}")
-            else:
-                types.append("interface{}")
-        return types
 
     def compile(self, code_path: str) -> Tuple[bool, str, str]:
         """Compile Go code, return (success, output_path, error)"""
