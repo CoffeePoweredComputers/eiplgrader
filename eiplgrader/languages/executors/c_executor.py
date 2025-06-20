@@ -1,6 +1,6 @@
 """C language executor for code testing."""
 
-import os
+
 import json
 from typing import Dict, Any, List
 from .base_executors import CompiledLanguageExecutor
