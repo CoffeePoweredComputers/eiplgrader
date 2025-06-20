@@ -58,16 +58,11 @@ Test cases must be provided as a list of dictionaries, each containing:
 The CodeTester now supports multiple programming languages through a unified architecture. Supported languages include:
 
 - Python (default)
-- JavaScript/TypeScript  
-- Bash
-- C/C++
-- Java/Kotlin
-- Rust
+- JavaScript
+- Java
+- C
+- C++
 - Go
-- Ruby
-- PHP
-- SQL
-- OCaml
 - Haskell
 
 Each language has its own adapter and executor that handle language-specific compilation, execution, and testing requirements.

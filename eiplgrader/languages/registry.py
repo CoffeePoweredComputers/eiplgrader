@@ -29,7 +29,7 @@ class LanguageRegistry:
             "c": "c_executor.CExecutor",
             "cpp": "cpp_executor.CppExecutor",
             "go": "go_executor.GoExecutor",
-            "rust": "rust_executor.RustExecutor",
+            "haskell": "haskell_executor.HaskellExecutor",
         }
         
         executor_path = executor_mapping.get(name.lower())

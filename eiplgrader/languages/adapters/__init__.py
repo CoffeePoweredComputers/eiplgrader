@@ -6,7 +6,7 @@ from .java_adapter import JavaAdapter
 from .c_adapter import CAdapter
 from .cpp_adapter import CppAdapter
 from .go_adapter import GoAdapter
-from .rust_adapter import RustAdapter
+from .haskell_adapter import HaskellAdapter
 
 __all__ = [
     "PythonAdapter", 
@@ -14,6 +14,6 @@ __all__ = [
     "JavaAdapter", 
     "CAdapter", 
     "CppAdapter", 
-    "GoAdapter", 
-    "RustAdapter"
+    "GoAdapter",
+    "HaskellAdapter",
 ]
