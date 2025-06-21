@@ -46,33 +46,98 @@ class GoExecutor(CompiledLanguageExecutor):
         if not code.strip().startswith("package"):
             code = "package main\n\n" + code
         
-        # Add necessary imports
-        imports_needed = ["fmt"]
+        # Extract existing imports from code
+        import re
+        import_pattern = r'^import\s+"([^"]+)"$'
+        multi_import_pattern = r'^import\s+\(\s*([^)]+)\s*\)$'
+        existing_imports = set()
         
-        # Check if we need json for output
-        if expected_type in ["[]int", "[]string", "[]float64", "[]bool"] or expected_type.startswith("map"):
-            imports_needed.append("encoding/json")
-            imports_needed.append("os")
+        lines = code.split("\n")
+        new_lines = []
+        in_import_block = False
         
-        # Build imports
-        import_block = "import (\n"
-        for imp in imports_needed:
-            import_block += f'    "{imp}"\n'
-        import_block += ")\n"
+        for line in lines:
+            # Single import statement
+            single_match = re.match(import_pattern, line.strip())
+            if single_match:
+                existing_imports.add(single_match.group(1))
+                continue  # Skip this line, we'll add imports later
+                
+            # Multi-import block start
+            if line.strip() == "import (" or re.match(r'^import\s+\($', line.strip()):
+                in_import_block = True
+                continue
+                
+            # Inside import block
+            if in_import_block:
+                if line.strip() == ")":
+                    in_import_block = False
+                    continue
+                # Extract import from quoted string
+                import_match = re.match(r'\s*"([^"]+)"', line)
+                if import_match:
+                    existing_imports.add(import_match.group(1))
+                continue
+                
+            new_lines.append(line)
         
-        # Check if code already has imports
-        if "import" not in code:
-            lines = code.split("\n")
-            for i, line in enumerate(lines):
-                if line.strip().startswith("package"):
-                    lines.insert(i + 1, "")
-                    lines.insert(i + 2, import_block)
-                    break
-            code = "\n".join(lines)
+        code = "\n".join(new_lines)
+        
+        # Get param names for import determination
+        param_names = list(params.keys())
+        
+        # Add necessary imports based on what we'll use
+        imports_needed = set()
+        
+        # Determine if we need fmt
+        if inplace_mode == "0":
+            # Always need output for return values
+            imports_needed.add("fmt")
+        elif inplace_mode == "1":
+            # Only need fmt if we're outputting the modified value
+            if param_names:
+                first_param_type = param_types.get(param_names[0], "")
+                if first_param_type in ["int", "float64", "string", "bool"]:
+                    imports_needed.add("fmt")
+                elif first_param_type in ["[]int", "[]float64", "[]string", "[]bool"] or first_param_type.startswith("map"):
+                    imports_needed.add("encoding/json")
+                    imports_needed.add("os")
+            else:
+                imports_needed.add("fmt")  # For null output
+        elif inplace_mode == "2":
+            # Need output for return value
+            imports_needed.add("fmt")
+        
+        # Check if we need json for output based on expected_type
+        if inplace_mode != "1":  # For modes 0 and 2, check expected_type
+            if expected_type in ["[]int", "[]string", "[]float64", "[]bool"] or expected_type.startswith("map"):
+                imports_needed.add("encoding/json")
+                imports_needed.add("os")
+                imports_needed.discard("fmt")  # Don't need fmt if using json
+        
+        # Combine with existing imports
+        all_imports = sorted(existing_imports.union(imports_needed))
+        
+        # Build import block
+        if len(all_imports) == 1:
+            import_block = f'import "{list(all_imports)[0]}"\n'
+        else:
+            import_block = "import (\n"
+            for imp in all_imports:
+                import_block += f'    "{imp}"\n'
+            import_block += ")\n"
+        
+        # Add imports after package declaration
+        lines = code.split("\n")
+        for i, line in enumerate(lines):
+            if line.strip().startswith("package"):
+                lines.insert(i + 1, "")
+                lines.insert(i + 2, import_block)
+                break
+        code = "\n".join(lines)
         
         # Generate parameter declarations with embedded values
         param_declarations = []
-        param_names = list(params.keys())
         
         for param_name in param_names:
             param_value = params[param_name]
