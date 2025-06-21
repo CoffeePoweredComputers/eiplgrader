@@ -11,7 +11,7 @@ import json
 from typing import Any, Dict, List, Optional
 from .string_utils import (
     CodeBuilder,
-    dedent_template: str,
+    dedent_template,
     escape_string_literal,
 )
 

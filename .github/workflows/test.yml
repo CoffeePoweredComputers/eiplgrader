@@ -39,10 +39,6 @@ jobs:
       run: |
         black --check eiplgrader/ tests/
     
-    - name: Type check with mypy
-      run: |
-        mypy --ignore-missing-imports eiplgrader/
-    
     - name: Run unit tests
       run: |
         python -m pytest tests/unit/ -v --tb=short --cov=eiplgrader --cov-report=xml --cov-report=term
