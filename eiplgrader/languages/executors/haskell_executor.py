@@ -1,6 +1,5 @@
 """Haskell language executor for code testing."""
 
-import os
 import json
 import subprocess
 from typing import Dict, Any, Tuple
@@ -32,7 +31,6 @@ class HaskellExecutor(CompiledLanguageExecutor):
             "parameter_types"
         ]  # Required field after validation
         expected_type = test_case["expected_type"]  # Required field after validation
-        inplace_mode = test_case.get("inplace", "0")
 
         # Build the module using CodeBuilder
         builder = CodeBuilder()

@@ -4,6 +4,11 @@ from typing import List, Dict, Any, Union
 from .languages import language_registry
 
 
+class CodeStructuralError(Exception):
+    """Exception raised when code has structural issues (missing functions, infinite recursion, etc.)."""
+    pass
+
+
 class CodeTestResult:
     """Simple, language-agnostic test result container."""
 
@@ -141,7 +146,7 @@ class CodeTester:
                         test_result.get("actual", None),
                         test_result.get("error", "Test failed"),
                     )
-            except (RuntimeError, ValueError, OSError, subprocess.TimeoutExpired) as e:
+            except (RuntimeError, OSError, subprocess.TimeoutExpired, ImportError, ModuleNotFoundError, SyntaxError, NameError, RecursionError, CodeStructuralError) as e:
                 result.add_error("Error executing test", str(e))
 
         # Clean up

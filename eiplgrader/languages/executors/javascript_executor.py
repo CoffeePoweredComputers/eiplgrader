@@ -1,7 +1,6 @@
 """JavaScript language executor for code testing."""
 
 import json
-import os
 from typing import Dict, Any
 from ..executors.base_executors import InterpretedLanguageExecutor
 from .string_utils import process_test_parameters
@@ -34,7 +33,6 @@ class JavaScriptExecutor(InterpretedLanguageExecutor):
         from .templates import (
             generate_javascript_parameter_setup,
             generate_javascript_function_check,
-            generate_inplace_function_call,
         )
         from .string_utils import CodeBuilder
     
@@ -67,9 +65,6 @@ class JavaScriptExecutor(InterpretedLanguageExecutor):
     
         # Generate inplace function call handling
         param_names = list(parameters.keys()) if parameters else []
-        inplace_call_code = generate_inplace_function_call(
-            "javascript", function_name, param_names, inplace_mode, parameter_types, expected_type
-        )
         
         # Parse the inplace call code to extract just the logic we need
         # The generate_inplace_function_call returns the result handling
@@ -105,9 +100,13 @@ class JavaScriptExecutor(InterpretedLanguageExecutor):
                 with inner_builder.indent():
                     inner_builder.add_line("// Deep copy first argument")
                     inner_builder.add_line("let firstArg = JSON.parse(JSON.stringify(args[0]));")
-                    inner_builder.add_line(f"let returnValue = await {function_name}(firstArg, ...args.slice(1));")
+                    inner_builder.add_line(
+                        f"let returnValue = await {function_name}(firstArg, ...args.slice(1));"
+                    )
                     inner_builder.add_line("// Use return value if it exists, otherwise use modified argument")
-                    inner_builder.add_line("result = returnValue !== undefined ? returnValue : firstArg;")
+                    inner_builder.add_line(
+                        "result = returnValue !== undefined ? returnValue : firstArg;"
+                    )
                 inner_builder.add_line("} else {")
                 with inner_builder.indent():
                     inner_builder.add_line(f"result = await {function_name}();")
@@ -116,7 +115,9 @@ class JavaScriptExecutor(InterpretedLanguageExecutor):
         
         # Handle all inplace modes with error handling
         if inplace_mode not in ["0", "1", "2"]:
-            inner_builder.add_line("if (inplaceMode !== \"0\" && inplaceMode !== \"1\" && inplaceMode !== \"2\") {")
+            inner_builder.add_line(
+                'if (inplaceMode !== "0" && inplaceMode !== "1" && inplaceMode !== "2") {'
+            )
             with inner_builder.indent():
                 inner_builder.add_line("console.error(JSON.stringify({")
                 with inner_builder.indent():

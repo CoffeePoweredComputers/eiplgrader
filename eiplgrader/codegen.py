@@ -28,11 +28,15 @@ DEFAULT_SEGMENTATION_RESPONSE_FORMAT = {
                         "properties": {
                             "code": {
                                 "type": "string",
-                                "description": "A string that contains the actual code related to the explanation.",
+                                "description": (
+                                    "A string that contains the actual code related to the explanation."
+                                ),
                             },
                             "explanation_portion": {
                                 "type": "string",
-                                "description": "A string that explains the code's content or purpose.",
+                                "description": (
+                                    "A string that explains the code's content or purpose."
+                                ),
                             },
                         },
                         "additionalProperties": False,

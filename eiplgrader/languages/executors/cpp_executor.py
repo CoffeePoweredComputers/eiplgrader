@@ -1,16 +1,11 @@
 """C++ language executor for code testing."""
 
-import os
-import json
-import subprocess
-import tempfile
-from typing import Dict, Any, Tuple, List
+from typing import Dict, Any
 from .base_executors import CompiledLanguageExecutor
 from .string_utils import CodeBuilder
 from .templates import (
     generate_cpp_param_declaration,
     generate_cpp_output,
-    CppTemplateConfig,
 )
 
 
@@ -36,7 +31,6 @@ class CppExecutor(CompiledLanguageExecutor):
         inplace_mode = test_case.get("inplace", "0")
 
         # Ensure necessary headers are included using CodeBuilder
-        template_config = CppTemplateConfig()
         necessary_includes = [
             "#include <iostream>",
             "#include <vector>",

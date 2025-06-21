@@ -60,24 +60,22 @@ class GoExecutor(CompiledLanguageExecutor):
         # Determine what imports we actually need based on what will be generated
         required_imports = set()
         
-        # Determine if we need fmt based on output types
+        # Determine if we need fmt, json, and os based on actual usage
         needs_fmt = False
         needs_json = False
         needs_os = False
         
-        # Check parameter types and expected type for complex types that need JSON
-        all_types = list(param_types.values()) + [expected_type]
+        # Check what the OUTPUT will use (expected_type determines output format)
+        output_type = expected_type
+        if (output_type.startswith("[]") or 
+            output_type.startswith("map") or 
+            (output_type.startswith("(") and output_type.endswith(")"))):  # tuple types
+            needs_json = True
+            needs_os = True
+        else:
+            needs_fmt = True
         
-        for type_str in all_types:
-            # Check if this type will use JSON marshaling in the output
-            if (type_str.startswith("[]") or 
-                type_str.startswith("map") or 
-                (type_str.startswith("(") and type_str.endswith(")"))):  # tuple types
-                needs_json = True
-                needs_os = True
-                break
-        
-        # Also check if inplace mode 1 uses complex types for first parameter
+        # For inplace mode 1, check the first parameter type for output
         if inplace_mode == "1" and params:
             first_param_name = list(params.keys())[0]
             first_param_type = param_types[first_param_name]
@@ -86,9 +84,12 @@ class GoExecutor(CompiledLanguageExecutor):
                 (first_param_type.startswith("(") and first_param_type.endswith(")"))):
                 needs_json = True
                 needs_os = True
+                needs_fmt = False  # Override fmt if using JSON
+            else:
+                needs_fmt = True
         
-        # Determine if we need fmt - use it if we're not using JSON or for null output
-        if not needs_json or inplace_mode == "1":
+        # For inplace mode 1 with no params, we always need fmt for null output
+        if inplace_mode == "1" and not params:
             needs_fmt = True
         
         if needs_fmt:
@@ -124,13 +125,13 @@ class GoExecutor(CompiledLanguageExecutor):
             
             if stripped.startswith('package '):
                 continue
-            elif stripped.startswith('import ('):
+            if stripped.startswith('import ('):
                 skip_mode = True
                 import_depth = 1
                 continue
-            elif stripped.startswith('import '):
+            if stripped.startswith('import '):
                 continue
-            elif skip_mode:
+            if skip_mode:
                 if '(' in stripped:
                     import_depth += stripped.count('(')
                 if ')' in stripped:
@@ -138,8 +139,7 @@ class GoExecutor(CompiledLanguageExecutor):
                 if import_depth <= 0:
                     skip_mode = False
                 continue
-            else:
-                code_lines.append(line)
+            code_lines.append(line)
         
         # Add the cleaned code
         clean_code = '\n'.join(code_lines).strip()
@@ -202,7 +202,7 @@ class GoExecutor(CompiledLanguageExecutor):
         
         return builder.build()
 
-    def normalize_output(self, raw_output: str, expected_type: str) -> Any:
+    def normalize_output(self, raw_output: str, expected_type: str = None) -> Any:
         """Normalize Go output to expected format."""
         output = raw_output.strip()
         

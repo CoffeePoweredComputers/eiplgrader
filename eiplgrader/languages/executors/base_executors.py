@@ -15,17 +15,17 @@ class LanguageExecutor(ABC):
     @abstractmethod
     def prepare_code(self, code: str, test_case: Dict[str, Any]) -> str:
         """Prepare code for execution with test harness."""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def execute_test(self, code: str, test_case: Dict[str, Any]) -> Dict[str, Any]:
         """Execute code with test case and return results."""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def cleanup(self) -> None:
         """Clean up any temporary resources."""
-        pass
+        raise NotImplementedError
 
     def validate_types_provided(self, test_case: Dict[str, Any]) -> None:
         """Validate that required type information is provided for non-JSON languages."""
@@ -81,7 +81,7 @@ class LanguageExecutor(ABC):
             return "List"
         return "unknown"
     
-    def normalize_output(self, raw_output: str, expected_type: str = None) -> Any:
+    def normalize_output(self, raw_output: str, expected_type: str = None) -> Any:  # pylint: disable=unused-argument
         """Override in subclasses for language-specific output normalization."""
         output = raw_output.strip()
         
@@ -94,7 +94,7 @@ class LanguageExecutor(ABC):
         else:
             return ""
     
-    def enhance_error_message(self, error_msg: str, stderr: str = "") -> str:
+    def enhance_error_message(self, error_msg: str, stderr: str = "") -> str:  # pylint: disable=unused-argument
         """Override in subclasses for language-specific error message enhancement."""
         return error_msg
     
@@ -199,7 +199,7 @@ class CompiledLanguageExecutor(LanguageExecutor):
                 "actual": None,
                 "expected": test_case.get("expected"),
             }
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught
             enhanced_error = self.enhance_error_message(str(e))
             return {
                 "passed": False,
@@ -293,7 +293,7 @@ class InterpretedLanguageExecutor(LanguageExecutor):
                 "actual": None,
                 "expected": test_case.get("expected"),
             }
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught
             enhanced_error = self.enhance_error_message(str(e))
             return {
                 "passed": False,

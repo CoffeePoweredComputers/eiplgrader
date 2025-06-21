@@ -1,13 +1,11 @@
 """C language executor for code testing."""
 
-import json
 from typing import Dict, Any, List
 from .base_executors import CompiledLanguageExecutor
 from .string_utils import CodeBuilder
 from .templates import (
     generate_c_param_declaration,
     generate_c_output,
-    generate_inplace_function_call,
 )
 
 

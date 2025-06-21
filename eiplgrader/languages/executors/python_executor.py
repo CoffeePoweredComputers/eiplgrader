@@ -4,11 +4,11 @@ import tempfile
 import importlib
 import importlib.util
 import os
-import json
 from copy import deepcopy
 from typing import Dict, Any
 from .base_executors import InterpretedLanguageExecutor
 from .string_utils import process_test_parameters
+from ...tester import CodeStructuralError
 
 
 class PythonExecutor(InterpretedLanguageExecutor):
@@ -52,7 +52,16 @@ class PythonExecutor(InterpretedLanguageExecutor):
                 }
 
             temp_module = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(temp_module)
+            try:
+                spec.loader.exec_module(temp_module)
+            except (ImportError, ModuleNotFoundError, SyntaxError) as e:
+                # Return import/syntax errors as test failures
+                return {
+                    "passed": False,
+                    "error": f"Code execution failed: {str(e)}",
+                    "actual": None,
+                    "expected": test_case.get("expected"),
+                }
 
             # Get the function
             function_name = test_case.get("function_name", "foo")
@@ -115,7 +124,11 @@ class PythonExecutor(InterpretedLanguageExecutor):
                 "function_call": function_call,
             }
 
-        except Exception as e:
+        except (NameError, RecursionError, CodeStructuralError) as e:
+            # Re-raise remaining structural/setup errors for CodeTester to handle as errors
+            raise
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            # Handle actual test execution errors as failures
             return {
                 "passed": False,
                 "error": str(e),
@@ -132,6 +145,6 @@ class PythonExecutor(InterpretedLanguageExecutor):
             try:
                 if os.path.exists(temp_file):
                     os.remove(temp_file)
-            except:
+            except OSError:
                 pass
         self.temp_files = []
