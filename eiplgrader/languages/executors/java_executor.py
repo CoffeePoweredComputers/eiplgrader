@@ -21,6 +21,9 @@ class JavaExecutor(CompiledLanguageExecutor):
 
     def prepare_code(self, code: str, test_case: Dict[str, Any]) -> str:
         """Prepare Java code for execution with test harness."""
+        from .string_utils import CodeBuilder
+        from .templates import generate_java_param_declaration, generate_java_output
+        
         # Use common validation
         self.validate_types_provided(test_case)
 
@@ -30,24 +33,28 @@ class JavaExecutor(CompiledLanguageExecutor):
         param_types = test_case["parameter_types"]  # Required field
         expected_type = test_case["expected_type"]  # Required field
 
-        # Extract the Solution class content
         # Check if code already has proper structure
         if "public class Test" in code:
-            # Code already has Test class, likely from previous preparation
             return code
 
+        # Initialize code builder
+        builder = CodeBuilder()
+        
+        # Extract and build imports
         import re
-
-        # Extract import statements first
         import_pattern = r"^import\s+.*?;$"
         imports = re.findall(import_pattern, code, re.MULTILINE)
+        
+        builder.add_line("import java.util.*;")
+        for import_stmt in imports:
+            builder.add_line(import_stmt)
+        builder.add_line()
 
-        # Remove imports from code
+        # Extract method code
         code_without_imports = re.sub(
             import_pattern, "", code, flags=re.MULTILINE
         ).strip()
 
-        # Extract method from Solution class if present
         solution_match = re.search(
             r"public\s+class\s+Solution\s*\{(.*)\}(?:\s*$)",
             code_without_imports,
@@ -56,209 +63,137 @@ class JavaExecutor(CompiledLanguageExecutor):
         if solution_match:
             method_code = solution_match.group(1).strip()
         else:
-            # Assume the code is just the method
             method_code = code_without_imports.strip()
 
-        # Build parameter declarations with embedded values
-        param_names = list(params.keys())
-        param_declarations = []
+        # Build Solution class
+        builder.add_line("class Solution {")
+        with builder.indent():
+            if method_code:
+                # Clean and add method code with proper indentation
+                self._add_method_code(builder, method_code)
+        builder.add_line("}")
+        builder.add_line()
 
-        for param_name in param_names:
-            param_value = params[param_name]
-            java_type = param_types[param_name]
-            declaration = self._generate_param_declaration(
-                param_name, java_type, param_value
-            )
-            param_declarations.append(declaration)
+        # Build Test class
+        builder.add_line("public class Test {")
+        with builder.indent():
+            builder.add_line("public static void main(String[] args) {")
+            with builder.indent():
+                # Generate parameter declarations
+                builder.add_line("// Test parameters")
+                param_names = list(params.keys())
+                for param_name in param_names:
+                    param_value = params[param_name]
+                    java_type = param_types[param_name]
+                    declaration = generate_java_param_declaration(
+                        param_name, java_type, param_value
+                    )
+                    builder.add_lines(declaration)
+                
+                builder.add_line()
+                builder.add_line("// Call function and handle result")
+                
+                # Generate function call and result handling
+                result_code = self._generate_result_handling(
+                    function_name, param_names, param_types, expected_type, inplace_mode
+                )
+                builder.add_lines(result_code)
+                
+            builder.add_line("}")
+        builder.add_line("}")
 
-        # Build function call based on inplace mode
+        return builder.build()
+
+    def _add_method_code(self, builder: "CodeBuilder", method_code: str) -> None:
+        """Add method code with proper indentation."""
+        lines = method_code.split("\n")
+        for line in lines:
+            builder.add_line(line.strip() if line.strip() else "")
+
+    def _generate_result_handling(
+        self, 
+        function_name: str, 
+        param_names: list, 
+        param_types: dict, 
+        expected_type: str, 
+        inplace_mode: str
+    ) -> str:
+        """Generate result handling code based on inplace mode."""
+        from .string_utils import CodeBuilder
+        from .templates import generate_java_output
+        
+        builder = CodeBuilder()
+        
         if inplace_mode == "0":
             # Normal function call - returns a value
             function_call = f"Solution.{function_name}({', '.join(param_names)})"
-            result_handling = self._generate_output(
-                expected_type, function_call, is_direct_call=True
-            )
+            if expected_type in ["int", "double", "boolean", "String"]:
+                builder.add_line(f"{expected_type} result = {function_call};")
+                output_code = generate_java_output(expected_type, "result")
+            else:
+                builder.add_line(f"var result = {function_call};")
+                output_code = generate_java_output(expected_type, "result")
+            builder.add_lines(output_code)
+            
         elif inplace_mode == "1":
             # In-place modification (for arrays/lists)
             if param_names:
                 first_param = param_names[0]
-                other_params = (
-                    ", ".join(param_names[1:]) if len(param_names) > 1 else ""
-                )
+                other_params = ", ".join(param_names[1:]) if len(param_names) > 1 else ""
                 if other_params:
-                    function_call = (
-                        f"Solution.{function_name}({first_param}, {other_params})"
-                    )
+                    function_call = f"Solution.{function_name}({first_param}, {other_params})"
                 else:
                     function_call = f"Solution.{function_name}({first_param})"
-                result_handling = f"        {function_call};\n"
+                builder.add_line(f"{function_call};")
                 first_type = param_types[first_param]
-                result_handling += self._generate_output(first_type, first_param)
+                output_code = generate_java_output(first_type, first_param)
+                builder.add_lines(output_code)
             else:
                 function_call = f"Solution.{function_name}()"
-                result_handling = (
-                    f'        {function_call};\n        System.out.println("null");'
-                )
+                builder.add_line(f'{function_call};')
+                builder.add_line('System.out.println("null");')
+                
         elif inplace_mode == "2":
             # Both modifies and returns
             if param_names:
                 first_param = param_names[0]
-                other_params = (
-                    ", ".join(param_names[1:]) if len(param_names) > 1 else ""
-                )
+                other_params = ", ".join(param_names[1:]) if len(param_names) > 1 else ""
                 if other_params:
-                    function_call = (
-                        f"Solution.{function_name}({first_param}, {other_params})"
-                    )
+                    function_call = f"Solution.{function_name}({first_param}, {other_params})"
                 else:
                     function_call = f"Solution.{function_name}({first_param})"
-                result_handling = self._generate_output(
-                    expected_type, function_call, is_direct_call=True
-                )
+                if expected_type in ["int", "double", "boolean", "String"]:
+                    builder.add_line(f"{expected_type} result = {function_call};")
+                    output_code = generate_java_output(expected_type, "result")
+                else:
+                    builder.add_line(f"var result = {function_call};")
+                    output_code = generate_java_output(expected_type, "result")
+                builder.add_lines(output_code)
             else:
                 function_call = f"Solution.{function_name}()"
-                result_handling = self._generate_output(
-                    expected_type, function_call, is_direct_call=True
-                )
-        else:
-            result_handling = (
-                '        System.out.println("Error: Invalid inplace mode");'
-            )
-
-        # Build complete test harness with embedded values
-        # Properly indent method code
-        if method_code:
-            # Add proper indentation if not already present
-            indented_method = []
-            for line in method_code.split("\n"):
-                if line.strip():  # Non-empty line
-                    if not line.startswith("    "):
-                        indented_method.append("    " + line)
-                    else:
-                        indented_method.append(line)
+                if expected_type in ["int", "double", "boolean", "String"]:
+                    builder.add_line(f"{expected_type} result = {function_call};")
+                    output_code = generate_java_output(expected_type, "result")
                 else:
-                    indented_method.append(line)
-            method_code = "\n".join(indented_method)
+                    builder.add_line(f"var result = {function_call};")
+                    output_code = generate_java_output(expected_type, "result")
+                builder.add_lines(output_code)
+        else:
+            builder.add_line('System.out.println("Error: Invalid inplace mode");')
 
-        # Build import section
-        import_section = "import java.util.*;\n"
-        if imports:
-            import_section += "\n".join(imports) + "\n"
-
-        test_harness = f"""{import_section}
-    class Solution {{
-    {method_code}
-    }}
-    
-    public class Test {{
-        public static void main(String[] args) {{
-            // Test parameters
-    {''.join(param_declarations)}
-            
-            // Call function and handle result
-    {result_handling}
-        }}
-    }}"""
-
-        return test_harness
+        return builder.build()
 
     def _generate_param_declaration(self, name: str, java_type: str, value: Any) -> str:
         """Generate parameter declaration with embedded value."""
-        if java_type == "int":
-            return f"        int {name} = {value};\n"
-        elif java_type == "double":
-            return f"        double {name} = {value};\n"
-        elif java_type == "boolean":
-            return f"        boolean {name} = {str(value).lower()};\n"
-        elif java_type == "String":
-            return f'        String {name} = "{value}";\n'
-        elif java_type == "int[]" and isinstance(value, list):
-            values_str = ", ".join(str(v) for v in value)
-            return f"        int[] {name} = new int[] {{{values_str}}};\n"
-        elif java_type == "double[]" and isinstance(value, list):
-            values_str = ", ".join(str(v) for v in value)
-            return f"        double[] {name} = new double[] {{{values_str}}};\n"
-        elif java_type == "String[]" and isinstance(value, list):
-            values_str = ", ".join(f'"{v}"' for v in value)
-            return f"        String[] {name} = new String[] {{{values_str}}};\n"
-        else:
-            return f"        // Unsupported type: {java_type} {name}\n"
+        from .templates import generate_java_param_declaration
+        return generate_java_param_declaration(name, java_type, value)
 
     def _generate_output(
         self, java_type: str, expr: str, is_direct_call: bool = False
     ) -> str:
         """Generate output code for a Java expression."""
-        if is_direct_call:
-            # Wrap the expression in a variable assignment
-            if java_type == "int":
-                return f"        int result = {expr};\n        System.out.println(result);\n"
-            elif java_type == "double":
-                return f"        double result = {expr};\n        System.out.println(result);\n"
-            elif java_type == "boolean":
-                return f"        boolean result = {expr};\n        System.out.println(result);\n"
-            elif java_type == "String":
-                return f'        String result = {expr};\n        System.out.println("\\"" + result + "\\"");\n'
-            elif java_type == "int[]":
-                return f"""        int[] result = {expr};
-        System.out.print("[");
-        for (int i = 0; i < result.length; i++) {{
-            if (i > 0) System.out.print(",");
-            System.out.print(result[i]);
-        }}
-        System.out.println("]");
-"""
-            elif java_type == "double[]":
-                return f"""        double[] result = {expr};
-        System.out.print("[");
-        for (int i = 0; i < result.length; i++) {{
-            if (i > 0) System.out.print(",");
-            System.out.print(result[i]);
-        }}
-        System.out.println("]");
-"""
-            elif java_type == "String[]":
-                return f"""        String[] result = {expr};
-        System.out.print("[");
-        for (int i = 0; i < result.length; i++) {{
-            if (i > 0) System.out.print(",");
-            System.out.print("\\"" + result[i] + "\\"");
-        }}
-        System.out.println("]");
-"""
-            else:
-                return f"        Object result = {expr};\n        System.out.println(result);\n"
-        else:
-            # Direct output of variable
-            if java_type in ("int", "double", "boolean"):
-                return f"        System.out.println({expr});\n"
-            elif java_type == "String":
-                return f'        System.out.println("\\"" + {expr} + "\\"");\n'
-            elif java_type == "int[]":
-                return f"""        System.out.print("[");
-        for (int i = 0; i < {expr}.length; i++) {{
-            if (i > 0) System.out.print(",");
-            System.out.print({expr}[i]);
-        }}
-        System.out.println("]");
-"""
-            elif java_type == "double[]":
-                return f"""        System.out.print("[");
-        for (int i = 0; i < {expr}.length; i++) {{
-            if (i > 0) System.out.print(",");
-            System.out.print({expr}[i]);
-        }}
-        System.out.println("]");
-"""
-            elif java_type == "String[]":
-                return f"""        System.out.print("[");
-        for (int i = 0; i < {expr}.length; i++) {{
-            if (i > 0) System.out.print(",");
-            System.out.print("\\"" + {expr}[i] + "\\"");
-        }}
-        System.out.println("]");
-"""
-            else:
-                return f"        System.out.println({expr});\n"
+        from .templates import generate_java_output
+        return generate_java_output(java_type, expr, is_direct_call)
 
     def compile(self, code_path: str) -> Tuple[bool, str, str]:
         """Compile Java code."""

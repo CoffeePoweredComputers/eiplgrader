@@ -174,7 +174,7 @@ class TestRegistryExecutorLoading:
         executor = self.registry.get_executor("nonexistent")
         assert executor is None
 
-    @patch("eiplgrader.languages.registry.import_module")
+    @patch("importlib.import_module")
     def test_get_executor_import_error(self, mock_import):
         """Test executor loading when import fails."""
         mock_import.side_effect = ImportError("Module not found")
@@ -182,7 +182,7 @@ class TestRegistryExecutorLoading:
         executor = self.registry.get_executor("python")
         assert executor is None
 
-    @patch("eiplgrader.languages.registry.import_module")
+    @patch("importlib.import_module")
     def test_get_executor_attribute_error(self, mock_import):
         """Test executor loading when class not found in module."""
         mock_module = Mock()
@@ -192,7 +192,7 @@ class TestRegistryExecutorLoading:
         executor = self.registry.get_executor("python")
         assert executor is None
 
-    @patch("eiplgrader.languages.registry.import_module")
+    @patch("importlib.import_module")
     def test_get_executor_success(self, mock_import):
         """Test successful executor loading."""
         mock_module = Mock()
@@ -235,7 +235,7 @@ class TestRegistryExecutorLoading:
             # for unsupported language (which would be a quick return)
 
             # Instead, let's verify by checking the method gets to the import stage
-            with patch("eiplgrader.languages.registry.import_module") as mock_import:
+            with patch("importlib.import_module") as mock_import:
                 mock_import.side_effect = ImportError()
                 result = self.registry.get_executor(lang)
                 # If import_module was called, then the mapping exists

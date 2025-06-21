@@ -3,6 +3,12 @@
 import json
 from typing import Dict, Any, List
 from .base_executors import CompiledLanguageExecutor
+from .string_utils import CodeBuilder
+from .templates import (
+    generate_c_param_declaration,
+    generate_c_output,
+    generate_inplace_function_call,
+)
 
 
 class CExecutor(CompiledLanguageExecutor):
@@ -21,7 +27,7 @@ class CExecutor(CompiledLanguageExecutor):
         expected_type = test_case.get("expected_type")
         inplace_mode = test_case.get("inplace", "0")
 
-        # Validate required type information using standardized error message
+        # Validate required type information using CodeBuilder
         errors = []
         if not parameter_types:
             errors.append("parameter_types not provided")
@@ -29,21 +35,23 @@ class CExecutor(CompiledLanguageExecutor):
             errors.append("expected_type not provided")
 
         if errors:
-            error_msg = "Missing required type information:\n"
-            error_msg += "\n".join(f"- {error}" for error in errors) + "\n"
-            error_msg += "\nTest case must include:\n"
-            error_msg += "{\n"
-            error_msg += '    "parameters": {...},\n'
-            error_msg += '    "parameter_types": {"param1": "type1", ...},\n'
-            error_msg += '    "expected": ...,\n'
-            error_msg += '    "expected_type": "type"\n'
-            error_msg += "}"
-            raise ValueError(error_msg)
+            error_builder = CodeBuilder()
+            error_builder.add_line("Missing required type information:")
+            for error in errors:
+                error_builder.add_line(f"- {error}")
+            error_builder.add_line("")
+            error_builder.add_line("Test case must include:")
+            error_builder.add_line("{")
+            with error_builder.indent():
+                error_builder.add_line('"parameters": {...},')
+                error_builder.add_line('"parameter_types": {"param1": "type1", ...},')
+                error_builder.add_line('"expected": ...,')
+                error_builder.add_line('"expected_type": "type"')
+            error_builder.add_line("}")
+            raise ValueError(error_builder.build())
 
         # Validate all parameters have types
-
         if parameter_types is None:
-            print("ASAD")
             raise ValueError("Missing required type information")
 
         for param_name in parameters:
@@ -52,65 +60,63 @@ class CExecutor(CompiledLanguageExecutor):
                     f"Missing required type information:\n- parameter_types['{param_name}'] not provided"
                 )
 
-        # Ensure code has necessary headers
-        if "#include <stdio.h>" not in code:
-            code = "#include <stdio.h>\n" + code
-        if "#include <stdlib.h>" not in code:
-            code = "#include <stdlib.h>\n" + code
-        if "#include <string.h>" not in code:
-            code = "#include <string.h>\n" + code
+        # Ensure code has necessary headers using organized approach
+        headers = ["stdio.h", "stdlib.h", "string.h"]
+        header_builder = CodeBuilder()
+        
+        # Add missing headers
+        for header in headers:
+            include_line = f"#include <{header}>"
+            if include_line not in code:
+                header_builder.add_line(include_line)
+        
+        # Prepend headers to code if any were missing
+        if len(header_builder) > 0:
+            code = header_builder.build() + "\n" + code
 
-        # Generate main function with embedded values
-        main_code = """\nint main() {
-    // Test parameters (embedded values)
-"""
-
-        # Generate parameter parsing based on explicit types
-        param_names = list(parameters.keys())
-
-        for name in param_names:
-            param_type = parameter_types.get(name) if parameter_types else None
-            value = parameters[name]
-            main_code += self._generate_param_declaration(name, param_type, value)
-
-        # Generate function call based on inplace mode
-        main_code += self._generate_function_call(
-            function_name,
-            param_names,
-            expected_type or "",
-            inplace_mode,
-            parameter_types or {},
-            parameters,
-        )
-
-        main_code += """
-    return 0;
-}
-"""
-
+        # Generate main function with embedded values using CodeBuilder
+        main_builder = CodeBuilder()
+        main_builder.add_line("")
+        main_builder.add_line("int main() {")
+        
+        with main_builder.indent():
+            main_builder.add_line("// Test parameters (embedded values)")
+            
+            # Generate parameter declarations using template function
+            param_names = list(parameters.keys())
+            for name in param_names:
+                param_type = parameter_types.get(name) if parameter_types else None
+                value = parameters[name]
+                param_decl = generate_c_param_declaration(name, param_type, value)
+                main_builder.add_lines(param_decl)
+            
+            # Generate function call using simplified approach
+            function_call_code = self._generate_function_call(
+                function_name,
+                param_names,
+                expected_type or "",
+                inplace_mode,
+                parameter_types or {},
+                parameters,
+            )
+            main_builder.add_lines(function_call_code)
+            
+            main_builder.add_line("return 0;")
+        
+        main_builder.add_line("}")
+        
         # Combine everything
-        return code + "\n" + main_code
+        return code + "\n" + main_builder.build()
 
     def _generate_param_declaration(
         self, name: str, c_type: str | None, value: Any
     ) -> str:
-        """Generate parameter declaration with embedded value."""
-        if c_type is None:
-            return f"    // Unknown type for {name}\n"
-        elif c_type == "int":
-            return f"    int {name} = {value};\n"
-        elif c_type == "double":
-            return f"    double {name} = {value};\n"
-        elif c_type == "char*":
-            return f'    char {name}[] = "{value}";\n'
-        elif c_type == "int*" and isinstance(value, list):
-            values_str = ", ".join(str(v) for v in value)
-            return f"    int {name}[] = {{{values_str}}};\n"
-        elif c_type == "double*" and isinstance(value, list):
-            values_str = ", ".join(str(v) for v in value)
-            return f"    double {name}[] = {{{values_str}}};\n"
-        else:
-            return f"    // Unsupported type: {c_type} {name}\n"
+        """Generate parameter declaration with embedded value.
+        
+        This method is maintained for backward compatibility but now
+        delegates to the template function for consistency.
+        """
+        return generate_c_param_declaration(name, c_type, value)
 
     def _generate_function_call(
         self,
@@ -121,66 +127,80 @@ class CExecutor(CompiledLanguageExecutor):
         parameter_types: Dict[str, str],
         parameters: Dict[str, Any],
     ) -> str:
-        """Generate function call and output code."""
-        code = ""
-
+        """Generate function call and output code using templates."""
+        builder = CodeBuilder()
+        
+        # Handle different inplace modes
         if inplace_mode == "0":
-            # Normal function call
-            c_return_type = expected_type
-            format_spec = self._get_format_spec(c_return_type)
-
-            if c_return_type == "int*":
-                # Handle array return
-                code += (
-                    f"    int* result = {function_name}({', '.join(param_names)});\n"
-                )
-                code += '    printf("[");\n'
-                code += "    // Assume small array for simplicity\n"
-                code += "    for (int i = 0; i < 10 && result[i] != 0; i++) {\n"
-                code += '        if (i > 0) printf(", ");\n'
-                code += '        printf("%d", result[i]);\n'
-                code += "    }\n"
-                code += '    printf("]\\n");\n'
+            # Normal function call with return value
+            if expected_type == "int*":
+                # Special case for array return - use template with loop
+                builder.add_line(f"int* result = {function_name}({', '.join(param_names)});")
+                builder.add_lines(self._generate_array_output_loop("result", "int"))
             else:
-                code += f"    {c_return_type} result = {function_name}({', '.join(param_names)});\n"
-                code += f'    printf("{format_spec}\\n", result);\n'
+                builder.add_line(f"{expected_type} result = {function_name}({', '.join(param_names)});")
+                builder.add_lines(generate_c_output(expected_type, "result"))
+                
         elif inplace_mode == "1":
             # In-place modification
-            code += f"    {function_name}({', '.join(param_names)});\n"
+            builder.add_line(f"{function_name}({', '.join(param_names)});")
             if param_names:
                 first_param = param_names[0]
                 first_type = parameter_types.get(first_param)
                 if not first_type:
                     raise ValueError(f"Type required for parameter '{first_param}'")
-                c_type = first_type
-                if c_type == "int*":
+                    
+                if first_type == "int*":
+                    # Use template for array output
                     array_size = (
                         len(parameters[first_param])
                         if isinstance(parameters[first_param], list)
                         else 5
                     )
-                    code += '    printf("[");\n'
-                    code += f"    for (int i = 0; i < {array_size}; i++) {{\n"
-                    code += '        if (i > 0) printf(", ");\n'
-                    code += f'        printf("%d", {first_param}[i]);\n'
-                    code += "    }\n"
-                    code += '    printf("]\\n");\n'
+                    builder.add_lines(self._generate_array_output_loop(first_param, "int", array_size))
                 else:
-                    format_spec = self._get_format_spec(c_type)
-                    code += f'    printf("{format_spec}\\n", {first_param});\n'
+                    builder.add_lines(generate_c_output(first_type, first_param))
             else:
-                code += '    printf("null\\n");\n'
+                builder.add_line('printf("null\\n");')
+                
         elif inplace_mode == "2":
             # Both modify and return
-            c_return_type = expected_type
-            format_spec = self._get_format_spec(c_return_type)
-            code += f"    {c_return_type} result = {function_name}({', '.join(param_names)});\n"
-            code += f'    printf("{format_spec}\\n", result);\n'
+            builder.add_line(f"{expected_type} result = {function_name}({', '.join(param_names)});")
+            builder.add_lines(generate_c_output(expected_type, "result"))
+            
+        return builder.build()
 
-        return code
-
+    def _generate_array_output_loop(self, var_name: str, element_type: str, size: int = None) -> str:
+        """Generate array output loop using template approach."""
+        builder = CodeBuilder()
+        
+        builder.add_line('printf("[");')
+        if size is not None:
+            # Fixed size array
+            builder.add_line(f"for (int i = 0; i < {size}; i++) {{")
+        else:
+            # Dynamic size (assuming null-terminated or small array)
+            builder.add_line(f"for (int i = 0; i < 10 && {var_name}[i] != 0; i++) {{")
+            
+        with builder.indent():
+            builder.add_line('if (i > 0) printf(", ");')
+            if element_type == "int":
+                builder.add_line(f'printf("%d", {var_name}[i]);')
+            elif element_type == "double":
+                builder.add_line(f'printf("%f", {var_name}[i]);')
+            else:
+                builder.add_line(f'printf("%d", {var_name}[i]);')
+                
+        builder.add_line("}")
+        builder.add_line('printf("]\\n");')
+        
+        return builder.build()
+    
     def _get_format_spec(self, c_type: str) -> str:
-        """Get printf format specifier for C type."""
+        """Get printf format specifier for C type.
+        
+        This method is maintained for backward compatibility.
+        """
         format_specs = {
             "int": "%d",
             "double": "%.6f",

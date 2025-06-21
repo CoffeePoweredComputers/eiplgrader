@@ -18,25 +18,15 @@ class GoExecutor(CompiledLanguageExecutor):
 
     def _generate_output(self, go_type: str, var_name: str) -> str:
         """Generate output code for a Go variable based on its type."""
-
-        if go_type in ["int", "float64", "string", "bool"]:
-            return f"    fmt.Println({var_name})\n"
-        elif go_type in [
-            "[]int",
-            "[]float64",
-            "[]string",
-            "[]bool",
-        ] or go_type.startswith("map"):
-            # Use encoding/json to serialize complex types
-            return f"""    encoder := json.NewEncoder(os.Stdout)
-        encoder.Encode({var_name})
-    """
-        else:
-            # Default fmt.Println for other types
-            return f"    fmt.Println({var_name})\n"
+        from .templates import generate_go_output
+        
+        return generate_go_output(go_type, var_name)
 
     def prepare_code(self, code: str, test_case: Dict[str, Any]) -> str:
         """Prepare Go code for execution with embedded test values."""
+        from .string_utils import CodeBuilder
+        from .templates import generate_go_param_declaration, generate_inplace_function_call
+        
         # Use common validation to ensure types are provided
         self.validate_types_provided(test_case)
 
@@ -133,60 +123,34 @@ class GoExecutor(CompiledLanguageExecutor):
         # Combine with existing imports
         all_imports = sorted(existing_imports.union(imports_needed))
 
-        # Build import block
+        # Build import block using CodeBuilder
+        import_builder = CodeBuilder()
         if len(all_imports) == 1:
-            import_block = f'import "{list(all_imports)[0]}"\n'
+            import_builder.add_line(f'import "{list(all_imports)[0]}"')
         else:
-            import_lines = ["import ("]
-            for imp in all_imports:
-                import_lines.append(f'    "{imp}"')
-            import_lines.append(")")
-            import_block = "\n".join(import_lines) + "\n"
+            import_builder.add_line("import (")
+            with import_builder.indent():
+                for imp in all_imports:
+                    import_builder.add_line(f'"{imp}"')
+            import_builder.add_line(")")
 
         # Add imports after package declaration
         lines = code.split("\n")
         for i, line in enumerate(lines):
             if line.strip().startswith("package"):
                 lines.insert(i + 1, "")
-                lines.insert(i + 2, import_block)
+                lines.insert(i + 2, import_builder.build())
                 break
         code = "\n".join(lines)
 
-        # Generate parameter declarations with embedded values
+        # Generate parameter declarations using templates
         param_declarations = []
-
         for param_name in param_names:
             param_value = params[param_name]
             go_type = param_types[param_name]
-
-            if go_type == "string":
-                # Escape the string value
-                escaped_value = (
-                    str(param_value).replace("\\", "\\\\").replace('"', '\\"')
-                )
-                param_declarations.append(f'    {param_name} := "{escaped_value}"')
-            elif go_type == "bool":
-                param_declarations.append(
-                    f"    {param_name} := {str(param_value).lower()}"
-                )
-            elif go_type in ["int", "float64"]:
-                param_declarations.append(f"    {param_name} := {param_value}")
-            elif go_type == "[]int":
-                values = ", ".join(str(v) for v in param_value)
-                param_declarations.append(f"    {param_name} := []int{{{values}}}")
-            elif go_type == "[]float64":
-                values = ", ".join(str(v) for v in param_value)
-                param_declarations.append(f"    {param_name} := []float64{{{values}}}")
-            elif go_type == "[]string":
-                values = ", ".join(
-                    f'"{str(v).replace("\\", "\\\\").replace('"', '\\"')}"'
-                    for v in param_value
-                )
-                param_declarations.append(f"    {param_name} := []string{{{values}}}")
-            elif go_type == "[]bool":
-                values = ", ".join(str(v).lower() for v in param_value)
-                param_declarations.append(f"    {param_name} := []bool{{{values}}}")
-            elif go_type == "[][]int":
+            
+            # Handle special cases not covered by the template
+            if go_type == "[][]int":
                 # Handle nested int slices
                 inner_slices = []
                 for inner_list in param_value:
@@ -202,7 +166,7 @@ class GoExecutor(CompiledLanguageExecutor):
                         str(param_value).replace("\\", "\\\\").replace('"', '\\"')
                     )
                     param_declarations.append(
-                        f'    {param_name} := interface{{}}("{escaped_value}")'
+                        f'    {param_name} := interface{{}}(\"{escaped_value}\")'
                     )
                 elif isinstance(param_value, bool):
                     param_declarations.append(
@@ -218,68 +182,33 @@ class GoExecutor(CompiledLanguageExecutor):
                         f"    // Complex interface{{}} value for {param_name}"
                     )
             else:
-                # For unsupported types, use a placeholder
+                # Use the template function for standard types
                 param_declarations.append(
-                    f"    // Unsupported type {go_type} for {param_name}"
+                    generate_go_param_declaration(param_name, go_type, param_value)
                 )
 
-        # Generate main function
-        main_code = "\nfunc main() {\n"
-
+        # Generate main function using CodeBuilder
+        main_builder = CodeBuilder()
+        main_builder.add_line("func main() {")
+        
         # Add parameter declarations
-        if param_declarations:
-            main_code += "\n".join(param_declarations) + "\n\n"
+        with main_builder.indent():
+            if param_declarations:
+                for decl in param_declarations:
+                    # Remove the leading spaces since CodeBuilder handles indentation
+                    clean_decl = decl.strip()
+                    main_builder.add_line(clean_decl)
+                main_builder.add_line("")
 
-        # Generate function call and output handling
-        if inplace_mode == "0":
-            # Normal function call with return value
-            if param_names:
-                main_code += (
-                    f"    result := {function_name}({', '.join(param_names)})\n"
-                )
-            else:
-                main_code += f"    result := {function_name}()\n"
-            main_code += self._generate_output(expected_type, "result")
-        elif inplace_mode == "1":
-            # In-place modification
-            if param_names:
-                # For slices, pass by reference
-                args = []
-                for p in param_names:
-                    if param_types[p].startswith("List[") or param_types[p].startswith(
-                        "[]"
-                    ):
-                        args.append(p)  # Slices are already references in Go
-                    else:
-                        args.append("&" + p)  # Other types need address-of
-                main_code += f"    {function_name}({', '.join(args)})\n"
-                # Output the first parameter after modification
-                first_param = param_names[0]
-                main_code += self._generate_output(
-                    param_types[first_param], first_param
-                )
-            else:
-                main_code += f"    {function_name}()\n"
-                main_code += '    fmt.Println("null")\n'
-        elif inplace_mode == "2":
-            # Both modify and return
-            if param_names:
-                args = []
-                for p in param_names:
-                    if param_types[p].startswith("List[") or param_types[p].startswith(
-                        "[]"
-                    ):
-                        args.append(p)
-                    else:
-                        args.append("&" + p)
-                main_code += f"    result := {function_name}({', '.join(args)})\n"
-            else:
-                main_code += f"    result := {function_name}()\n"
-            main_code += self._generate_output(expected_type, "result")
+            # Generate function call using templates
+            function_call = generate_inplace_function_call(
+                "go", function_name, param_names, inplace_mode, param_types, expected_type
+            )
+            main_builder.add_lines(function_call)
 
-        main_code += "}\n"
+        main_builder.add_line("}")
 
-        return code + "\n" + main_code
+        return code + "\n" + main_builder.build()
 
     def normalize_output(self, raw_output: str, expected_type: str = None) -> Any:
         """Handle Go-specific output parsing."""
@@ -296,22 +225,3 @@ class GoExecutor(CompiledLanguageExecutor):
         
         # Otherwise call parent normalize_output for default behavior
         return super().normalize_output(raw_output, expected_type)
-
-    # def execute_test(self, code: str, test_case: Dict[str, Any]) -> Dict[str, Any]:
-    #     """Execute test with embedded values."""
-    #     # No type inference - types must be provided
-    #     result = super().execute_test(code, test_case)
-
-    #     # Clean up serialized output if needed
-    #     if result.get("output") and not result.get("error"):
-    #         output = result["output"].strip()
-    #         # Handle string outputs that might have extra quotes
-    #         if output.startswith('"') and output.endswith('"') and len(output) > 2:
-    #             try:
-    #                 # Try to parse as serialized string
-    #                 result["actual"] = json.loads(output)
-    #             except Exception:
-    #                 # If it fails, use the raw output
-    #                 result["actual"] = output
-
-    #     return result

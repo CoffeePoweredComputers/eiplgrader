@@ -17,6 +17,12 @@ class HaskellExecutor(CompiledLanguageExecutor):
 
     def prepare_code(self, code: str, test_case: Dict[str, Any]) -> str:
         """Prepare Haskell code for execution with test harness."""
+        from .string_utils import CodeBuilder
+        from .templates import (
+            generate_haskell_param_declaration,
+            generate_haskell_output,
+        )
+
         # Use common validation
         self.validate_types_provided(test_case)
 
@@ -28,76 +34,48 @@ class HaskellExecutor(CompiledLanguageExecutor):
         expected_type = test_case["expected_type"]  # Required field after validation
         inplace_mode = test_case.get("inplace", "0")
 
-        # Start building the module
-        prepared_code = "module Main where\n\n"
-        prepared_code += "import System.IO\n"
-        prepared_code += "import Text.Read (readMaybe)\n\n"
+        # Build the module using CodeBuilder
+        builder = CodeBuilder()
+
+        # Module header and imports
+        builder.add_line("module Main where")
+        builder.add_line()
+        builder.add_line("import System.IO")
+        builder.add_line("import Text.Read (readMaybe)")
+        builder.add_line()
 
         # Add the student's code
-        prepared_code += code + "\n\n"
+        builder.add_lines(code)
+        builder.add_line()
 
-        # Generate main function with embedded values
-        prepared_code += "main :: IO ()\n"
-        prepared_code += "main = do\n"
-        prepared_code += "    hSetBuffering stdout NoBuffering\n"
-        prepared_code += "    -- Test parameters (embedded values)\n"
+        # Generate main function
+        builder.add_line("main :: IO ()")
+        builder.add_line("main = do")
 
-        # Generate parameter declarations with embedded values
-        param_names = list(parameters.keys())
+        with builder.indent():
+            builder.add_line("hSetBuffering stdout NoBuffering")
+            builder.add_line("-- Test parameters (embedded values)")
 
-        for name, value in parameters.items():
-            param_type = parameter_types[name]
-            prepared_code += self._generate_param_declaration(name, param_type, value)
+            # Generate parameter declarations using template function
+            param_names = list(parameters.keys())
+            for name, value in parameters.items():
+                param_type = parameter_types[name]
+                param_decl = generate_haskell_param_declaration(name, param_type, value)
+                builder.add_line(param_decl)
 
-        # Generate function call
-        if param_names:
-            prepared_code += (
-                f"    let result = {function_name} {' '.join(param_names)}\n"
-            )
-        else:
-            prepared_code += f"    let result = {function_name}\n"
+            # Generate function call
+            if param_names:
+                builder.add_line(
+                    f"let result = {function_name} {' '.join(param_names)}"
+                )
+            else:
+                builder.add_line(f"let result = {function_name}")
 
-        # Output based on explicit expected type
-        if expected_type == "Bool":
-            prepared_code += '    putStrLn $ if result then "true" else "false"\n'
-        elif expected_type in ["Int", "Double"]:
-            prepared_code += "    print result\n"
-        elif expected_type == "String":
-            prepared_code += '    putStrLn $ "\\"" ++ result ++ "\\""\n'
-        elif expected_type and expected_type.startswith("["):
-            prepared_code += "    print result\n"
-        else:
-            prepared_code += "    print result\n"
+            # Generate output using template function
+            output_code = generate_haskell_output(expected_type, "result")
+            builder.add_line(output_code)
 
-        return prepared_code
-
-    def _generate_param_declaration(
-        self, name: str, param_type: str, value: Any
-    ) -> str:
-        """Generate parameter declaration with embedded value."""
-        if param_type == "Int":
-            return f"    let {name} = {value} :: Int\n"
-        elif param_type == "String":
-            escaped_value = value.replace("\\", "\\\\").replace('"', '\\"')
-            return f'    let {name} = "{escaped_value}" :: String\n'
-        elif param_type == "Bool":
-            haskell_bool = "True" if value else "False"
-            return f"    let {name} = {haskell_bool} :: Bool\n"
-        elif param_type == "Double":
-            return f"    let {name} = {value} :: Double\n"
-        elif param_type == "[Int]" and isinstance(value, list):
-            return f"    let {name} = {value} :: [Int]\n"
-        elif param_type == "[Double]" and isinstance(value, list):
-            return f"    let {name} = {value} :: [Double]\n"
-        elif param_type == "[String]" and isinstance(value, list):
-            escaped_values = []
-            for v in value:
-                escaped = v.replace("\\", "\\\\").replace('"', '\\"')
-                escaped_values.append(f'"{escaped}"')
-            values_str = ", ".join(escaped_values)
-            return f"    let {name} = [{values_str}] :: [String]\n"
-        else:
-            return f"    let {name} = {value} :: {param_type}\n"
+        return builder.build()
 
     def compile(self, code_path: str) -> Tuple[bool, str, str]:
         """Compile Haskell code, return (success, output_path, error)"""
@@ -111,22 +89,20 @@ class HaskellExecutor(CompiledLanguageExecutor):
         else:
             return False, output_path, result.stderr.strip()
 
-
-
     def normalize_output(self, raw_output: str, expected_type: str = None) -> Any:
         """Handle Haskell-specific output parsing."""
         output = raw_output.strip()
-        
+
         # Handle boolean output
         if output == "true":
             return True
         elif output == "false":
             return False
-        
+
         # Handle string output (remove quotes)
         if output.startswith('"') and output.endswith('"'):
             return output[1:-1]
-        
+
         # Try to parse as JSON
         try:
             return json.loads(output)
