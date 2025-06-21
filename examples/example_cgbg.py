@@ -312,7 +312,7 @@ print("Note: Haskell is statically typed and requires explicit Haskell type anno
 haskell_generator = CodeGenerator(api_key, language="haskell")
 
 result = haskell_generator.generate_code(
-    student_response="that takes a list of integers and returns the list with all elements doubled using map",
+    student_response="that takes a list of integers and returns the list with all elements that are prime doubled",
     function_name="doubleAll",
     temperature=0.0
 )

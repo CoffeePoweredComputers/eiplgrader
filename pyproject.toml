@@ -74,6 +74,22 @@ testpaths = ["tests"]
 python_files = "test_*.py"
 python_classes = "Test*"
 python_functions = "test_*"
+markers = [
+    "type_system: marks tests related to type system functionality",
+    "infrastructure: marks tests related to infrastructure functionality", 
+    "edge_cases: marks tests related to edge cases and error handling",
+    "integration: marks integration tests",
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')"
+]
+addopts = [
+    "--strict-markers",
+    "--tb=short"
+]
+testmon = true
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning"
+]
 
 [tool.mypy]
 python_version = "3.10"
