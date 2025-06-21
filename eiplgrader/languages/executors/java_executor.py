@@ -4,8 +4,11 @@ import json
 import os
 import subprocess
 
-from typing import Dict, Any, Tuple
+from typing import Dict, Any, Tuple, TYPE_CHECKING
 from ..executors.base_executors import CompiledLanguageExecutor
+
+if TYPE_CHECKING:
+    from .string_utils import CodeBuilder
 
 
 class JavaExecutor(CompiledLanguageExecutor):
@@ -23,7 +26,7 @@ class JavaExecutor(CompiledLanguageExecutor):
         """Prepare Java code for execution with test harness."""
         from .string_utils import CodeBuilder
         from .templates import generate_java_param_declaration
-        
+
         # Use common validation
         self.validate_types_provided(test_case)
 
@@ -39,12 +42,13 @@ class JavaExecutor(CompiledLanguageExecutor):
 
         # Initialize code builder
         builder = CodeBuilder()
-        
+
         # Extract and build imports
         import re
+
         import_pattern = r"^import\s+.*?;$"
         imports = re.findall(import_pattern, code, re.MULTILINE)
-        
+
         builder.add_line("import java.util.*;")
         for import_stmt in imports:
             builder.add_line(import_stmt)
@@ -89,16 +93,16 @@ class JavaExecutor(CompiledLanguageExecutor):
                         param_name, java_type, param_value
                     )
                     builder.add_lines(declaration)
-                
+
                 builder.add_line()
                 builder.add_line("// Call function and handle result")
-                
+
                 # Generate function call and result handling
                 result_code = self._generate_result_handling(
                     function_name, param_names, param_types, expected_type, inplace_mode
                 )
                 builder.add_lines(result_code)
-                
+
             builder.add_line("}")
         builder.add_line("}")
 
@@ -111,19 +115,19 @@ class JavaExecutor(CompiledLanguageExecutor):
             builder.add_line(line.strip() if line.strip() else "")
 
     def _generate_result_handling(
-        self, 
-        function_name: str, 
-        param_names: list, 
-        param_types: dict, 
-        expected_type: str, 
-        inplace_mode: str
+        self,
+        function_name: str,
+        param_names: list,
+        param_types: dict,
+        expected_type: str,
+        inplace_mode: str,
     ) -> str:
         """Generate result handling code based on inplace mode."""
         from .string_utils import CodeBuilder
         from .templates import generate_java_output
-        
+
         builder = CodeBuilder()
-        
+
         if inplace_mode == "0":
             # Normal function call - returns a value
             # Create Solution instance and call method
@@ -136,15 +140,19 @@ class JavaExecutor(CompiledLanguageExecutor):
                 builder.add_line(f"var result = {function_call};")
                 output_code = generate_java_output(expected_type, "result")
             builder.add_lines(output_code)
-            
+
         elif inplace_mode == "1":
             # In-place modification (for arrays/lists)
             if param_names:
                 builder.add_line("Solution solution = new Solution();")
                 first_param = param_names[0]
-                other_params = ", ".join(param_names[1:]) if len(param_names) > 1 else ""
+                other_params = (
+                    ", ".join(param_names[1:]) if len(param_names) > 1 else ""
+                )
                 if other_params:
-                    function_call = f"solution.{function_name}({first_param}, {other_params})"
+                    function_call = (
+                        f"solution.{function_name}({first_param}, {other_params})"
+                    )
                 else:
                     function_call = f"solution.{function_name}({first_param})"
                 builder.add_line(f"{function_call};")
@@ -154,17 +162,21 @@ class JavaExecutor(CompiledLanguageExecutor):
             else:
                 builder.add_line("Solution solution = new Solution();")
                 function_call = f"solution.{function_name}()"
-                builder.add_line(f'{function_call};')
+                builder.add_line(f"{function_call};")
                 builder.add_line('System.out.println("null");')
-                
+
         elif inplace_mode == "2":
             # Both modifies and returns
             if param_names:
                 builder.add_line("Solution solution = new Solution();")
                 first_param = param_names[0]
-                other_params = ", ".join(param_names[1:]) if len(param_names) > 1 else ""
+                other_params = (
+                    ", ".join(param_names[1:]) if len(param_names) > 1 else ""
+                )
                 if other_params:
-                    function_call = f"solution.{function_name}({first_param}, {other_params})"
+                    function_call = (
+                        f"solution.{function_name}({first_param}, {other_params})"
+                    )
                 else:
                     function_call = f"solution.{function_name}({first_param})"
                 if expected_type in ["int", "double", "boolean", "String"]:
@@ -192,6 +204,7 @@ class JavaExecutor(CompiledLanguageExecutor):
     def _generate_param_declaration(self, name: str, java_type: str, value: Any) -> str:
         """Generate parameter declaration with embedded value."""
         from .templates import generate_java_param_declaration
+
         return generate_java_param_declaration(name, java_type, value)
 
     def _generate_output(
@@ -199,6 +212,7 @@ class JavaExecutor(CompiledLanguageExecutor):
     ) -> str:
         """Generate output code for a Java expression."""
         from .templates import generate_java_output
+
         return generate_java_output(java_type, expr, is_direct_call)
 
     def compile(self, code_path: str) -> Tuple[bool, str, str]:

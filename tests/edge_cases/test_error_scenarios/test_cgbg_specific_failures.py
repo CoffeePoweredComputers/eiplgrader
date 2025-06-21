@@ -309,7 +309,7 @@ public class WrongClassName {
         """Test Java code with non-static method."""
         non_static_code = """
 public class Solution {
-    public int add_numbers(int a, int b) {  // Missing static
+    public int add_numbers(int a, int b) {  // Non-static method
         return a + b;
     }
 }
@@ -331,8 +331,8 @@ public class Solution {
         )
 
         result = tester.run_tests()
-        # Java executor expects static methods
-        assert not result.was_successful()
+        # Java executor supports both static and non-static methods
+        assert result.was_successful()
 
     def test_mixed_language_code(self):
         """Test code that mixes multiple language syntaxes."""
@@ -354,9 +354,9 @@ public static void main(String[] args) {  // Java syntax
         )
 
         result = tester.run_tests()
-        # Might work if Python function is syntactically valid
-        # But the Java code will cause syntax errors
+        # The Java code will cause a syntax error when Python tries to parse it
         assert not result.was_successful()
+        assert result.errors > 0  # Syntax error from the Java code
 
     def test_code_with_natural_language_comments(self):
         """Test code that contains natural language that looks like instructions."""
@@ -387,37 +387,69 @@ def add_numbers(a, b):
 
     def test_incomplete_function_implementation(self):
         """Test incomplete function implementations."""
-        incomplete_implementations = [
-            """
+        # Test cases that should definitely fail
+        incomplete_pass = """
 def add_numbers(a, b):
     # TODO: implement this
     pass
-""",
-            """
+"""
+        incomplete_return = """
 def add_numbers(a, b):
     return  # Missing return value
-""",
-            """
+"""
+        incomplete_expr = """
 def add_numbers(a, b):
     return a +  # Incomplete expression
-""",
-            """
-def add_numbers(a, b):
-    if a > 0:
-        return a + b
-    # Missing else case
-""",
-        ]
+"""
 
         test_cases = [{"parameters": {"a": 1, "b": 2}, "expected": 3}]
 
-        for incomplete_code in incomplete_implementations:
+        # Test implementations that return None or have syntax errors
+        for incomplete_code in [incomplete_pass, incomplete_return]:
             tester = CodeTester(
                 code=incomplete_code,
                 test_cases=test_cases,
                 function_name="add_numbers",
                 language="python",
             )
-
             result = tester.run_tests()
             assert not result.was_successful()
+            assert result.failures > 0  # These return None instead of expected value
+
+        # Test implementation with syntax error
+        tester = CodeTester(
+            code=incomplete_expr,
+            test_cases=test_cases,
+            function_name="add_numbers",
+            language="python",
+        )
+        result = tester.run_tests()
+        assert not result.was_successful()
+        assert result.errors > 0  # This has a syntax error
+
+        # Test implementation that works for some inputs
+        partial_implementation = """
+def add_numbers(a, b):
+    if a > 0:
+        return a + b
+    # Missing else case returns None for a <= 0
+"""
+        tester = CodeTester(
+            code=partial_implementation,
+            test_cases=[{"parameters": {"a": 1, "b": 2}, "expected": 3}],
+            function_name="add_numbers",
+            language="python",
+        )
+        result = tester.run_tests()
+        assert result.was_successful()  # This test case passes since a=1 > 0
+
+        # But fails for non-positive a
+        tester = CodeTester(
+            code=partial_implementation,
+            test_cases=[{"parameters": {"a": 0, "b": 2}, "expected": 2}],
+            function_name="add_numbers",
+            language="python",
+        )
+        result = tester.run_tests()
+        assert not result.was_successful()
+        assert result.failures > 0  # Returns None instead of expected value

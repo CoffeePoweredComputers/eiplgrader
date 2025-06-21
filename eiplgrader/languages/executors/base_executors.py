@@ -80,11 +80,13 @@ class LanguageExecutor(ABC):
                     return "List[string]"
             return "List"
         return "unknown"
-    
-    def normalize_output(self, raw_output: str, expected_type: str = None) -> Any:  # pylint: disable=unused-argument
+
+    def normalize_output(
+        self, raw_output: str, expected_type: Optional[str] = None
+    ) -> Any:  # pylint: disable=unused-argument
         """Override in subclasses for language-specific output normalization."""
         output = raw_output.strip()
-        
+
         # Default: try JSON, fallback to raw
         if output:
             try:
@@ -93,17 +95,20 @@ class LanguageExecutor(ABC):
                 return output
         else:
             return ""
-    
-    def enhance_error_message(self, error_msg: str, stderr: str = "") -> str:  # pylint: disable=unused-argument
+
+    def enhance_error_message(
+        self, error_msg: str, stderr: str = ""
+    ) -> str:  # pylint: disable=unused-argument
         """Override in subclasses for language-specific error message enhancement."""
         return error_msg
-    
+
     def generate_function_call_repr(self, test_case: Dict[str, Any]) -> str:
         """Generate standardized function call representation."""
         function_name = test_case.get("function_name", "foo")
         params = test_case.get("parameters", {})
         args = list(params.values())
         return f"{function_name}({', '.join(map(repr, args))})"
+
 
 class CompiledLanguageExecutor(LanguageExecutor):
     """Base executor for compiled languages (C, C++, Java, Go, Haskell)."""
@@ -142,7 +147,9 @@ class CompiledLanguageExecutor(LanguageExecutor):
         # Compile
         success, output_path, error = self.compile(code_path)
         if not success:
-            enhanced_error = self.enhance_error_message(f"Compilation failed: {error}", error)
+            enhanced_error = self.enhance_error_message(
+                f"Compilation failed: {error}", error
+            )
             return {
                 "passed": False,
                 "error": enhanced_error,
@@ -172,7 +179,9 @@ class CompiledLanguageExecutor(LanguageExecutor):
                 )
 
             if result.returncode != 0:
-                enhanced_error = self.enhance_error_message(f"Runtime error: {result.stderr}", result.stderr)
+                enhanced_error = self.enhance_error_message(
+                    f"Runtime error: {result.stderr}", result.stderr
+                )
                 return {
                     "passed": False,
                     "error": enhanced_error,
@@ -181,7 +190,9 @@ class CompiledLanguageExecutor(LanguageExecutor):
                 }
 
             # Use normalize_output hook for language-specific output parsing
-            actual = self.normalize_output(result.stdout, test_case.get("expected_type"))
+            actual = self.normalize_output(
+                result.stdout, test_case.get("expected_type")
+            )
             passed = actual == test_case.get("expected")
 
             return {
@@ -208,18 +219,24 @@ class CompiledLanguageExecutor(LanguageExecutor):
                 "expected": test_case.get("expected"),
             }
 
-
     def cleanup(self) -> None:
-        """Clean up temporary directory"""
+        """Clean up temporary files in directory (keep directory for reuse)"""
         if (
             hasattr(self, "temp_dir")
             and self.temp_dir
             and os.path.exists(self.temp_dir)
         ):
             try:
-                shutil.rmtree(self.temp_dir)
+                # Remove files inside the directory but keep the directory itself
+                for filename in os.listdir(self.temp_dir):
+                    file_path = os.path.join(self.temp_dir, filename)
+                    if os.path.isfile(file_path):
+                        try:
+                            os.remove(file_path)
+                        except (OSError, PermissionError):
+                            pass  # File in use or inaccessible
             except (OSError, PermissionError):
-                pass  # Directory already removed or inaccessible
+                pass  # Directory inaccessible
 
 
 class InterpretedLanguageExecutor(LanguageExecutor):
@@ -266,7 +283,9 @@ class InterpretedLanguageExecutor(LanguageExecutor):
             )
 
             if result.returncode != 0:
-                enhanced_error = self.enhance_error_message(f"Runtime error: {result.stderr}", result.stderr)
+                enhanced_error = self.enhance_error_message(
+                    f"Runtime error: {result.stderr}", result.stderr
+                )
                 return {
                     "passed": False,
                     "error": enhanced_error,
@@ -275,7 +294,9 @@ class InterpretedLanguageExecutor(LanguageExecutor):
                 }
 
             # Use normalize_output hook for language-specific output parsing
-            actual = self.normalize_output(result.stdout, test_case.get("expected_type"))
+            actual = self.normalize_output(
+                result.stdout, test_case.get("expected_type")
+            )
             passed = actual == test_case.get("expected")
 
             return {
@@ -302,15 +323,21 @@ class InterpretedLanguageExecutor(LanguageExecutor):
                 "expected": test_case.get("expected"),
             }
 
-
     def cleanup(self) -> None:
-        """Clean up temporary directory"""
+        """Clean up temporary files in directory (keep directory for reuse)"""
         if (
             hasattr(self, "temp_dir")
             and self.temp_dir
             and os.path.exists(self.temp_dir)
         ):
             try:
-                shutil.rmtree(self.temp_dir)
+                # Remove files inside the directory but keep the directory itself
+                for filename in os.listdir(self.temp_dir):
+                    file_path = os.path.join(self.temp_dir, filename)
+                    if os.path.isfile(file_path):
+                        try:
+                            os.remove(file_path)
+                        except (OSError, PermissionError):
+                            pass  # File in use or inaccessible
             except (OSError, PermissionError):
-                pass  # Directory already removed or inaccessible
+                pass  # Directory inaccessible

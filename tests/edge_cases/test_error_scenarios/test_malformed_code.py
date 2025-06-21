@@ -186,7 +186,14 @@ func add_numbers(a int, b int) int {
     return a + b  // Missing expected semicolon or newline
     fmt.Println("unreachable")
 """
-        test_cases = [{"parameters": {"a": 1, "b": 2}, "expected": 3}]
+        test_cases = [
+            {
+                "parameters": {"a": 1, "b": 2},
+                "parameter_types": {"a": "int", "b": "int"},
+                "expected": 3,
+                "expected_type": "int",
+            }
+        ]
 
         tester = CodeTester(
             code=malformed_go_code,

@@ -5,6 +5,37 @@ from typing import List
 from ..base import LanguageAdapter, LanguageConfig
 
 
+DEFAULT_STUDENT_PERSONA_PYTHON = """
+You are an introductory CS student learning Python for the very first time. You
+also don't know about type annotations. Do not use list comprehension, lambda's
+or maps --- use iteration instead. Additionally, do not consolidate multiple
+complex operations into a single line. Break things into multiple distinct
+lines wherever possible.
+"""
+
+DEFAULT_CGBG_PROMPT_PYTHON = """
+Create a function, called {function_name},
+according to the following prompt:
+
+Create a function {function_name} that {student_response}
+"""
+
+DEFAULT_REDEF_PROMPT_PYTHON = """
+Create a function based on the following function signature: {function_signature}
+You are given the following assumptions about the arguments:
+{assumptions}.
+"""
+
+DEFAULT_RETURN_FORMAT = """
+Include only the function and no additional test cases, code, or comments.
+Respond with the code for the function {function_name} in the following format
+which has the code wrapped in markdown of a python code block:
+
+```python
+def {function_name}():
+    pass
+```"""
+
 class PythonAdapter(LanguageAdapter):
     """Python language adapter with 4 core methods."""
 
@@ -27,46 +58,36 @@ class PythonAdapter(LanguageAdapter):
         **kwargs,
     ) -> str:
         """Generate Python-specific prompt for LLM."""
+            
+        prompt = DEFAULT_STUDENT_PERSONA_PYTHON
+
         if gen_type == "cgbg":
-            return f"""Pretend you are an introductory CS student learning Python for the very first time. You also don't know about type annotations. Do not use list comprehension, lambda's or maps --- use iteration instead. Additionally, do not consolidate multiple complex operations into a single line. Break things into multiple distinct lines wherever possible.
 
-Create a function, called {function_name},
-according to the following prompt:
+            prompt += DEFAULT_CGBG_PROMPT_PYTHON.format(
+                function_name=function_name, student_response=student_response
+            )
 
-Create a function {function_name} that {student_response}
+            prompt += DEFAULT_RETURN_FORMAT.format(function_name=function_name)
 
-Include only the function and no additional test cases, code, or comments.
-Respond with the code for the function {function_name} in the following format
-which has the code wrapped in markdown of a python code block:
-
-```python
-def {function_name}():
-    pass
-```"""
+            return prompt
 
         elif gen_type == "redef":
-            function_signature = kwargs.get(
-                "function_signature", f"def {function_name}():"
+
+            params = kwargs.get("params", "")
+            function_signature = f"def {function_name}({params}):"
+
+            prompt += DEFAULT_REDEF_PROMPT_PYTHON.format(
+                function_signature=function_signature,
+                assumptions=kwargs.get("assumptions", ""),
             )
-            assumptions = kwargs.get("assumptions", "")
 
-            return f"""Pretend you are an introductory CS student learning Python for the very first time. You also don't know about type annotations.
-
-Create a function based on the following function signature: {function_signature}
-You are given the following assumptions about the arguments:
-{assumptions}.
-
-Generate the code only and generate it to be surrounded with markdown of a
-python code block. It is very important that you use the provided function name
-when generating the code. For example:
-
-```python
-{function_signature}
-    pass
-```"""
+            prompt += DEFAULT_RETURN_FORMAT.format(function_name=function_name)
+            return prompt
 
         else:
-            return f"Generate a Python function named {function_name}"
+            raise ValueError(
+                f"Unsupported generation type: {gen_type}. Supported types are 'cgbg' and 'redef'."
+            )
 
     def extract_code(self, llm_response: str) -> List[str]:
         """Extract Python code blocks from LLM response."""

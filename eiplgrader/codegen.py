@@ -6,6 +6,10 @@ import openai
 import requests
 from .languages import language_registry
 
+DEFAULT_RETURN_TYPE = """
+Unless otherwise specified by the user or in the function name, the function should always
+return rather than print values.
+"""
 
 DEFAULT_SYSTEM_PROMPT_ROBUSTNESS = """
 Generate {num_to_gen} different versions of this function with these formatting
@@ -150,6 +154,8 @@ class CodeGenerator:
 
         if num_to_gen > 1:
             prompt += DEFAULT_SYSTEM_PROMPT_ROBUSTNESS.format(num_to_gen=num_to_gen)
+
+        prompt += DEFAULT_RETURN_TYPE
 
         if self.model_request is None or not isinstance(
             self.model_request, ModelRequest

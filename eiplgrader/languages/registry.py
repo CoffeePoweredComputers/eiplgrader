@@ -14,6 +14,10 @@ class LanguageRegistry:
         """Register a language adapter."""
         self._adapters[name.lower()] = adapter_class
 
+    def clear(self) -> None:
+        """Clear all registered adapters."""
+        self._adapters.clear()
+
     def get_adapter(self, name: str) -> Optional[LanguageAdapter]:
         """Get adapter instance for language."""
         adapter_class = self._adapters.get(name.lower())

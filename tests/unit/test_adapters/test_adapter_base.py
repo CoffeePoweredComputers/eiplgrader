@@ -491,7 +491,7 @@ class TestAdapterCodeExtractionPatterns:
             # For other languages (JavaScript, Java, C, C++, Go) use // comments
             code = "function test() {\n    // comment\n    return 42;\n}"
             comment_text = "// comment"
-        
+
         normalized = adapter.normalize_code(code)
 
         # All adapters should remove comments and normalize whitespace

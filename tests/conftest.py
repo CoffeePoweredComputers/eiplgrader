@@ -25,9 +25,12 @@ from eiplgrader.languages.adapters.go_adapter import GoAdapter
 from eiplgrader.languages.adapters.haskell_adapter import HaskellAdapter
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def setup_language_registry():
-    """Set up the language registry with all adapters for the test session."""
+    """Set up the language registry with all adapters for each test function."""
+    # Clear registry before setup to ensure clean state
+    language_registry.clear()
+
     adapters = [
         ("python", PythonAdapter),
         ("javascript", JavaScriptAdapter),
@@ -41,7 +44,10 @@ def setup_language_registry():
     for name, adapter_class in adapters:
         language_registry.register(name, adapter_class)
 
-    return language_registry
+    yield language_registry
+
+    # Clear registry after test to ensure cleanup
+    language_registry.clear()
 
 
 @pytest.fixture
@@ -101,7 +107,7 @@ def malformed_code_snippets():
 @pytest.fixture
 def type_inference_languages():
     """List of languages that support type inference."""
-    return ["python", "javascript", "go"]
+    return ["python", "javascript"]
 
 
 @pytest.fixture

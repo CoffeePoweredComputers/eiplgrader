@@ -34,23 +34,6 @@ from eiplgrader.languages.adapters.haskell_adapter import HaskellAdapter
 class TestComprehensiveSuite:
     """Unified test suite combining all three agent approaches."""
 
-    @pytest.fixture(autouse=True)
-    def setup_registry(self):
-        """Set up the language registry with all adapters."""
-        # Register all adapters
-        adapters = [
-            ("python", PythonAdapter),
-            ("javascript", JavaScriptAdapter),
-            ("java", JavaAdapter),
-            ("c", CAdapter),
-            ("cpp", CppAdapter),
-            ("go", GoAdapter),
-            ("haskell", HaskellAdapter),
-        ]
-
-        for name, adapter_class in adapters:
-            language_registry.register(name, adapter_class)
-
     def test_suite_integration(self):
         """Test that all three agent test suites are properly integrated."""
 
@@ -125,7 +108,7 @@ class TestComprehensiveSuite:
             "function_name": "add",
         }
 
-        for language in ["python", "javascript", "go"]:  # Test inference languages
+        for language in ["python", "javascript"]:  # Test inference languages
             adapter = language_registry.get_adapter(language)
             executor = language_registry.get_executor(language)
 
@@ -146,7 +129,7 @@ class TestComprehensiveSuite:
         """Validate Agent 1's type system testing approach."""
 
         # Test that type inference works for supported languages
-        inference_languages = ["python", "javascript", "go"]
+        inference_languages = ["python", "javascript"]
 
         for language in inference_languages:
             executor = language_registry.get_executor(language)
@@ -176,7 +159,7 @@ class TestComprehensiveSuite:
             assert config.name == language
             assert len(config.file_extensions) > 0
             # Some compiled languages (like Haskell) may have empty run_command
-            if language in ["python", "javascript", "go"]:
+            if language in ["python", "javascript"]:
                 assert (
                     len(config.run_command) > 0
                 ), f"{language} should have run_command"

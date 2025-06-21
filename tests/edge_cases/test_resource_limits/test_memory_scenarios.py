@@ -46,7 +46,9 @@ class TestMemoryExhaustionScenarios:
         executor = MockInterpretedExecutor(["python3"], ".py")
 
         try:
-            with patch.object(executor, "prepare_code", return_value="memory allocation"):
+            with patch.object(
+                executor, "prepare_code", return_value="memory allocation"
+            ):
                 test_case = {"parameters": {"size": 1000000000}, "expected": []}
                 result = executor.execute_test("large array", test_case)
 
@@ -126,7 +128,9 @@ RecursionError: maximum recursion depth exceeded"""
         executor = MockCompiledExecutor(["gcc"], ["./"], ".c")
 
         try:
-            with patch.object(executor, "prepare_code", return_value="null pointer access"):
+            with patch.object(
+                executor, "prepare_code", return_value="null pointer access"
+            ):
                 test_case = {"parameters": {}, "expected": 0}
                 result = executor.execute_test("segfault", test_case)
 
@@ -166,7 +170,7 @@ RecursionError: maximum recursion depth exceeded"""
         compile_result = Mock(returncode=0, stderr="", stdout="")
         execute_result = Mock(
             returncode=1,
-            stderr="Exception in thread \"main\" java.lang.OutOfMemoryError: Java heap space",
+            stderr='Exception in thread "main" java.lang.OutOfMemoryError: Java heap space',
             stdout="",
         )
 
@@ -232,7 +236,9 @@ class TestMemoryLeakDetection:
         executor = MockCompiledExecutor(["gcc"], ["./"], ".c")
 
         try:
-            with patch.object(executor, "prepare_code", return_value="malloc without free"):
+            with patch.object(
+                executor, "prepare_code", return_value="malloc without free"
+            ):
                 test_case = {"parameters": {}, "expected": 42}
                 result = executor.execute_test("memory leak", test_case)
 

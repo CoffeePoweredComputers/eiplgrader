@@ -41,9 +41,10 @@ code_generator = CodeGenerator(api_key, language="python")
 
 # In redef mode, student_response is the function name to redefine
 result = code_generator.generate_code(
-    student_response="calculate_area",  # Function name to implement
     gen_type="redef",
-    function_name="calculate_area"
+    student_response="calculate_area",
+    params="length: int, width: int",
+    assumptions="This function takes two integers which are positive."
 )
 
 generated_code = result["code"]
@@ -51,9 +52,9 @@ print(f"Generated code for function redefinition: {generated_code[0]}")
 
 # Test assuming it calculates area of a rectangle
 test_cases = [
-    {"parameters": {"length": 5, "width": 3}, "parameter_types": {"length": "int", "width": "int"}, "expected": 15, "expected_type": "int"},
-    {"parameters": {"length": 10, "width": 2}, "parameter_types": {"length": "int", "width": "int"}, "expected": 20, "expected_type": "int"},
-    {"parameters": {"length": 1, "width": 1}, "parameter_types": {"length": "int", "width": "int"}, "expected": 1, "expected_type": "int"},
+    {"parameters": {"length": 5, "width": 3}, "expected": 15},
+    {"parameters": {"length": 10, "width": 2}, "expected": 20},
+    {"parameters": {"length": 1, "width": 1}, "expected": 1},
 ]
 
 code_tester = CodeTester(
@@ -72,21 +73,19 @@ print("\n\n2. Python Function with Specific Signature and Assumptions")
 print("-" * 50)
 
 result = code_generator.generate_code(
-    student_response="process_grades",  # Function name
+    student_response="calculate_average_grade",  # Function name
     gen_type="redef",
-    function_name="process_grades",
     params="grades: List[float]",  # Parameter specification
-    assumptions="grades is a list of test scores between 0-100, function should return the average grade"
+    assumptions="grades is a list of test scores between 0-100. Returns a value rather than prints."
 )
 
 generated_code = result["code"]
 print(f"Generated code: {generated_code[0]}")
 
 test_cases = [
-    {"parameters": {"grades": [85.0, 90.0, 78.0, 92.0]}, "parameter_types": {"grades": "List[float]"}, "expected": 86.25, "expected_type": "float"},
-    {"parameters": {"grades": [100.0, 95.0, 88.0]}, "parameter_types": {"grades": "List[float]"}, "expected": 94.33333333333333, "expected_type": "float"},
-    {"parameters": {"grades": [70.0]}, "parameter_types": {"grades": "List[float]"}, "expected": 70.0, "expected_type": "float"},
-    {"parameters": {"grades": []}, "parameter_types": {"grades": "List[float]"}, "expected": 0.0, "expected_type": "float"},  # Edge case: empty list
+    {"parameters": {"grades": [85.0, 90.0, 78.0, 92.0]}, "expected": 86.25},
+    {"parameters": {"grades": [100.0, 95.0, 88.0]}, "expected": 94.33333333333333},
+    {"parameters": {"grades": [70.0]}, "expected": 70.0}
 ]
 
 code_tester = CodeTester(
@@ -109,7 +108,8 @@ js_generator = CodeGenerator(api_key, language="javascript")
 result = js_generator.generate_code(
     student_response="validateEmail",  # Function name
     gen_type="redef",
-    function_name="validateEmail"
+    params="x: string",  
+    assumptions="This takes a string containing only alphanumeric characters"
 )
 
 generated_code = result["code"]
@@ -143,8 +143,8 @@ java_generator = CodeGenerator(api_key, language="java")
 result = java_generator.generate_code(
     student_response="mergeArrays",  # Function name
     gen_type="redef",
-    function_name="mergeArrays",
-    assumptions="Takes two sorted integer arrays and merges them into one sorted array"
+    params="arr1: int[], arr2: int[]",  
+    assumptions="Takes two sorted integer arrays and returns an array."
 )
 
 generated_code = result["code"]
@@ -161,7 +161,8 @@ code_tester = CodeTester(
     code=generated_code[0],
     test_cases=test_cases,
     function_name="mergeArrays",
-    language="java"
+    language="java",
+    inplace="2"
 )
 test_result = code_tester.run_tests()
 print(f"Tests passed: {test_result.successes}/{test_result.testsRun}")
@@ -174,10 +175,16 @@ print("-" * 50)
 
 c_generator = CodeGenerator(api_key, language="c")
 
+test_cases = [
+        {"parameters": {"str": "hello world", "char": "o"}, "parameter_types": {"str": "char*", "char": "char"}, "expected": 2, "expected_type": "int"},
+        {"parameters": {"str": "test string", "char": "t"}, "parameter_types": {"str": "char*", "char": "char"}, "expected": 3, "expected_type": "int"},
+        {"parameters": {"str": "", "char": "a"}, "parameter_types": {"str": "char*", "char": "char"}, "expected": 0, "expected_type": "int"},  # Empty string
+        {"parameters": {"str": "aaaaaa", "char": "a"}, "parameter_types": {"str": "char*", "char": "char"}, "expected": 6, "expected_type": "int"},  # All same character
+        ]
+
 result = c_generator.generate_code(
     student_response="count_characters",  # Function name
     gen_type="redef",
-    function_name="count_characters",
     assumptions="Takes a string and a character, returns the number of times the character appears in the string"
 )
 
@@ -185,7 +192,15 @@ generated_code = result["code"]
 print(f"Generated C code: {generated_code[0]}")
 
 # Note: C testing requires compilation
-print("Note: C code testing requires compilation and careful memory management")
+code_tester = CodeTester(
+    code=generated_code[0],
+    test_cases=test_cases,
+    function_name="count_characters",
+    language="c"
+)
+test_result = code_tester.run_tests()
+print(f"Tests passed: {test_result.successes}/{test_result.testsRun}")
+
 
 # ============================================================================
 # Example 6: Multiple Implementations of Same Function
@@ -196,8 +211,8 @@ print("-" * 50)
 result = code_generator.generate_code(
     student_response="is_prime",  # Function name
     gen_type="redef",
-    function_name="is_prime",
-    assumptions="Takes an integer n and returns True if n is a prime number, False otherwise",
+    params="n: int",  
+    assumptions="Takes an integer n that is positive in value",
     num_to_gen=3  # Generate 3 different implementations
 )
 
@@ -241,15 +256,32 @@ print("-" * 50)
 
 go_generator = CodeGenerator(api_key, language="go")
 
+test_cases = [
+        {"parameters": {"arr1": [1, 2, 3], "arr2": [2, 3, 4]}, "parameter_types": {"arr1": "[]int", "arr2": "[]int"}, "expected": [2, 3], "expected_type": "[]int"},
+        {"parameters": {"arr1": [5, 6, 7], "arr2": [6, 7, 8]}, "parameter_types": {"arr1": "[]int", "arr2": "[]int"}, "expected": [6, 7], "expected_type": "[]int"},
+        {"parameters": {"arr1": [], "arr2": [1, 2, 3]}, "parameter_types": {"arr1": "[]int", "arr2": "[]int"}, "expected": [], "expected_type": "[]int"},  # Empty first array
+        {"parameters": {"arr1": [1, 2, 3], "arr2": []}, "parameter_types": {"arr1": "[]int", "arr2": "[]int"}, "expected": [], "expected_type": "[]int"},  # Empty second array
+]
+
 result = go_generator.generate_code(
     student_response="findCommonElements",  # Function name
     gen_type="redef",
-    function_name="findCommonElements",
-    assumptions="Takes two slices of integers and returns a slice containing elements that appear in both slices"
+    params="arr1 []int, arr2 []int",  
+    assumptions="Each of the arrays contains integers. One or both may be empty"
 )
 
 generated_code = result["code"]
 print(f"Generated Go code: {generated_code[0]}")
+
+code_tester = CodeTester(
+    code=generated_code[0],
+    test_cases=test_cases,
+    function_name="findCommonElements",
+    language="go"
+)
+test_result = code_tester.run_tests()
+print(f"Tests passed: {test_result.successes}/{test_result.testsRun}")
+
 
 print("\n" + "="*80)
 print("FUNCTION REDEFINITION EXAMPLES COMPLETE")

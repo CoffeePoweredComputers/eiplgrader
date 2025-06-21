@@ -115,7 +115,7 @@ class TestCrossLanguageConsistency:
 
     def _get_type_inference_languages(self):
         """Get languages that support type inference."""
-        return ["python", "javascript", "go"]
+        return ["python", "javascript"]
 
     def _get_static_type_languages(self):
         """Get languages that require explicit types."""

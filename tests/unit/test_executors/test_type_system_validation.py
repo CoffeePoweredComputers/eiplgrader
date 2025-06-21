@@ -58,10 +58,16 @@ class TestTypeSystemValidation:
         except Exception:
             pass
 
-        # Static type languages (Java, C++, C, Haskell)
+        # Static type languages (Java, C++, C, Go, Haskell)
         try:
             self.static_type_executors["java"] = JavaExecutor()
             self.samples["java"] = java_samples
+        except Exception:
+            pass
+
+        try:
+            self.static_type_executors["go"] = GoExecutor()
+            self.samples["go"] = go_samples
         except Exception:
             pass
 
@@ -476,7 +482,7 @@ class TestTypeSystemValidation:
             simple_test = {
                 "function_name": func_name,
                 "parameters": {"a": 5, "b": 3},
-                "expected": 8
+                "expected": 8,
             }
 
             executor = self.type_inference_executors[lang]
@@ -496,13 +502,12 @@ class TestTypeSystemValidation:
             simple_test = {
                 "function_name": func_name,
                 "parameters": {"a": 5, "b": 3},
-                "expected": 8
+                "expected": 8,
             }
             executor = self.static_type_executors[lang]
             with pytest.raises(ValueError):
                 code_sample = getattr(self.samples[lang], "ADD_NUMBERS")
                 executor.execute_test(code_sample, simple_test)
-
 
     def test_type_system_documentation_compliance(self):
         """Test that type systems behave as documented."""

@@ -399,11 +399,12 @@ def generate_java_param_declaration(
     return builder.build()
 
 
-
 def generate_java_output(
-    data_type: str, value_expr: str, is_direct_call: bool = False
+    data_type: Optional[str], value_expr: str, is_direct_call: bool = False
 ) -> str:
     """Generate Java output formatting code."""
+    if not data_type:
+        return f"System.out.println({value_expr});"
     builder = CodeBuilder()
 
     if is_direct_call:
@@ -486,7 +487,6 @@ def generate_java_output(
     return builder.build()
 
 
-
 def generate_go_param_declaration(
     param_name: str, param_type: str, param_value: Any
 ) -> str:
@@ -529,11 +529,14 @@ def generate_go_param_declaration(
         for inner_list in param_value:
             if isinstance(inner_list, list):
                 inner_values = ", ".join(
-                    f'"{str(v).replace("\\", "\\\\").replace('"', '\\"')}"' for v in inner_list
+                    f'"{str(v).replace("\\", "\\\\").replace('"', '\\"')}"'
+                    for v in inner_list
                 )
                 inner_slices.append(f"[]string{{{inner_values}}}")
             else:
-                inner_slices.append(f'[]string{{"{str(inner_list).replace("\\", "\\\\").replace('"', '\\"')}"}}')
+                inner_slices.append(
+                    f'[]string{{"{str(inner_list).replace("\\", "\\\\").replace('"', '\\"')}"}}'
+                )
         values = ", ".join(inner_slices)
         return f"    {param_name} := [][]string{{{values}}}"
     elif param_type == "[][]float64":
@@ -551,9 +554,10 @@ def generate_go_param_declaration(
         return f"    // Unsupported type {param_type} for {param_name}"
 
 
-
-def generate_go_output(data_type: str, value_expr: str) -> str:
+def generate_go_output(data_type: Optional[str], value_expr: str) -> str:
     """Generate Go output formatting code."""
+    if not data_type:
+        return f"fmt.Println({value_expr})"
     builder = CodeBuilder()
 
     # Handle multiple return values (tuple-like types)
@@ -561,7 +565,7 @@ def generate_go_output(data_type: str, value_expr: str) -> str:
         # Extract individual types from tuple notation like "(int, string)"
         inner_types = data_type[1:-1].split(", ")
         builder.add_line(f"result := {value_expr}")
-        
+
         # Create a slice to hold all return values
         builder.add_line("values := []interface{}{}")
         for i, _ in enumerate(inner_types):
@@ -569,7 +573,7 @@ def generate_go_output(data_type: str, value_expr: str) -> str:
                 builder.add_line(f"values = append(values, result)")
             # Note: Go functions with multiple returns would need special handling
             # For now, this handles the output formatting part
-        
+
         builder.add_line("jsonBytes, _ := json.Marshal(values)")
         builder.add_line("os.Stdout.Write(jsonBytes)")
         builder.add_line('os.Stdout.WriteString("\\n")')
@@ -588,7 +592,6 @@ def generate_go_output(data_type: str, value_expr: str) -> str:
         builder.add_line(f'fmt.Printf("%v\\n", {value_expr})')
 
     return builder.build()
-
 
 
 def generate_cpp_param_declaration(
@@ -615,8 +618,10 @@ def generate_cpp_param_declaration(
         return f"    // Unsupported type {param_type} for {param_name}"
 
 
-def generate_cpp_output(data_type: str, value_expr: str) -> str:
+def generate_cpp_output(data_type: Optional[str], value_expr: str) -> str:
     """Generate C++ output formatting code."""
+    if not data_type:
+        return f"std::cout << {value_expr} << std::endl;"
     builder = CodeBuilder()
 
     if data_type in ["int", "double", "float", "long", "bool"]:
@@ -662,8 +667,10 @@ def generate_c_param_declaration(
         return f"    // Unsupported type: {param_type} {param_name}"
 
 
-def generate_c_output(data_type: str, value_expr: str) -> str:
+def generate_c_output(data_type: Optional[str], value_expr: str) -> str:
     """Generate C output formatting code."""
+    if not data_type:
+        return f'printf("%p\\n", (void*){value_expr});'
     # Get the format specifier like the original code
     format_specs = {
         "int": "%d",
@@ -672,7 +679,7 @@ def generate_c_output(data_type: str, value_expr: str) -> str:
         "char*": '\\"%s\\"',
     }
     format_spec = format_specs.get(data_type, "%d")
-    
+
     return f'printf("{format_spec}\\n", {value_expr});'
 
 
@@ -682,68 +689,127 @@ def generate_haskell_param_declaration(
     """Generate Haskell parameter declaration with embedded value."""
     builder = CodeBuilder()
 
-    if param_type == "Int":
-        builder.add_line(f"let {param_name} = {param_value} :: Int")
-    elif param_type == "String":
-        escaped_value = escape_string_literal(str(param_value))
-        builder.add_line(f"let {param_name} = {escaped_value} :: String")
-    elif param_type == "Bool":
-        haskell_bool = "True" if param_value else "False"
-        builder.add_line(f"let {param_name} = {haskell_bool} :: Bool")
-    elif param_type == "Double":
-        builder.add_line(f"let {param_name} = {param_value} :: Double")
-    elif param_type == "[Int]" and isinstance(param_value, list):
-        values = ", ".join(str(v) for v in param_value)
-        builder.add_line(f"let {param_name} = [{values}] :: [Int]")
-    elif param_type == "[Double]" and isinstance(param_value, list):
-        values = ", ".join(str(v) for v in param_value)
-        builder.add_line(f"let {param_name} = [{values}] :: [Double]")
-    elif param_type == "[String]" and isinstance(param_value, list):
-        escaped_values = []
-        for v in param_value:
-            escaped_values.append(escape_string_literal(str(v)))
-        values_str = ", ".join(escaped_values)
-        builder.add_line(f"let {param_name} = [{values_str}] :: [String]")
-    elif param_type.startswith("(") and param_type.endswith(")") and "," in param_type:
-        # Handle tuple types like "(Int, String)"
-        if isinstance(param_value, (list, tuple)) and len(param_value) >= 2:
-            # Convert Python list/tuple to Haskell tuple literal
-            tuple_values = []
+    try:
+        if param_type == "Int":
+            # Handle both int and float values that should be integers
+            int_value = int(param_value) if isinstance(param_value, (int, float)) else param_value
+            builder.add_line(f"let {param_name} = {int_value} :: Int")
+        elif param_type == "String":
+            escaped_value = escape_string_literal(str(param_value))
+            builder.add_line(f"let {param_name} = {escaped_value} :: String")
+        elif param_type == "Bool":
+            # Handle various boolean representations
+            if isinstance(param_value, bool):
+                haskell_bool = "True" if param_value else "False"
+            elif isinstance(param_value, str):
+                haskell_bool = "True" if param_value.lower() in ('true', '1', 'yes') else "False"
+            else:
+                haskell_bool = "True" if param_value else "False"
+            builder.add_line(f"let {param_name} = {haskell_bool} :: Bool")
+        elif param_type == "Double":
+            # Ensure proper double formatting
+            double_value = float(param_value) if isinstance(param_value, (int, float, str)) else param_value
+            builder.add_line(f"let {param_name} = {double_value} :: Double")
+        elif param_type == "[Int]" and isinstance(param_value, list):
+            # Handle list of integers with validation
+            int_values = []
             for v in param_value:
-                if isinstance(v, str):
-                    tuple_values.append(escape_string_literal(v))
-                elif isinstance(v, bool):
-                    tuple_values.append("True" if v else "False")
+                int_values.append(str(int(v)) if isinstance(v, (int, float)) else str(v))
+            values = ", ".join(int_values)
+            builder.add_line(f"let {param_name} = [{values}] :: [Int]")
+        elif param_type == "[Double]" and isinstance(param_value, list):
+            # Handle list of doubles with validation
+            double_values = []
+            for v in param_value:
+                double_values.append(str(float(v)) if isinstance(v, (int, float)) else str(v))
+            values = ", ".join(double_values)
+            builder.add_line(f"let {param_name} = [{values}] :: [Double]")
+        elif param_type == "[String]" and isinstance(param_value, list):
+            escaped_values = []
+            for v in param_value:
+                escaped_values.append(escape_string_literal(str(v)))
+            values_str = ", ".join(escaped_values)
+            builder.add_line(f"let {param_name} = [{values_str}] :: [String]")
+        elif param_type == "[[Int]]" and isinstance(param_value, list):
+            # Handle nested list of integers
+            nested_lists = []
+            for sublist in param_value:
+                if isinstance(sublist, list):
+                    int_values = [str(int(v)) if isinstance(v, (int, float)) else str(v) for v in sublist]
+                    nested_lists.append(f"[{', '.join(int_values)}]")
                 else:
-                    tuple_values.append(str(v))
-            tuple_literal = f"({', '.join(tuple_values)})"
-            builder.add_line(f"let {param_name} = {tuple_literal} :: {param_type}")
+                    nested_lists.append(f"[{sublist}]")
+            builder.add_line(f"let {param_name} = [{', '.join(nested_lists)}] :: [[Int]]")
+        elif param_type.startswith("(") and param_type.endswith(")") and "," in param_type:
+            # Handle tuple types like "(Int, String)", "(Bool, Double)"
+            if isinstance(param_value, (list, tuple)) and len(param_value) >= 2:
+                # Convert Python list/tuple to Haskell tuple literal
+                tuple_values = []
+                for v in param_value:
+                    if isinstance(v, str):
+                        tuple_values.append(escape_string_literal(v))
+                    elif isinstance(v, bool):
+                        tuple_values.append("True" if v else "False")
+                    else:
+                        tuple_values.append(str(v))
+                tuple_literal = f"({', '.join(tuple_values)})"
+                builder.add_line(f"let {param_name} = {tuple_literal} :: {param_type}")
+            else:
+                # Fallback for invalid tuple data
+                builder.add_line(f"let {param_name} = {param_value} :: {param_type}")
         else:
+            # Generic fallback for any other types
             builder.add_line(f"let {param_name} = {param_value} :: {param_type}")
-    else:
-        builder.add_line(f"let {param_name} = {param_value} :: {param_type}")
+
+    except (ValueError, TypeError) as e:
+        # If type conversion fails, use raw value with a comment
+        builder.add_line(f"let {param_name} = {param_value} :: {param_type}  -- Warning: type conversion failed")
 
     return builder.build()
 
 
 
-def generate_haskell_output(data_type: str, value_expr: str) -> str:
+def generate_haskell_output(data_type: Optional[str], value_expr: str) -> str:
     """Generate Haskell output formatting code."""
-    # Handle tuple types like "(Int, String)"
-    if data_type.startswith("(") and data_type.endswith(")") and "," in data_type:
-        # Tuple type - convert to JSON array format
-        return f'print {value_expr}'  # Haskell tuples naturally print as JSON-like format
-    elif data_type == "Bool":
+    if not data_type:
+        return f"print {value_expr}"
+    
+    # Handle specific data types with proper JSON-compatible output
+    if data_type == "Bool":
+        # Boolean values should output as "true"/"false" (lowercase for JSON compatibility)
         return f'putStrLn $ if {value_expr} then "true" else "false"'
-    elif data_type in ["Int", "Double"]:
+    elif data_type == "Int":
+        # Integer values can be printed directly
+        return f"print {value_expr}"
+    elif data_type == "Double":
+        # Double values can be printed directly  
         return f"print {value_expr}"
     elif data_type == "String":
+        # String values need to be JSON-quoted
         return f'putStrLn $ "\\"" ++ {value_expr} ++ "\\""'
-    elif data_type and data_type.startswith("["):
+    elif data_type == "[Int]":
+        # List of integers - print as JSON array
+        return f"print {value_expr}"
+    elif data_type == "[Double]":
+        # List of doubles - print as JSON array
+        return f"print {value_expr}"
+    elif data_type == "[String]":
+        # List of strings - needs special handling for JSON format
+        return f"print {value_expr}"
+    elif data_type == "[[Int]]":
+        # Nested list of integers
+        return f"print {value_expr}"
+    elif data_type.startswith("(") and data_type.endswith(")") and "," in data_type:
+        # Tuple types - convert to JSON array format
+        # Haskell tuples print as (a,b) but we need [a,b] for JSON compatibility
+        # We can use a simple transformation or leave as-is depending on requirements
+        return f"print {value_expr}"
+    elif data_type.startswith("[") and data_type.endswith("]"):
+        # Generic list types
         return f"print {value_expr}"
     else:
+        # Generic fallback for any other types
         return f"print {value_expr}"
-
 
 
 
@@ -774,7 +840,11 @@ def generate_inplace_function_call(
             )
         elif language == "go":
             # Handle multiple return values
-            if expected_type and expected_type.startswith("(") and expected_type.endswith(")"):
+            if (
+                expected_type
+                and expected_type.startswith("(")
+                and expected_type.endswith(")")
+            ):
                 # Multiple return values - need special handling
                 if param_names:
                     inner_types = expected_type[1:-1].split(", ")
@@ -786,14 +856,18 @@ def generate_inplace_function_call(
                     inner_types = expected_type[1:-1].split(", ")
                     result_vars = [f"result{i+1}" for i in range(len(inner_types))]
                     builder.add_line(f"{', '.join(result_vars)} := {function_name}()")
-                
+
                 # Create a slice with all return values
-                builder.add_line(f"values := []interface{{{{{', '.join(result_vars)}}}}}")
+                builder.add_line(
+                    f"values := []interface{{{{{', '.join(result_vars)}}}}}"
+                )
                 builder.add_lines(generate_go_output("[]interface{}", "values"))
             else:
                 # Single return value
                 if param_names:
-                    builder.add_line(f"result := {function_name}({', '.join(param_names)})")
+                    builder.add_line(
+                        f"result := {function_name}({', '.join(param_names)})"
+                    )
                 else:
                     builder.add_line(f"result := {function_name}()")
                 builder.add_lines(generate_go_output(expected_type, "result"))
@@ -959,22 +1033,22 @@ def generate_javascript_parameter_setup(
     parameters: Dict[str, Any], parameter_types: Dict[str, str], expected_type: str
 ) -> str:
     """Generate JavaScript parameter setup code."""
-    
+
     builder = CodeBuilder()
-    
+
     # Add parameter setup
     builder.add_line("// Get test parameters from command line or hardcoded")
     builder.add_line(f"const testParams = {json.dumps(parameters)};")
     builder.add_line(f"const paramTypes = {json.dumps(parameter_types)};")
     builder.add_line(f"const expectedType = {json.dumps(expected_type)};")
     builder.add_line()
-    
+
     # Add parameter validation
     builder.add_line("// Validate parameter types match expected format")
     builder.add_line("const paramNames = Object.keys(testParams);")
     builder.add_line("const args = [];")
     builder.add_line()
-    
+
     builder.add_line("for (const paramName of paramNames) {")
     with builder.indent():
         builder.add_line("if (!paramTypes[paramName]) {")
@@ -987,33 +1061,33 @@ def generate_javascript_parameter_setup(
         builder.add_line("}")
         builder.add_line("args.push(testParams[paramName]);")
     builder.add_line("}")
-    
+
     return builder.build()
 
 
 def generate_javascript_function_check(function_name: str) -> str:
     """Generate JavaScript function existence check."""
-    
+
     builder = CodeBuilder()
-    
+
     builder.add_line("// Check if function exists")
     builder.add_line(f"if (typeof {function_name} === 'undefined') {{")
     with builder.indent():
         builder.add_line("console.error(JSON.stringify({")
         with builder.indent():
-            builder.add_line(f'error: "Function \'{function_name}\' is not defined"')
+            builder.add_line(f"error: \"Function '{function_name}' is not defined\"")
         builder.add_line("}));")
         builder.add_line("process.exit(1);")
     builder.add_line("}")
-    
+
     return builder.build()
 
 
 def generate_javascript_error_handler() -> str:
     """Generate JavaScript error handling code."""
-    
+
     builder = CodeBuilder()
-    
+
     builder.add_line("} catch (error) {")
     with builder.indent():
         builder.add_line("console.error(JSON.stringify({")
@@ -1022,15 +1096,15 @@ def generate_javascript_error_handler() -> str:
         builder.add_line("}));")
         builder.add_line("process.exit(1);")
     builder.add_line("}")
-    
+
     return builder.build()
 
 
 def generate_javascript_async_wrapper(inner_code: str) -> str:
     """Generate JavaScript async wrapper function."""
-    
+
     builder = CodeBuilder()
-    
+
     builder.add_line("(async function runTest() {")
     with builder.indent():
         builder.add_line("try {")
@@ -1038,11 +1112,8 @@ def generate_javascript_async_wrapper(inner_code: str) -> str:
             builder.add_lines(inner_code)
         builder.add_lines(generate_javascript_error_handler())
     builder.add_line("})();")
-    
+
     return builder.build()
-
-
-
 
 
 def get_param_declaration_generator(language: str):

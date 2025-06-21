@@ -29,8 +29,9 @@ if not api_key:
 print("="*80)
 print("CGBG (CODE GENERATION BASED GRADING) EXAMPLES")
 print("="*80)
-print("\nNOTE: Type annotations are now optional for Python, JavaScript, and Go!")
-print("      Type annotations are still required for C, C++, Java, and Haskell.")
+print("
+NOTE: Type annotations are optional for Python and JavaScript only!")
+print("      Type annotations are required for C, C++, Java, Go, and Haskell.")
 print("="*80)
 
 # ============================================================================
@@ -256,11 +257,13 @@ test_result = code_tester.run_tests()
 print(f"Tests passed: {test_result.successes}/{test_result.testsRun}")
 
 # ============================================================================
-# Example 7: Go CGBG - String Processing (NO TYPES REQUIRED!)
+# Example 7: Go CGBG - String Processing (REQUIRES TYPE ANNOTATIONS)
 # ============================================================================
-print("\n\n7. Go CGBG - String Processing (TYPES OPTIONAL!)")
+print("
+
+7. Go CGBG - String Processing (REQUIRES TYPE ANNOTATIONS)")
 print("-" * 50)
-print("Note: Go now supports type inference from values like Python/JS!")
+print("Note: Go is statically typed and requires explicit type annotations")
 
 go_generator = CodeGenerator(api_key, language="go")
 
@@ -273,7 +276,7 @@ result = go_generator.generate_code(
 generated_code = result["code"]
 print(f"Generated Go code: {generated_code[0]}")
 
-# Go now supports type inference! No need to specify types.
+# Go requires explicit types (static typing)
 test_cases = [
     {"parameters": {"s": "racecar"}, "expected": True, "parameter_types": {"s": "string"}, "expected_type": "bool"},
     {"parameters": {"s": "hello"}, "expected": False, "parameter_types": {"s": "string"}, "expected_type": "bool"},
@@ -393,7 +396,7 @@ print("6. Handle both simple and complex algorithmic problems")
 print("\nLanguage Testing Status:")
 print("✅ Python: Fully functional (type inference supported)")
 print("✅ JavaScript: Fully functional (type inference supported)")
-print("✅ Go: Fully functional (type inference supported)")
+print("✅ Go: Fully functional (types required)")
 print("✅ Java: Fully functional (types required)")
 print("✅ C++: Fully functional (types required)")
 print("✅ C: Fully functional (types required)")

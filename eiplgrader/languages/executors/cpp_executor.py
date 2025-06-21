@@ -81,10 +81,10 @@ class CppExecutor(CompiledLanguageExecutor):
         main_builder = CodeBuilder()
         main_builder.add_line()
         main_builder.add_line("int main() {")
-        
+
         with main_builder.indent():
             main_builder.add_line("// Test case values")
-            
+
             # Generate parameter declarations with embedded values
             param_names = list(parameters.keys())
 
@@ -102,9 +102,11 @@ class CppExecutor(CompiledLanguageExecutor):
             # Generate function call based on inplace mode
             if inplace_mode == "0":
                 # Normal function call - function returns a value
-                main_builder.add_line(f"{expected_type} result = {function_name}({', '.join(param_names)});")
+                main_builder.add_line(
+                    f"{expected_type} result = {function_name}({', '.join(param_names)});"
+                )
                 output_code = self._generate_output(expected_type, "result")
-                main_builder.add_lines(output_code.rstrip().split('\n'))
+                main_builder.add_lines(output_code.rstrip().split("\n"))
             elif inplace_mode == "1":
                 # Function modifies arguments in-place
                 main_builder.add_line(f"{function_name}({', '.join(param_names)});")
@@ -112,17 +114,19 @@ class CppExecutor(CompiledLanguageExecutor):
                     first_param = param_names[0]
                     first_type = parameter_types.get(first_param)
                     output_code = self._generate_output(first_type, first_param)
-                    main_builder.add_lines(output_code.rstrip().split('\n'))
+                    main_builder.add_lines(output_code.rstrip().split("\n"))
                 else:
                     main_builder.add_line('std::cout << "null" << std::endl;')
             elif inplace_mode == "2":
                 # Function both modifies and returns
-                main_builder.add_line(f"{expected_type} result = {function_name}({', '.join(param_names)});")
+                main_builder.add_line(
+                    f"{expected_type} result = {function_name}({', '.join(param_names)});"
+                )
                 output_code = self._generate_output(expected_type, "result")
-                main_builder.add_lines(output_code.rstrip().split('\n'))
+                main_builder.add_lines(output_code.rstrip().split("\n"))
 
             main_builder.add_line("return 0;")
-        
+
         main_builder.add_line("}")
         main_code = main_builder.build()
 
@@ -134,7 +138,7 @@ class CppExecutor(CompiledLanguageExecutor):
         """Generate C++ parameter declaration with embedded value using templates."""
         # Try template function first
         template_result = generate_cpp_param_declaration(name, param_type, value)
-        
+
         # If template doesn't support the type, fall back to original implementation
         if template_result.strip().startswith("// Unsupported type"):
             # Handle complex types using original logic
@@ -151,7 +155,10 @@ class CppExecutor(CompiledLanguageExecutor):
                 return f'    std::string {name} = "{value}";\n'
             elif "vector" in param_type and isinstance(value, list):
                 # Check if it's a nested vector
-                if "vector<vector" in param_type or "std::vector<std::vector" in param_type:
+                if (
+                    "vector<vector" in param_type
+                    or "std::vector<std::vector" in param_type
+                ):
                     # Handle nested vectors
                     inner_vectors = []
                     for inner_list in value:
@@ -187,22 +194,34 @@ class CppExecutor(CompiledLanguageExecutor):
                 return f"    {param_type} {name} = {{{values_str}}};\n"
             else:
                 # For complex types, generate a comment
-                return f"    // TODO: Initialize {param_type} {name} with value {value}\n"
+                return (
+                    f"    // TODO: Initialize {param_type} {name} with value {value}\n"
+                )
         else:
             # Template function supports this type, add newline if needed
-            return template_result if template_result.endswith('\n') else template_result + '\n'
-
+            return (
+                template_result
+                if template_result.endswith("\n")
+                else template_result + "\n"
+            )
 
     def _generate_output(self, cpp_type: str, var_name: str) -> str:
         """Generate output code for a variable of given type using templates."""
         # Try template function first
         template_result = generate_cpp_output(cpp_type, var_name)
-        
+
         # Check if template handles boolean output correctly
-        if cpp_type == "bool" and f"std::cout << {var_name} << std::endl;" in template_result:
+        if (
+            cpp_type == "bool"
+            and f"std::cout << {var_name} << std::endl;" in template_result
+        ):
             # Template doesn't handle boolean correctly, use original logic
             return f'    std::cout << ({var_name} ? "true" : "false") << std::endl;\n'
-        elif "vector" in cpp_type and cpp_type not in ["std::vector<int>", "std::vector<std::string>", "std::vector<double>"]:
+        elif "vector" in cpp_type and cpp_type not in [
+            "std::vector<int>",
+            "std::vector<std::string>",
+            "std::vector<double>",
+        ]:
             # For unsupported vector types, fall back to original implementation
             code = f'    std::cout << "[";\n'
             code += f"    for(size_t i = 0; i < {var_name}.size(); i++) {{\n"
@@ -216,6 +235,6 @@ class CppExecutor(CompiledLanguageExecutor):
             return code
         else:
             # Template function works, add proper indentation and newline
-            lines = template_result.strip().split('\n')
-            indented_lines = ['    ' + line for line in lines]
-            return '\n'.join(indented_lines) + '\n'
+            lines = template_result.strip().split("\n")
+            indented_lines = ["    " + line for line in lines]
+            return "\n".join(indented_lines) + "\n"
