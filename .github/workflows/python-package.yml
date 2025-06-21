@@ -44,16 +44,15 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip setuptools wheel
-        # Try Poetry first, fallback to pip if it fails
-        if ! pip install poetry; then
-          echo "Poetry installation failed, using pip fallback"
-          pip install -r requirements.txt
-          pip install pytest pytest-cov black pylint mypy types-requests
-        elif ! poetry install --with dev; then
-          echo "Poetry install failed, using pip fallback"
-          pip install -r requirements.txt
-          pip install pytest pytest-cov black pylint mypy types-requests
-        fi
+        echo "Installing dependencies with pip fallback strategy..."
+        
+        # Always install core deps with pip as fallback
+        pip install -r requirements.txt
+        pip install pytest pytest-cov black pylint mypy types-requests
+        
+        echo "Dependencies installed successfully"
+        which pylint
+        pylint --version
 
     - name: Lint with pylint
       run: |
