@@ -14,16 +14,11 @@ import subprocess
 import sys
 
 import pytest
+from eiplgrader.languages.executors.javascript_executor import JavaScriptExecutor
+from tests.fixtures.mock_code_samples import javascript_samples
 
 # Add the project root to the path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../.."))
-
-from eiplgrader.languages.executors.javascript_executor import (
-    JavaScriptExecutor,
-)  # pylint: disable=wrong-import-position
-from tests.fixtures.mock_code_samples import (
-    javascript_samples,
-)  # pylint: disable=wrong-import-position
 
 
 class TestJavaScriptExecutor:  # pylint: disable=too-many-public-methods

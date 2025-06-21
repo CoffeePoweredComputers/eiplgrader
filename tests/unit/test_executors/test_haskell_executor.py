@@ -16,16 +16,11 @@ import subprocess
 import sys
 
 import pytest
+from eiplgrader.languages.executors.haskell_executor import HaskellExecutor
+from tests.fixtures.mock_code_samples import haskell_samples
 
 # Add the project root to the path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../.."))
-
-from eiplgrader.languages.executors.haskell_executor import (
-    HaskellExecutor,
-)  # pylint: disable=wrong-import-position
-from tests.fixtures.mock_code_samples import (
-    haskell_samples,
-)  # pylint: disable=wrong-import-position
 
 
 class TestHaskellExecutor:  # pylint: disable=too-many-public-methods

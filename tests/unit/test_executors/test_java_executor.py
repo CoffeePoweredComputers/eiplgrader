@@ -14,16 +14,11 @@ import subprocess
 import sys
 
 import pytest
+from eiplgrader.languages.executors.java_executor import JavaExecutor
+from tests.fixtures.mock_code_samples import java_samples
 
 # Add the project root to the path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../.."))
-
-from eiplgrader.languages.executors.java_executor import (
-    JavaExecutor,
-)  # pylint: disable=wrong-import-position
-from tests.fixtures.mock_code_samples import (
-    java_samples,
-)  # pylint: disable=wrong-import-position
 
 
 class TestJavaExecutor:  # pylint: disable=too-many-public-methods

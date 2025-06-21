@@ -15,33 +15,14 @@ import subprocess
 import sys
 
 import pytest
-
-# Add the project root to the path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../.."))
-
-from eiplgrader.languages.executors.python_executor import (
-    PythonExecutor,
-)  # pylint: disable=wrong-import-position
-from eiplgrader.languages.executors.javascript_executor import (
-    JavaScriptExecutor,
-)  # pylint: disable=wrong-import-position
-from eiplgrader.languages.executors.go_executor import (
-    GoExecutor,
-)  # pylint: disable=wrong-import-position
-from eiplgrader.languages.executors.java_executor import (
-    JavaExecutor,
-)  # pylint: disable=wrong-import-position
-from eiplgrader.languages.executors.cpp_executor import (
-    CppExecutor,
-)  # pylint: disable=wrong-import-position
-from eiplgrader.languages.executors.c_executor import (
-    CExecutor,
-)  # pylint: disable=wrong-import-position
-from eiplgrader.languages.executors.haskell_executor import (
-    HaskellExecutor,
-)  # pylint: disable=wrong-import-position
-
-from tests.fixtures.mock_code_samples import (  # pylint: disable=wrong-import-position
+from eiplgrader.languages.executors.python_executor import PythonExecutor
+from eiplgrader.languages.executors.javascript_executor import JavaScriptExecutor
+from eiplgrader.languages.executors.go_executor import GoExecutor
+from eiplgrader.languages.executors.java_executor import JavaExecutor
+from eiplgrader.languages.executors.cpp_executor import CppExecutor
+from eiplgrader.languages.executors.c_executor import CExecutor
+from eiplgrader.languages.executors.haskell_executor import HaskellExecutor
+from tests.fixtures.mock_code_samples import (
     python_samples,
     javascript_samples,
     go_samples,
@@ -50,6 +31,9 @@ from tests.fixtures.mock_code_samples import (  # pylint: disable=wrong-import-p
     c_samples,
     haskell_samples,
 )
+
+# Add the project root to the path
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../.."))
 
 
 class TestTypeSystemValidation:

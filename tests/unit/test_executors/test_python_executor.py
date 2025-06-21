@@ -11,16 +11,11 @@ This module tests the PythonExecutor's ability to:
 import os
 import sys
 import pytest
+from eiplgrader.languages.executors.python_executor import PythonExecutor
+from tests.fixtures.mock_code_samples import python_samples
 
 # Add the project root to the path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../.."))
-
-from eiplgrader.languages.executors.python_executor import (
-    PythonExecutor,
-)  # pylint: disable=wrong-import-position
-from tests.fixtures.mock_code_samples import (
-    python_samples,
-)  # pylint: disable=wrong-import-position
 
 
 class TestPythonExecutor:  # pylint: disable=too-many-public-methods
