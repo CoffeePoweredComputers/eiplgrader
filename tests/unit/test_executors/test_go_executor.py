@@ -547,8 +547,8 @@ func largeNumberOperation(x int) int {
         # Just check the value is correct
         assert float_result["actual"] == 8.0
 
-    def test_go_json_marshaling(self):
-        """Test that Go's JSON marshaling works correctly for complex types."""
+    def test_go_slice_handling(self):
+        """Test that Go handles slices correctly with embedded values."""
         # Test that slices and basic types marshal/unmarshal correctly
         test_case = {
             "function_name": "doubleSlice",
@@ -563,5 +563,5 @@ func largeNumberOperation(x int) int {
 
         assert result["passed"] is True
         assert result["actual"] == [2, 4, 6]
-        # Verify JSON round-trip worked correctly
+        # Verify slice values are correct
         assert all(isinstance(x, int) for x in result["actual"])

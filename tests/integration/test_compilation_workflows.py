@@ -17,6 +17,14 @@ from eiplgrader.languages.executors.go_executor import GoExecutor
 from eiplgrader.languages.executors.haskell_executor import HaskellExecutor
 
 
+class MockCompiledLanguageExecutor(CompiledLanguageExecutor):
+    """Concrete test implementation of CompiledLanguageExecutor."""
+    
+    def prepare_code(self, code: str, test_case: Dict[str, Any]) -> str:
+        """Simple prepare_code implementation for testing."""
+        return code
+
+
 class TestCompilationWorkflowBase:
     """Test base compilation workflow functionality."""
 
@@ -34,7 +42,7 @@ class TestCompilationWorkflowBase:
         """Test successful compilation workflow."""
         mock_run.return_value = Mock(returncode=0, stderr="", stdout="")
 
-        executor = CompiledLanguageExecutor(
+        executor = MockCompiledLanguageExecutor(
             compile_cmd=["gcc"], run_cmd=["./"], file_ext=".c", use_json_input=False
         )
 
@@ -64,7 +72,7 @@ class TestCompilationWorkflowBase:
             returncode=1, stderr="error: 'undeclared_var' undeclared", stdout=""
         )
 
-        executor = CompiledLanguageExecutor(
+        executor = MockCompiledLanguageExecutor(
             compile_cmd=["gcc"], run_cmd=["./"], file_ext=".c", use_json_input=False
         )
 
@@ -88,7 +96,7 @@ class TestCompilationWorkflowBase:
             returncode=0, stderr="warning: unused variable 'x'", stdout=""
         )
 
-        executor = CompiledLanguageExecutor(
+        executor = MockCompiledLanguageExecutor(
             compile_cmd=["gcc", "-Wall"],
             run_cmd=["./"],
             file_ext=".c",
@@ -112,7 +120,7 @@ class TestCompilationWorkflowBase:
         """Test compilation timeout handling."""
         mock_run.side_effect = subprocess.TimeoutExpired("gcc", 30)
 
-        executor = CompiledLanguageExecutor(
+        executor = MockCompiledLanguageExecutor(
             compile_cmd=["gcc"], run_cmd=["./"], file_ext=".c", use_json_input=False
         )
 
@@ -136,7 +144,7 @@ class TestCCompilationWorkflow:
             executor = CExecutor()
 
             assert executor.compile_cmd == ["gcc"]
-            assert executor.run_cmd == ["./"]
+            assert executor.run_cmd is None
             assert executor.file_ext == ".c"
             assert executor.use_json_input is False
             assert hasattr(executor, "temp_dir")
@@ -216,8 +224,8 @@ class TestCppCompilationWorkflow:
         try:
             executor = CppExecutor()
 
-            assert executor.compile_cmd == ["g++"]
-            assert executor.run_cmd == ["./"]
+            assert executor.compile_cmd == ["g++", "-std=c++17"]
+            assert executor.run_cmd == ["./a.out"]
             assert executor.file_ext == ".cpp"
             assert executor.use_json_input is False
 
@@ -240,7 +248,7 @@ class TestCppCompilationWorkflow:
 
             # Verify g++ was called
             expected_output = code_path.replace(".cpp", "")
-            expected_cmd = ["g++", "-o", expected_output, code_path]
+            expected_cmd = ["g++", "-std=c++17", "-o", expected_output, code_path]
             mock_run.assert_called_once_with(
                 expected_cmd, capture_output=True, text=True
             )
@@ -282,8 +290,8 @@ class TestJavaCompilationWorkflow:
             code_path = os.path.join(executor.temp_dir, "Test.java")
             success, output_path, error = executor.compile(code_path)
 
-            # Java compilation is different - output path is same as input
-            expected_cmd = ["javac", "-o", "Test", code_path]
+            # Java compilation uses -d flag for output directory
+            expected_cmd = ["javac", "-d", executor.temp_dir, code_path]
             mock_run.assert_called_once_with(
                 expected_cmd, capture_output=True, text=True
             )
@@ -337,7 +345,7 @@ class TestGoCompilationWorkflow:
             assert executor.compile_cmd == ["go", "build"]
             assert executor.run_cmd == ["go", "run"]
             assert executor.file_ext == ".go"
-            assert executor.use_json_input is True  # Go supports JSON
+            assert executor.use_json_input is False  # Go now uses embedded values
 
         except ImportError:
             pytest.skip("GoExecutor not available")
@@ -412,7 +420,7 @@ class TestHaskellCompilationWorkflow:
             executor = HaskellExecutor()
 
             assert executor.compile_cmd == ["ghc"]
-            assert executor.run_cmd == ["./"]
+            assert executor.run_cmd is None
             assert executor.file_ext == ".hs"
             assert executor.use_json_input is False
 
@@ -435,7 +443,7 @@ class TestHaskellCompilationWorkflow:
 
             # GHC compilation
             expected_output = code_path.replace(".hs", "")
-            expected_cmd = ["ghc", "-o", expected_output, code_path]
+            expected_cmd = ["ghc", "-O0", "-o", expected_output, code_path]
             mock_run.assert_called_once_with(
                 expected_cmd, capture_output=True, text=True
             )
@@ -495,7 +503,7 @@ class TestCompilationExecutionIntegration:
 
         mock_run.side_effect = [compile_result, execute_result]
 
-        executor = CompiledLanguageExecutor(
+        executor = MockCompiledLanguageExecutor(
             compile_cmd=["gcc"], run_cmd=["./"], file_ext=".c", use_json_input=False
         )
 
@@ -505,8 +513,8 @@ class TestCompilationExecutionIntegration:
                 test_case = {"parameters": {"x": 5}, "expected": 42}
                 result = executor.execute_test("test_code", test_case)
 
-                assert result["passed"] is False  # 42 != "42" (string vs int)
-                assert result["actual"] == "42"
+                assert result["passed"] is True  # "42" is parsed as JSON to int 42
+                assert result["actual"] == 42  # JSON parsed
                 assert result["expected"] == 42
 
                 # Should have called compile then execute
@@ -531,7 +539,7 @@ class TestCompilationExecutionIntegration:
             returncode=1, stderr="Compilation failed", stdout=""
         )
 
-        executor = CompiledLanguageExecutor(
+        executor = MockCompiledLanguageExecutor(
             compile_cmd=["gcc"], run_cmd=["./"], file_ext=".c", use_json_input=False
         )
 
@@ -555,41 +563,7 @@ class TestCompilationExecutionIntegration:
             finally:
                 executor.cleanup()
 
-    @patch("subprocess.run")
-    def test_json_input_compilation_workflow(self, mock_run):
-        """Test compilation workflow for JSON input languages."""
-        # Mock compilation success
-        compile_result = Mock(returncode=0, stderr="", stdout="")
-        # Mock execution with JSON input
-        execute_result = Mock(returncode=0, stderr="", stdout="15")
 
-        mock_run.side_effect = [compile_result, execute_result]
-
-        executor = CompiledLanguageExecutor(
-            compile_cmd=["go", "build"],
-            run_cmd=["./"],
-            file_ext=".go",
-            use_json_input=True,
-        )
-
-        # Mock the prepare_code method
-        with patch.object(executor, "prepare_code", return_value="prepared_code"):
-            try:
-                test_case = {"parameters": {"x": 5, "y": 10}, "expected": 15}
-                result = executor.execute_test("test_code", test_case)
-
-                assert result["passed"] is False  # 15 != "15"
-                assert result["actual"] == "15"
-
-                # Should have called compile then execute
-                assert mock_run.call_count == 2
-
-                # Execution should have received JSON input
-                execute_call = mock_run.call_args_list[1]
-                assert execute_call[1]["input"] == '{"x": 5, "y": 10}'
-
-            finally:
-                executor.cleanup()
 
 
 class TestCompilationErrorRecovery:
@@ -598,7 +572,7 @@ class TestCompilationErrorRecovery:
     @patch("subprocess.run")
     def test_partial_compilation_recovery(self, mock_run):
         """Test recovery from partial compilation errors."""
-        executor = CompiledLanguageExecutor(
+        executor = MockCompiledLanguageExecutor(
             compile_cmd=["gcc", "-Wall", "-Wextra"],
             run_cmd=["./"],
             file_ext=".c",
@@ -632,7 +606,7 @@ class TestCompilationErrorRecovery:
     @patch("subprocess.run")
     def test_compilation_output_parsing(self, mock_run):
         """Test parsing of compilation output and errors."""
-        executor = CompiledLanguageExecutor(
+        executor = MockCompiledLanguageExecutor(
             compile_cmd=["gcc"], run_cmd=["./"], file_ext=".c", use_json_input=False
         )
 
@@ -658,8 +632,8 @@ test.c:6:10: warning: unused variable 'y' [-Wunused-variable]"""
 
     def test_compilation_environment_isolation(self):
         """Test that compilation environments are properly isolated."""
-        executor1 = CompiledLanguageExecutor(["gcc"], ["./"], ".c")
-        executor2 = CompiledLanguageExecutor(["gcc"], ["./"], ".c")
+        executor1 = MockCompiledLanguageExecutor(["gcc"], ["./"], ".c")
+        executor2 = MockCompiledLanguageExecutor(["gcc"], ["./"], ".c")
 
         try:
             # Different temp directories
@@ -706,7 +680,7 @@ class TestCompilationPerformance:
 
         mock_run.side_effect = slow_compile
 
-        executor = CompiledLanguageExecutor(
+        executor = MockCompiledLanguageExecutor(
             compile_cmd=["gcc"], run_cmd=["./"], file_ext=".c", use_json_input=False
         )
 
@@ -722,7 +696,7 @@ class TestCompilationPerformance:
 
     def test_multiple_compilation_cleanup(self):
         """Test cleanup after multiple compilation attempts."""
-        executor = CompiledLanguageExecutor(
+        executor = MockCompiledLanguageExecutor(
             compile_cmd=["gcc"], run_cmd=["./"], file_ext=".c", use_json_input=False
         )
 

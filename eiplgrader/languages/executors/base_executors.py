@@ -294,4 +294,3 @@ class InterpretedLanguageExecutor(LanguageExecutor):
                 shutil.rmtree(self.temp_dir)
             except (OSError, PermissionError):
                 pass  # Directory already removed or inaccessible
-

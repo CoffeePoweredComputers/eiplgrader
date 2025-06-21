@@ -102,22 +102,17 @@ class TestComprehensiveSuite:
         """Test that type system categories are properly handled."""
 
         # JSON-capable languages (support type inference via JSON input)
-        json_languages = ["python", "javascript", "go"]
+        json_languages = ["python", "javascript"]
 
         # Static type languages (require explicit types)
-        static_languages = ["c", "cpp", "java", "haskell"]
+        static_languages = ["c", "cpp", "java", "go", "haskell"]
 
         for language in json_languages:
             executor = language_registry.get_executor(language)
-            # Check if it's an interpreted language executor or JSON-capable compiled executor
-            if language in ["python", "javascript"]:
-                assert hasattr(
-                    executor, "validate_or_infer_types"
-                ), f"{language} executor should support type inference"
-            else:  # Go is compiled but JSON-capable
-                assert hasattr(executor, "use_json_input") or getattr(
-                    executor, "use_json_input", False
-                ), f"{language} executor should support JSON input for type inference"
+            # Check if it's an interpreted language executor
+            assert hasattr(
+                executor, "validate_or_infer_types"
+            ), f"{language} executor should support type inference"
 
         for language in static_languages:
             executor = language_registry.get_executor(language)

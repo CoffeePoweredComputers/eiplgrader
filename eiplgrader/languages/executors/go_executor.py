@@ -256,4 +256,3 @@ class GoExecutor(CompiledLanguageExecutor):
     
         return result
 
-
