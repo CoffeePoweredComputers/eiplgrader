@@ -214,13 +214,17 @@ class InterpretedLanguageExecutor(LanguageExecutor):
         # For interpreted languages, types are optional
         if "parameter_types" not in test_case:
             test_case["parameter_types"] = {}
-            for param_name, value in test_case.get("parameters", {}).items():
+        
+        # Infer types for any missing parameter types
+        for param_name, value in test_case.get("parameters", {}).items():
+            if param_name not in test_case["parameter_types"]:
                 test_case["parameter_types"][param_name] = self.infer_type(value)
-
+    
         if "expected_type" not in test_case:
             test_case["expected_type"] = self.infer_type(test_case.get("expected"))
-
+    
         return test_case
+
 
     def execute_test(self, code: str, test_case: Dict[str, Any]) -> Dict[str, Any]:
         """Execute test with interpreter"""

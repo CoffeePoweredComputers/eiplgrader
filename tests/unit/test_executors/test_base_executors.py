@@ -577,7 +577,7 @@ class TestInterpretedLanguageExecutor:
         # Check that correct command was called
         mock_run.assert_called_once()
         args, kwargs = mock_run.call_args
-        assert args[0][:2] == ["python3"]  # First part should be interpreter
+        assert args[0][0] == "python3"  # First element should be interpreter
         assert kwargs["capture_output"] is True
         assert kwargs["text"] is True
         assert kwargs["timeout"] == 30

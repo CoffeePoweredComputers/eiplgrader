@@ -23,35 +23,42 @@ class JavaExecutor(CompiledLanguageExecutor):
         """Prepare Java code for execution with test harness."""
         # Use common validation
         self.validate_types_provided(test_case)
-
+    
         function_name = test_case.get("function_name", "foo")
         params = test_case.get("parameters", {})
         inplace_mode = test_case.get("inplace", "0")
         param_types = test_case["parameter_types"]  # Required field
         expected_type = test_case["expected_type"]  # Required field
-
+    
         # Extract the Solution class content
         # Check if code already has proper structure
         if "public class Test" in code:
             # Code already has Test class, likely from previous preparation
             return code
-
-        # Extract method from Solution class if present
+    
         import re
-
+    
+        # Extract import statements first
+        import_pattern = r'^import\s+.*?;$'
+        imports = re.findall(import_pattern, code, re.MULTILINE)
+        
+        # Remove imports from code
+        code_without_imports = re.sub(import_pattern, '', code, flags=re.MULTILINE).strip()
+    
+        # Extract method from Solution class if present
         solution_match = re.search(
-            r"public\s+class\s+Solution\s*\{(.*)\}(?:\s*$)", code, re.DOTALL
+            r"public\s+class\s+Solution\s*\{(.*)\}(?:\s*$)", code_without_imports, re.DOTALL
         )
         if solution_match:
             method_code = solution_match.group(1).strip()
         else:
             # Assume the code is just the method
-            method_code = code.strip()
-
+            method_code = code_without_imports.strip()
+    
         # Build parameter declarations with embedded values
         param_names = list(params.keys())
         param_declarations = []
-
+    
         for param_name in param_names:
             param_value = params[param_name]
             java_type = param_types[param_name]
@@ -59,7 +66,7 @@ class JavaExecutor(CompiledLanguageExecutor):
                 param_name, java_type, param_value
             )
             param_declarations.append(declaration)
-
+    
         # Build function call based on inplace mode
         if inplace_mode == "0":
             # Normal function call - returns a value
@@ -113,7 +120,7 @@ class JavaExecutor(CompiledLanguageExecutor):
             result_handling = (
                 '        System.out.println("Error: Invalid inplace mode");'
             )
-
+    
         # Build complete test harness with embedded values
         # Properly indent method code
         if method_code:
@@ -128,24 +135,29 @@ class JavaExecutor(CompiledLanguageExecutor):
                 else:
                     indented_method.append(line)
             method_code = "\n".join(indented_method)
-
-        test_harness = f"""import java.util.*;
-
-class Solution {{
-{method_code}
-}}
-
-public class Test {{
-    public static void main(String[] args) {{
-        // Test parameters
-{''.join(param_declarations)}
-        
-        // Call function and handle result
-{result_handling}
+    
+        # Build import section
+        import_section = "import java.util.*;\n"
+        if imports:
+            import_section += "\n".join(imports) + "\n"
+    
+        test_harness = f"""{import_section}
+    class Solution {{
+    {method_code}
     }}
-}}"""
-
+    
+    public class Test {{
+        public static void main(String[] args) {{
+            // Test parameters
+    {''.join(param_declarations)}
+            
+            // Call function and handle result
+    {result_handling}
+        }}
+    }}"""
+    
         return test_harness
+
 
     def _generate_param_declaration(self, name: str, java_type: str, value: Any) -> str:
         """Generate parameter declaration with embedded value."""
