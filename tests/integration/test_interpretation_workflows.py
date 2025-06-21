@@ -200,69 +200,55 @@ class TestPythonInterpretationWorkflow:
             if "executor" in locals():
                 executor.cleanup()
 
-    @patch("subprocess.run")
-    def test_python_execution_command(self, mock_run):
+    def test_python_execution_command(self):
         """Test Python execution command structure."""
-        mock_run.return_value = Mock(returncode=0, stdout="42", stderr="")
-
         try:
             executor = PythonExecutor()
-
-            with patch.object(executor, "prepare_code", return_value="print(42)"):
-                test_case = {"parameters": {"x": 5}, "expected": 42}
-                result = executor.execute_test("test_code", test_case)
-
-                # Verify python3 was called
-                mock_run.assert_called_once()
-                args, kwargs = mock_run.call_args
-                assert args[0][0] == "python3"
-                assert args[0][1].endswith(".py")
-
+    
+            # Test that the executor can execute simple code
+            test_case = {"parameters": {"x": 5}, "expected": 5, "function_name": "identity"}
+            code = "def identity(x):\n    return x"
+            result = executor.execute_test(code, test_case)
+    
+            # Verify the execution worked
+            assert result["passed"] is True
+            assert result["actual"] == 5
+            assert result["expected"] == 5
+    
         except ImportError:
             pytest.skip("PythonExecutor not available")
         finally:
             if "executor" in locals():
                 executor.cleanup()
 
-    @patch("subprocess.run")
-    def test_python_error_scenarios(self, mock_run):
+
+    def test_python_error_scenarios(self):
         """Test various Python error scenarios."""
         try:
             executor = PythonExecutor()
-
+    
             # Test syntax error
-            mock_run.return_value = Mock(
-                returncode=1,
-                stdout="",
-                stderr='  File "test.py", line 1\n    print(\n         ^\nSyntaxError: unexpected EOF while parsing',
-            )
-
-            with patch.object(executor, "prepare_code", return_value="print("):
-                test_case = {"parameters": {}, "expected": ""}
-                result = executor.execute_test("print(", test_case)
-
-                assert result["passed"] is False
-                assert "SyntaxError" in result["error"]
-
-            # Test runtime error
-            mock_run.return_value = Mock(
-                returncode=1,
-                stdout="",
-                stderr="Traceback (most recent call last):\n  File \"test.py\", line 1, in <module>\n    print(x)\nNameError: name 'x' is not defined",
-            )
-
-            with patch.object(executor, "prepare_code", return_value="print(x)"):
-                test_case = {"parameters": {}, "expected": ""}
-                result = executor.execute_test("print(x)", test_case)
-
-                assert result["passed"] is False
-                assert "NameError" in result["error"]
-
+            test_case = {"parameters": {}, "expected": "", "function_name": "bad_func"}
+            result = executor.execute_test("def bad_func():\n    print(", test_case)
+    
+            assert result["passed"] is False
+            assert "error" in result
+            # The actual error message contains information about unclosed parentheses
+            assert "never closed" in result["error"] or "SyntaxError" in result["error"]
+    
+            # Test runtime error - function not found
+            test_case = {"parameters": {}, "expected": "", "function_name": "nonexistent"}
+            result = executor.execute_test("def some_func():\n    pass", test_case)
+    
+            assert result["passed"] is False
+            assert "not found" in result["error"]
+    
         except ImportError:
             pytest.skip("PythonExecutor not available")
         finally:
             if "executor" in locals():
                 executor.cleanup()
+
 
     def test_python_type_inference_specifics(self):
         """Test Python-specific type inference."""

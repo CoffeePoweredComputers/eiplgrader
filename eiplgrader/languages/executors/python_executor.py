@@ -18,7 +18,6 @@ class PythonExecutor(InterpretedLanguageExecutor):
         self.temp_module = None
         self.temp_files = []
 
-
     def prepare_code(self, code: str, test_case: Dict[str, Any]) -> str:
         """Prepare Python code for execution with test harness."""
         # For Python, we typically don't need to modify the code
