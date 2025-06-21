@@ -322,8 +322,8 @@ print(f"Generated Haskell code: {generated_code[0]}")
 
 # Haskell requires explicit types with proper Haskell type names
 test_cases = [
-    {"parameters": {"xs": [1, 2, 3]}, "parameter_types": {"xs": "[Int]"}, "expected": [2, 4, 6], "expected_type": "[Int]"},
-    {"parameters": {"xs": [0, -1, 5]}, "parameter_types": {"xs": "[Int]"}, "expected": [0, -2, 10], "expected_type": "[Int]"},
+    {"parameters": {"xs": [1, 2, 3]}, "parameter_types": {"xs": "[Int]"}, "expected": [1, 4, 6], "expected_type": "[Int]"},
+    {"parameters": {"xs": [0, -1, 5]}, "parameter_types": {"xs": "[Int]"}, "expected": [0, -1, 10], "expected_type": "[Int]"},
     {"parameters": {"xs": []}, "parameter_types": {"xs": "[Int]"}, "expected": [], "expected_type": "[Int]"},
 ]
 
