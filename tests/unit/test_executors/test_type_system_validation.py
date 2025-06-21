@@ -2,8 +2,8 @@
 Comprehensive type system validation tests for all executors.
 
 This module tests:
-1. Type inference behavior in Python/JavaScript/Go executors
-2. Explicit type validation in C/C++/Java/Haskell executors
+1. Type inference behavior in Python/JavaScript executors
+2. Explicit type validation in C/C++/Java/Go/Haskell executors
 3. Type system boundaries and error conditions
 4. Complex type scenarios across all languages
 5. Type coercion and conversion handling
@@ -45,7 +45,7 @@ class TestTypeSystemValidation:
         self.static_type_executors = {}
         self.samples = {}
 
-        # Type inference languages (Python, JavaScript, Go)
+        # Type inference languages (Python, JavaScript)
         try:
             self.type_inference_executors["python"] = PythonExecutor()
             self.samples["python"] = python_samples
@@ -58,16 +58,16 @@ class TestTypeSystemValidation:
         except Exception:
             pass
 
-        try:
-            self.type_inference_executors["go"] = GoExecutor()
-            self.samples["go"] = go_samples
-        except Exception:
-            pass
-
-        # Static type languages (Java, C++, C, Haskell)
+        # Static type languages (Java, C++, C, Go, Haskell)
         try:
             self.static_type_executors["java"] = JavaExecutor()
             self.samples["java"] = java_samples
+        except Exception:
+            pass
+
+        try:
+            self.static_type_executors["go"] = GoExecutor()
+            self.samples["go"] = go_samples
         except Exception:
             pass
 
@@ -364,6 +364,14 @@ class TestTypeSystemValidation:
                 "int_array": "int*",
                 "double": "double",
             },
+            "go": {
+                "int": "int",
+                "string": "string",
+                "bool": "bool",
+                "int_slice": "[]int",
+                "string_slice": "[]string",
+                "double": "float64",
+            },
             "haskell": {
                 "int": "Int",
                 "string": "String",
@@ -434,6 +442,12 @@ class TestTypeSystemValidation:
                         "active": "int",
                         "salary": "double",
                     },
+                    "go": {
+                        "name": "string",
+                        "age": "int",
+                        "active": "bool",
+                        "salary": "float64",
+                    },
                     "haskell": {
                         "name": "String",
                         "age": "Int",
@@ -445,6 +459,7 @@ class TestTypeSystemValidation:
                     "java": "String",
                     "cpp": "std::string",
                     "c": "char*",
+                    "go": "string",
                     "haskell": "String",
                 },
             },
@@ -456,12 +471,14 @@ class TestTypeSystemValidation:
                     "java": {"numbers": "int[]"},
                     "cpp": {"numbers": "std::vector<int>"},
                     "c": {"numbers": "int*", "size": "int"},
+                    "go": {"numbers": "[]int"},
                     "haskell": {"numbers": "[Int]"},
                 },
                 "expected_types": {
                     "java": "int",
                     "cpp": "int",
                     "c": "int",
+                    "go": "int",
                     "haskell": "Int",
                 },
             },
@@ -627,13 +644,13 @@ class TestTypeSystemValidation:
         """Test that type systems behave as documented."""
         documented_behavior = {
             "type_inference": {
-                "languages": ["python", "javascript", "go"],
+                "languages": ["python", "javascript"],
                 "requires_types": False,
                 "supports_inference": True,
                 "native_json": True,
             },
             "static_types": {
-                "languages": ["java", "cpp", "c", "haskell"],
+                "languages": ["java", "cpp", "c", "go", "haskell"],
                 "requires_types": True,
                 "supports_inference": False,
                 "native_json": False,

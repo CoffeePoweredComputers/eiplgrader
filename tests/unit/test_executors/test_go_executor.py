@@ -1,13 +1,13 @@
 """
-Comprehensive tests for Go executor focusing on type inference capabilities.
+Comprehensive tests for Go executor with explicit type requirements.
 
 This module tests the GoExecutor's ability to:
-1. Execute Go code with JSON input/output
-2. Infer types automatically from parameter values (like Python/JS)
+1. Execute Go code with embedded values (no JSON input)
+2. Work with explicit type annotations (required for all test cases)
 3. Handle different execution modes (normal, in-place, both)
 4. Properly handle errors and edge cases
-5. Support both explicit types and automatic type inference
-6. Handle Go-specific types like slices, interfaces, etc.
+5. Support Go-specific types like slices, interfaces, etc.
+6. Handle complex Go types like nested slices and multiple return values
 """
 
 import os
@@ -23,7 +23,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../.."))
 
 
 class TestGoExecutor:  # pylint: disable=too-many-public-methods
-    """Test suite for Go executor with focus on type inference capabilities."""
+    """Test suite for Go executor with explicit type requirements."""
 
     def setup_method(self):
         """Set up test fixtures."""
@@ -46,7 +46,9 @@ class TestGoExecutor:  # pylint: disable=too-many-public-methods
         test_case = {
             "function_name": "addNumbers",
             "parameters": {"a": 5, "b": 3},
+            "parameter_types": {"a": "int", "b": "int"},
             "expected": 8,
+            "expected_type": "int",
             "inplace": "0",
         }
 
@@ -62,7 +64,9 @@ class TestGoExecutor:  # pylint: disable=too-many-public-methods
         test_case = {
             "function_name": "calculateAverage",
             "parameters": {"a": 10.5, "b": 7.3},
+            "parameter_types": {"a": "float64", "b": "float64"},
             "expected": 8.9,
+            "expected_type": "float64",
             "inplace": "0",
         }
 
@@ -76,7 +80,9 @@ class TestGoExecutor:  # pylint: disable=too-many-public-methods
         test_case = {
             "function_name": "countVowels",
             "parameters": {"s": "hello world"},
+            "parameter_types": {"s": "string"},
             "expected": 3,
+            "expected_type": "int",
             "inplace": "0",
         }
 
@@ -90,7 +96,9 @@ class TestGoExecutor:  # pylint: disable=too-many-public-methods
         test_case = {
             "function_name": "sumEvenNumbers",
             "parameters": {"numbers": [1, 2, 3, 4, 5, 6]},
+            "parameter_types": {"numbers": "[]int"},
             "expected": 12,
+            "expected_type": "int",
             "inplace": "0",
         }
 
@@ -104,7 +112,9 @@ class TestGoExecutor:  # pylint: disable=too-many-public-methods
         test_case = {
             "function_name": "isPalindrome",
             "parameters": {"s": "racecar"},
+            "parameter_types": {"s": "string"},
             "expected": True,
+            "expected_type": "bool",
             "inplace": "0",
         }
 
@@ -123,7 +133,14 @@ class TestGoExecutor:  # pylint: disable=too-many-public-methods
                 "isActive": False,
                 "salary": 75000.50,
             },
+            "parameter_types": {
+                "name": "string",
+                "age": "int",
+                "isActive": "bool",
+                "salary": "float64",
+            },
             "expected": "Alice,25,false,75000.50",
+            "expected_type": "string",
             "inplace": "0",
         }
 
@@ -133,30 +150,37 @@ class TestGoExecutor:  # pylint: disable=too-many-public-methods
         assert result["actual"] == "Alice,25,false,75000.50"
 
     def test_type_inference_empty_slices(self):
-        """Test type inference with empty slices."""
+        """Test empty slices with explicit types."""
         test_case = {
             "function_name": "sumEvenNumbers",
             "parameters": {"numbers": []},
+            "parameter_types": {"numbers": "[]int"},
             "expected": 0,
+            "expected_type": "int",
             "inplace": "0",
         }
-
+    
         result = self.executor.execute_test(go_samples.SUM_EVEN_NUMBERS, test_case)
-
+    
         assert result["passed"] is True
         assert result["actual"] == 0
+
 
     def test_type_inference_string_slices(self):
         """Test type inference with string slice parameters."""
         test_case = {
             "function_name": "joinWords",
             "parameters": {"words": ["hello", "world", "go"]},
+            "parameter_types": {"words": "[]string"},
             "expected": "hello world go",
+            "expected_type": "string",
             "inplace": "0",
         }
 
         result = self.executor.execute_test(go_samples.JOIN_WORDS, test_case)
 
+        if not result["passed"]:
+            print(f"Test failed: {result}")
         assert result["passed"] is True
         assert result["actual"] == "hello world go"
 
@@ -165,7 +189,9 @@ class TestGoExecutor:  # pylint: disable=too-many-public-methods
         test_case = {
             "function_name": "factorial",
             "parameters": {"n": 5},
+            "parameter_types": {"n": "int"},
             "expected": 120,
+            "expected_type": "int",
             "inplace": "0",
         }
 
@@ -179,7 +205,9 @@ class TestGoExecutor:  # pylint: disable=too-many-public-methods
         test_case = {
             "function_name": "sortSlice",
             "parameters": {"arr": [3, 1, 4, 1, 5]},
+            "parameter_types": {"arr": "[]int"},
             "expected": [1, 1, 3, 4, 5],
+            "expected_type": "[]int",
             "inplace": "1",
         }
 
@@ -203,7 +231,9 @@ func processAndReturn(arr []int) int {
         test_case = {
             "function_name": "processAndReturn",
             "parameters": {"arr": [1, 2, 3]},
+            "parameter_types": {"arr": "[]int"},
             "expected": 3,
+            "expected_type": "int",
             "inplace": "2",
         }
 
@@ -217,7 +247,9 @@ func processAndReturn(arr []int) int {
         test_case = {
             "function_name": "doubleSlice",
             "parameters": {"arr": [1, 2, 3, 4]},
+            "parameter_types": {"arr": "[]int"},
             "expected": [2, 4, 6, 8],
+            "expected_type": "[]int",
             "inplace": "0",
         }
 
@@ -231,7 +263,9 @@ func processAndReturn(arr []int) int {
         test_case = {
             "function_name": "findMax",
             "parameters": {"numbers": [3, 7, 2, 9, 1]},
+            "parameter_types": {"numbers": "[]int"},
             "expected": 9,
+            "expected_type": "int",
             "inplace": "0",
         }
 
@@ -245,7 +279,9 @@ func processAndReturn(arr []int) int {
         test_case = {
             "function_name": "linearSearch",
             "parameters": {"arr": [10, 20, 30, 40], "target": 30},
+            "parameter_types": {"arr": "[]int", "target": "int"},
             "expected": 2,
+            "expected_type": "int",
             "inplace": "0",
         }
 
@@ -259,7 +295,9 @@ func processAndReturn(arr []int) int {
         test_case = {
             "function_name": "linearSearch",
             "parameters": {"arr": [10, 20, 30, 40], "target": 99},
+            "parameter_types": {"arr": "[]int", "target": "int"},
             "expected": -1,
+            "expected_type": "int",
             "inplace": "0",
         }
 
@@ -273,7 +311,9 @@ func processAndReturn(arr []int) int {
         test_case = {
             "function_name": "flattenNested",
             "parameters": {"nested": [[1, 2], [3, 4], [5]]},
+            "parameter_types": {"nested": "[][]int"},
             "expected": [1, 2, 3, 4, 5],
+            "expected_type": "[]int",
             "inplace": "0",
         }
 
@@ -287,7 +327,9 @@ func processAndReturn(arr []int) int {
         test_case = {
             "function_name": "average",
             "parameters": {"numbers": [1.0, 2.0, 3.0, 4.0, 5.0]},
+            "parameter_types": {"numbers": "[]float64"},
             "expected": 3.0,
+            "expected_type": "float64",
             "inplace": "0",
         }
 
@@ -306,7 +348,9 @@ func brokenFunction(x int) int {
         test_case = {
             "function_name": "brokenFunction",
             "parameters": {"x": 1},
+            "parameter_types": {"x": "int"},
             "expected": 2,
+            "expected_type": "int",
             "inplace": "0",
         }
 
@@ -326,7 +370,9 @@ func divideByZero(x int) int {
         test_case = {
             "function_name": "divideByZero",
             "parameters": {"x": 10},
+            "parameter_types": {"x": "int"},
             "expected": None,
+            "expected_type": "int",
             "inplace": "0",
         }
 
@@ -345,7 +391,9 @@ func largeNumberOperation(x int) int {
         test_case = {
             "function_name": "largeNumberOperation",
             "parameters": {"x": 999999999},
+            "parameter_types": {"x": "int"},
             "expected": 999999999000000,
+            "expected_type": "int",
             "inplace": "0",
         }
 
@@ -359,7 +407,9 @@ func largeNumberOperation(x int) int {
         test_case = {
             "function_name": "countCharacters",
             "parameters": {"s": "héllo wörld 🌍"},
+            "parameter_types": {"s": "string"},
             "expected": 13,
+            "expected_type": "int",
             "inplace": "0",
         }
 
@@ -369,22 +419,24 @@ func largeNumberOperation(x int) int {
         assert result["actual"] == 13
 
     def test_automatic_type_annotation(self):
-        """Test that types are automatically inferred and added to test case."""
+        """Test that types are now required."""
         test_case = {
             "function_name": "addNumbers",
             "parameters": {"a": 5, "b": 3},
+            "parameter_types": {"a": "int", "b": "int"},
             "expected": 8,
+            "expected_type": "int",
             "inplace": "0",
         }
 
-        # Before execution, no types should be present
-        assert "parameter_types" not in test_case
-        assert "expected_type" not in test_case
+        # Types are now required for Go
+        assert "parameter_types" in test_case
+        assert "expected_type" in test_case
 
-        # Execute the test - Go executor should infer types automatically
+        # Execute the test - Go executor requires explicit types
         result = self.executor.execute_test(go_samples.ADD_NUMBERS, test_case)
 
-        # The executor should handle type inference internally
+        # The executor should work with explicit types
         assert result["passed"] is True
 
     def test_pre_existing_types_respected(self):
@@ -414,7 +466,9 @@ func divMod(a, b int) (int, int) {
         test_case = {
             "function_name": "divMod",
             "parameters": {"a": 17, "b": 5},
+            "parameter_types": {"a": "int", "b": "int"},
             "expected": [3, 2],  # Go returns multiple values as array in JSON
+            "expected_type": "[]int",
             "inplace": "0",
         }
 
@@ -436,7 +490,9 @@ func formatAny(value interface{}) string {
         test_case = {
             "function_name": "formatAny",
             "parameters": {"value": 42},
+            "parameter_types": {"value": "interface{}"},
             "expected": "42",
+            "expected_type": "string",
             "inplace": "0",
         }
 
@@ -450,7 +506,9 @@ func formatAny(value interface{}) string {
         test_case = {
             "function_name": "addNumbers",
             "parameters": {"a": 5, "b": 3},
+            "parameter_types": {"a": "int", "b": "int"},
             "expected": 8,
+            "expected_type": "int",
             "inplace": "0",
         }
 
@@ -472,7 +530,9 @@ func formatAny(value interface{}) string {
         test_case = {
             "function_name": "addNumbers",
             "parameters": {"a": 1, "b": 2},
+            "parameter_types": {"a": "int", "b": "int"},
             "expected": 3,
+            "expected_type": "int",
             "inplace": "0",
         }
 
@@ -494,7 +554,9 @@ func formatAny(value interface{}) string {
         int_test = {
             "function_name": "addNumbers",
             "parameters": {"a": 5, "b": 3},
+            "parameter_types": {"a": "int", "b": "int"},
             "expected": 8,
+            "expected_type": "int",
             "inplace": "0",
         }
 
@@ -502,7 +564,9 @@ func formatAny(value interface{}) string {
         float_test = {
             "function_name": "calculateAverage",
             "parameters": {"a": 10.0, "b": 6.0},
+            "parameter_types": {"a": "float64", "b": "float64"},
             "expected": 8.0,
+            "expected_type": "float64",
             "inplace": "0",
         }
 
@@ -522,7 +586,9 @@ func formatAny(value interface{}) string {
         test_case = {
             "function_name": "doubleSlice",
             "parameters": {"arr": [1, 2, 3]},
+            "parameter_types": {"arr": "[]int"},
             "expected": [2, 4, 6],
+            "expected_type": "[]int",
             "inplace": "0",
         }
 

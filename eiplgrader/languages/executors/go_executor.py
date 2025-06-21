@@ -13,165 +13,170 @@ class GoExecutor(CompiledLanguageExecutor):
             compile_cmd=["go", "build"],
             run_cmd=["go", "run"],
             file_ext=".go",
-            use_json_input=True,  # Go has native JSON support
+            use_json_input=False,  # Go now uses embedded values
         )
 
-    def _to_go_type(self, generic_type: str) -> str:
-        """Convert generic type names to Go-specific types."""
-        type_mapping = {
-            "double": "float64",
-            "List[int]": "[]int",
-            "List[double]": "[]float64",
-            "List[string]": "[]string",
-        }
-        return type_mapping.get(generic_type, generic_type)
 
+    
+    def _generate_output(self, go_type: str, var_name: str) -> str:
+        """Generate output code for a Go variable based on its type."""
+        
+        if go_type in ["int", "float64", "string", "bool"]:
+            return f'    fmt.Println({var_name})\n'
+        elif go_type in ["[]int", "[]float64", "[]string", "[]bool"] or go_type.startswith("map"):
+            # Use JSON for complex types
+            return f"""    encoder := json.NewEncoder(os.Stdout)
+        encoder.Encode({var_name})
+    """
+        else:
+            # Default fmt.Println for other types
+            return f'    fmt.Println({var_name})\n'
     def prepare_code(self, code: str, test_case: Dict[str, Any]) -> str:
-        """Prepare Go code for execution with JSON-based test harness."""
+        """Prepare Go code for execution with embedded test values."""
+        # Use common validation to ensure types are provided
+        self.validate_types_provided(test_case)
+        
         function_name = test_case.get("function_name", "foo")
-        parameters = test_case.get("parameters", {})
+        params = test_case.get("parameters", {})
         inplace_mode = test_case.get("inplace", "0")
-
+        param_types = test_case["parameter_types"]  # Required field
+        expected_type = test_case["expected_type"]  # Required field
+        
         # Ensure code has package declaration
         if not code.strip().startswith("package"):
             code = "package main\n\n" + code
-
-        # Add necessary imports if not present
-        imports_needed = ["fmt", "encoding/json", "os"]
-
-        import_lines = [f'    "{imp}"' for imp in imports_needed]
-        import_block = "import (\n" + "\n".join(import_lines) + "\n)\n"
-
-        # Check if code already has imports and merge them
-        lines = code.split("\n")
-        has_import = False
-        import_insert_idx = 1
-
-        for i, line in enumerate(lines):
-            if line.strip().startswith("package"):
-                import_insert_idx = i + 1
-            elif line.strip().startswith("import"):
-                has_import = True
-                # Check if it's a single import or import block
-                if "(" in line:
-                    # Multi-line import block, find the end
-                    for j in range(i + 1, len(lines)):
-                        if ")" in lines[j]:
-                            # Insert our imports before the closing )
-                            for imp in imports_needed:
-                                if f'"{imp}"' not in code:
-                                    lines.insert(j, f'    "{imp}"')
-                            break
-                else:
-                    # Single import, convert to multi-import
-                    existing_import = line.strip().replace("import ", "").strip()
-                    lines[i] = "import ("
-                    lines.insert(i + 1, f"    {existing_import}")
-                    for imp in imports_needed:
-                        if f'"{imp}"' not in existing_import:
-                            lines.insert(i + 2, f'    "{imp}"')
-                    lines.insert(i + 2 + len(imports_needed), ")")
-                break
-
-        if not has_import:
-            lines.insert(import_insert_idx, "")
-            lines.insert(import_insert_idx + 1, import_block)
-
-        code = "\n".join(lines)
-
-        # Generate main function with JSON unmarshaling
-        main_code = "\nfunc main() {\n"
-
-        # Read JSON input
-        main_code += "    // Read JSON input\n"
-        main_code += "    var params map[string]interface{}\n"
-        main_code += "    decoder := json.NewDecoder(os.Stdin)\n"
-        main_code += "    if err := decoder.Decode(&params); err != nil {\n"
-        main_code += '        fmt.Fprintf(os.Stderr, "JSON decode error: %v\\n", err)\n'
-        main_code += "        return\n"
-        main_code += "    }\n\n"
-
-        # Extract parameters with type assertions
-        param_names = list(parameters.keys())
-        for name, value in parameters.items():
-            # Infer type and convert to Go-specific names
-            inferred_type = self.infer_type(value)
-            go_type = self._to_go_type(inferred_type)
-
-            if go_type == "int":
-                main_code += f'    {name} := int(params["{name}"].(float64))\n'
-            elif go_type == "float64":
-                main_code += f'    {name} := params["{name}"].(float64)\n'
-            elif go_type == "string":
-                main_code += f'    {name} := params["{name}"].(string)\n'
+        
+        # Add necessary imports
+        imports_needed = ["fmt"]
+        
+        # Check if we need json for output
+        if expected_type in ["[]int", "[]string", "[]float64", "[]bool"] or expected_type.startswith("map"):
+            imports_needed.append("encoding/json")
+            imports_needed.append("os")
+        
+        # Build imports
+        import_block = "import (\n"
+        for imp in imports_needed:
+            import_block += f'    "{imp}"\n'
+        import_block += ")\n"
+        
+        # Check if code already has imports
+        if "import" not in code:
+            lines = code.split("\n")
+            for i, line in enumerate(lines):
+                if line.strip().startswith("package"):
+                    lines.insert(i + 1, "")
+                    lines.insert(i + 2, import_block)
+                    break
+            code = "\n".join(lines)
+        
+        # Generate parameter declarations with embedded values
+        param_declarations = []
+        param_names = list(params.keys())
+        
+        for param_name in param_names:
+            param_value = params[param_name]
+            go_type = param_types[param_name]
+            
+            if go_type == "string":
+                # Escape the string value
+                escaped_value = str(param_value).replace("\\", "\\\\").replace('"', '\\"')
+                param_declarations.append(f'    {param_name} := "{escaped_value}"')
             elif go_type == "bool":
-                main_code += f'    {name} := params["{name}"].(bool)\n'
+                param_declarations.append(f'    {param_name} := {str(param_value).lower()}')
+            elif go_type in ["int", "float64"]:
+                param_declarations.append(f'    {param_name} := {param_value}')
             elif go_type == "[]int":
-                main_code += (
-                    f'    {name}Interface := params["{name}"].([]interface{{}})\n'
-                )
-                main_code += f"    {name} := make([]int, len({name}Interface))\n"
-                main_code += f"    for i, v := range {name}Interface {{\n"
-                main_code += f"        {name}[i] = int(v.(float64))\n"
-                main_code += f"    }}\n"
+                values = ", ".join(str(v) for v in param_value)
+                param_declarations.append(f'    {param_name} := []int{{{values}}}')
             elif go_type == "[]float64":
-                main_code += (
-                    f'    {name}Interface := params["{name}"].([]interface{{}})\n'
-                )
-                main_code += f"    {name} := make([]float64, len({name}Interface))\n"
-                main_code += f"    for i, v := range {name}Interface {{\n"
-                main_code += f"        {name}[i] = v.(float64)\n"
-                main_code += f"    }}\n"
+                values = ", ".join(str(v) for v in param_value)
+                param_declarations.append(f'    {param_name} := []float64{{{values}}}')
             elif go_type == "[]string":
-                main_code += (
-                    f'    {name}Interface := params["{name}"].([]interface{{}})\n'
-                )
-                main_code += f"    {name} := make([]string, len({name}Interface))\n"
-                main_code += f"    for i, v := range {name}Interface {{\n"
-                main_code += f"        {name}[i] = v.(string)\n"
-                main_code += f"    }}\n"
-
-        main_code += "\n"
-
-        # Generate function call and output
+                values = ", ".join(f'"{str(v).replace("\\", "\\\\").replace('"', '\\"')}"' for v in param_value)
+                param_declarations.append(f'    {param_name} := []string{{{values}}}')
+            elif go_type == "[]bool":
+                values = ", ".join(str(v).lower() for v in param_value)
+                param_declarations.append(f'    {param_name} := []bool{{{values}}}')
+            elif go_type == "[][]int":
+                # Handle nested int slices
+                inner_slices = []
+                for inner_list in param_value:
+                    inner_values = ", ".join(str(v) for v in inner_list)
+                    inner_slices.append(f"[]int{{{inner_values}}}")
+                param_declarations.append(f'    {param_name} := [][]int{{{", ".join(inner_slices)}}}')
+            elif go_type == "interface{}":
+                # Handle interface{} type - can be any value
+                if isinstance(param_value, str):
+                    escaped_value = str(param_value).replace("\\", "\\\\").replace('"', '\\"')
+                    param_declarations.append(f'    {param_name} := interface{{}}("{escaped_value}")')
+                elif isinstance(param_value, bool):
+                    param_declarations.append(f'    {param_name} := interface{{}}{str(param_value).lower()}')
+                elif isinstance(param_value, (int, float)):
+                    param_declarations.append(f'    {param_name} := interface{{}}{param_value}')
+                else:
+                    # For complex types, use a placeholder
+                    param_declarations.append(f'    // Complex interface{{}} value for {param_name}')
+            else:
+                # For unsupported types, use a placeholder
+                param_declarations.append(f'    // Unsupported type {go_type} for {param_name}')
+        
+        # Generate main function
+        main_code = "\nfunc main() {\n"
+        
+        # Add parameter declarations
+        if param_declarations:
+            main_code += "\n".join(param_declarations) + "\n\n"
+        
+        # Generate function call and output handling
         if inplace_mode == "0":
             # Normal function call with return value
             if param_names:
-                main_code += (
-                    f"    result := {function_name}({', '.join(param_names)})\n"
-                )
+                main_code += f"    result := {function_name}({', '.join(param_names)})\n"
             else:
                 main_code += f"    result := {function_name}()\n"
-            main_code += "    encoder := json.NewEncoder(os.Stdout)\n"
-            main_code += "    encoder.Encode(result)\n"
+            main_code += self._generate_output(expected_type, "result")
         elif inplace_mode == "1":
             # In-place modification
             if param_names:
-                main_code += f"    {function_name}({', '.join('&' + p if isinstance(parameters[p], list) else p for p in param_names)})\n"
+                # For slices, pass by reference
+                args = []
+                for p in param_names:
+                    if param_types[p].startswith("List[") or param_types[p].startswith("[]"):
+                        args.append(p)  # Slices are already references in Go
+                    else:
+                        args.append("&" + p)  # Other types need address-of
+                main_code += f"    {function_name}({', '.join(args)})\n"
                 # Output the first parameter after modification
                 first_param = param_names[0]
-                main_code += "    encoder := json.NewEncoder(os.Stdout)\n"
-                main_code += f"    encoder.Encode({first_param})\n"
+                main_code += self._generate_output(param_types[first_param], first_param)
             else:
                 main_code += f"    {function_name}()\n"
                 main_code += '    fmt.Println("null")\n'
         elif inplace_mode == "2":
             # Both modify and return
             if param_names:
-                main_code += f"    result := {function_name}({', '.join('&' + p if isinstance(parameters[p], list) else p for p in param_names)})\n"
+                args = []
+                for p in param_names:
+                    if param_types[p].startswith("List[") or param_types[p].startswith("[]"):
+                        args.append(p)
+                    else:
+                        args.append("&" + p)
+                main_code += f"    result := {function_name}({', '.join(args)})\n"
             else:
                 main_code += f"    result := {function_name}()\n"
-            main_code += "    encoder := json.NewEncoder(os.Stdout)\n"
-            main_code += "    encoder.Encode(result)\n"
-
+            main_code += self._generate_output(expected_type, "result")
+        
         main_code += "}\n"
-
+        
         return code + "\n" + main_code
 
-    def execute_test(self, code: str, test_case: Dict[str, Any]) -> Dict[str, Any]:
-        """Execute test with JSON input/output."""
-        result = super().execute_test(code, test_case)
 
+    def execute_test(self, code: str, test_case: Dict[str, Any]) -> Dict[str, Any]:
+        """Execute test with embedded values."""
+        # No type inference - types must be provided
+        result = super().execute_test(code, test_case)
+    
         # Clean up JSON output if needed
         if result.get("output") and not result.get("error"):
             output = result["output"].strip()
@@ -183,5 +188,7 @@ class GoExecutor(CompiledLanguageExecutor):
                 except Exception:
                     # If it fails, use the raw output
                     result["actual"] = output
-
+    
         return result
+
+
