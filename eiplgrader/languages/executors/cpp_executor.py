@@ -23,8 +23,8 @@ class CppExecutor(CompiledLanguageExecutor):
 
         function_name = test_case.get("function_name", "foo")
         parameters = test_case.get("parameters", {})
-        parameter_types = test_case.get("parameter_types", {})
-        expected_type = test_case.get("expected_type", "int")
+        parameter_types = test_case["parameter_types"]  # Required field after validation
+        expected_type = test_case["expected_type"]  # Required field after validation
         inplace_mode = test_case.get("inplace", "0")
 
         # Ensure necessary headers are included

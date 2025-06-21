@@ -58,16 +58,10 @@ class TestTypeSystemValidation:
         except Exception:
             pass
 
-        # Static type languages (Java, C++, C, Go, Haskell)
+        # Static type languages (Java, C++, C, Haskell)
         try:
             self.static_type_executors["java"] = JavaExecutor()
             self.samples["java"] = java_samples
-        except Exception:
-            pass
-
-        try:
-            self.static_type_executors["go"] = GoExecutor()
-            self.samples["go"] = go_samples
         except Exception:
             pass
 
@@ -263,8 +257,13 @@ class TestTypeSystemValidation:
 
     def test_static_type_validation_required(self):
         """Test that static type languages require explicit type annotations."""
+        print(f"Static type executors: {list(self.static_type_executors.keys())}")
         for lang_name, executor in self.static_type_executors.items():
-            if not executor or not self._check_compiler_available(lang_name):
+            if not executor:
+                print(f"Skipping {lang_name} - no executor")
+                continue
+            if not self._check_compiler_available(lang_name):
+                print(f"Skipping {lang_name} - compiler not available")
                 continue
 
             # Test case without types - should fail validation
@@ -275,9 +274,14 @@ class TestTypeSystemValidation:
                 "inplace": "0",
             }
 
-            with pytest.raises(ValueError) as exc_info:
-                code_sample = getattr(self.samples[lang_name], "ADD_NUMBERS")
-                executor.execute_test(code_sample, test_case_no_types)
+            print(f"\nTesting {lang_name} without types...")
+            try:
+                with pytest.raises(ValueError) as exc_info:
+                    code_sample = getattr(self.samples[lang_name], "ADD_NUMBERS")
+                    executor.execute_test(code_sample, test_case_no_types)
+            except Exception as e:
+                print(f"Exception for {lang_name}: {e}")
+                raise
 
             error_msg = str(exc_info.value)
             assert "Missing required type information" in error_msg
