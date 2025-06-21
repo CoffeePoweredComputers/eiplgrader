@@ -431,19 +431,23 @@ int largeNumberOperation(int x) {
 
     def test_edge_case_unicode_strings(self):
         """Test handling of unicode strings."""
+        # Note: C++ std::string.length() counts bytes, not Unicode characters
+        # "héllo wörld" has 13 bytes due to UTF-8 encoding
         test_case = {
             "function_name": "countCharacters",
             "parameters": {"s": "héllo wörld"},
             "parameter_types": {"s": "std::string"},
-            "expected": 11,
+            "expected": 13,  # UTF-8 byte count, not character count
             "expected_type": "int",
             "inplace": "0",
         }
 
         result = self.executor.execute_test(cpp_samples.COUNT_CHARACTERS, test_case)
 
+        if not result["passed"]:
+            print(f"Test failed: {result}")
         assert result["passed"] is True
-        assert result["actual"] == 11
+        assert result["actual"] == 13
 
     def test_type_validation_comprehensive(self):
         """Test comprehensive type validation message."""
