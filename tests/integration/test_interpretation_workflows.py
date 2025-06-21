@@ -14,6 +14,14 @@ from eiplgrader.languages.executors.python_executor import PythonExecutor
 from eiplgrader.languages.executors.javascript_executor import JavaScriptExecutor
 
 
+class MockInterpretedLanguageExecutor(InterpretedLanguageExecutor):
+    """Mock executor for testing base interpretation functionality."""
+
+    def prepare_code(self, code: str, test_case: Dict[str, Any]) -> str:
+        """Mock prepare_code implementation."""
+        return code
+
+
 class TestInterpretationWorkflowBase:
     """Test base interpretation workflow functionality."""
 
@@ -31,7 +39,7 @@ class TestInterpretationWorkflowBase:
         """Test successful interpretation workflow."""
         mock_run.return_value = Mock(returncode=0, stdout='{"result": 42}', stderr="")
 
-        executor = InterpretedLanguageExecutor(
+        executor = MockInterpretedLanguageExecutor(
             interpreter_cmd=["python3"], file_ext=".py"
         )
 
@@ -66,7 +74,7 @@ class TestInterpretationWorkflowBase:
             stderr="NameError: name 'undefined_var' is not defined",
         )
 
-        executor = InterpretedLanguageExecutor(
+        executor = MockInterpretedLanguageExecutor(
             interpreter_cmd=["python3"], file_ext=".py"
         )
 
@@ -90,7 +98,7 @@ class TestInterpretationWorkflowBase:
         """Test interpretation timeout handling."""
         mock_run.side_effect = subprocess.TimeoutExpired("python3", 30)
 
-        executor = InterpretedLanguageExecutor(
+        executor = MockInterpretedLanguageExecutor(
             interpreter_cmd=["python3"], file_ext=".py"
         )
 
@@ -113,7 +121,7 @@ class TestInterpretationWorkflowBase:
         """Test interpretation with custom timeout."""
         mock_run.return_value = Mock(returncode=0, stdout="42", stderr="")
 
-        executor = InterpretedLanguageExecutor(
+        executor = MockInterpretedLanguageExecutor(
             interpreter_cmd=["python3"], file_ext=".py"
         )
 
@@ -132,7 +140,7 @@ class TestInterpretationWorkflowBase:
 
     def test_type_inference_workflow(self):
         """Test type inference in interpretation workflow."""
-        executor = InterpretedLanguageExecutor(
+        executor = MockInterpretedLanguageExecutor(
             interpreter_cmd=["python3"], file_ext=".py"
         )
 
@@ -156,7 +164,7 @@ class TestInterpretationWorkflowBase:
 
     def test_file_creation_and_execution_workflow(self):
         """Test file creation during interpretation workflow."""
-        executor = InterpretedLanguageExecutor(
+        executor = MockInterpretedLanguageExecutor(
             interpreter_cmd=["python3"], file_ext=".py"
         )
 
@@ -204,51 +212,57 @@ class TestPythonInterpretationWorkflow:
         """Test Python execution command structure."""
         try:
             executor = PythonExecutor()
-    
+
             # Test that the executor can execute simple code
-            test_case = {"parameters": {"x": 5}, "expected": 5, "function_name": "identity"}
+            test_case = {
+                "parameters": {"x": 5},
+                "expected": 5,
+                "function_name": "identity",
+            }
             code = "def identity(x):\n    return x"
             result = executor.execute_test(code, test_case)
-    
+
             # Verify the execution worked
             assert result["passed"] is True
             assert result["actual"] == 5
             assert result["expected"] == 5
-    
+
         except ImportError:
             pytest.skip("PythonExecutor not available")
         finally:
             if "executor" in locals():
                 executor.cleanup()
-
 
     def test_python_error_scenarios(self):
         """Test various Python error scenarios."""
         try:
             executor = PythonExecutor()
-    
+
             # Test syntax error
             test_case = {"parameters": {}, "expected": "", "function_name": "bad_func"}
             result = executor.execute_test("def bad_func():\n    print(", test_case)
-    
+
             assert result["passed"] is False
             assert "error" in result
             # The actual error message contains information about unclosed parentheses
             assert "never closed" in result["error"] or "SyntaxError" in result["error"]
-    
+
             # Test runtime error - function not found
-            test_case = {"parameters": {}, "expected": "", "function_name": "nonexistent"}
+            test_case = {
+                "parameters": {},
+                "expected": "",
+                "function_name": "nonexistent",
+            }
             result = executor.execute_test("def some_func():\n    pass", test_case)
-    
+
             assert result["passed"] is False
             assert "not found" in result["error"]
-    
+
         except ImportError:
             pytest.skip("PythonExecutor not available")
         finally:
             if "executor" in locals():
                 executor.cleanup()
-
 
     def test_python_type_inference_specifics(self):
         """Test Python-specific type inference."""
@@ -381,7 +395,7 @@ class TestInterpretationOutputParsing:
     @patch("subprocess.run")
     def test_json_output_parsing(self, mock_run):
         """Test parsing of JSON output from interpreters."""
-        executor = InterpretedLanguageExecutor(
+        executor = MockInterpretedLanguageExecutor(
             interpreter_cmd=["python3"], file_ext=".py"
         )
 
@@ -419,7 +433,7 @@ class TestInterpretationOutputParsing:
     @patch("subprocess.run")
     def test_numeric_output_parsing(self, mock_run):
         """Test parsing of numeric output."""
-        executor = InterpretedLanguageExecutor(
+        executor = MockInterpretedLanguageExecutor(
             interpreter_cmd=["python3"], file_ext=".py"
         )
 
@@ -431,10 +445,10 @@ class TestInterpretationOutputParsing:
                 test_case = {"parameters": {}, "expected": 42}
                 result = executor.execute_test("test", test_case)
 
-                # Output is string, expected is int - should not match
-                assert result["actual"] == "42"
+                # JSON parsing converts "42" to integer 42
+                assert result["actual"] == 42
                 assert result["expected"] == 42
-                assert result["passed"] is False
+                assert result["passed"] is True
 
                 # Test with JSON numeric output
                 mock_run.return_value = Mock(
@@ -444,8 +458,8 @@ class TestInterpretationOutputParsing:
                 test_case = {"parameters": {}, "expected": "42"}  # String expected
                 result = executor.execute_test("test", test_case)
 
-                assert result["actual"] == "42"
-                assert result["passed"] is True
+                assert result["actual"] == 42  # JSON parses "42" as integer
+                assert result["passed"] is False  # Types don't match: int vs string
 
         finally:
             executor.cleanup()
@@ -453,7 +467,7 @@ class TestInterpretationOutputParsing:
     @patch("subprocess.run")
     def test_empty_output_handling(self, mock_run):
         """Test handling of empty output."""
-        executor = InterpretedLanguageExecutor(
+        executor = MockInterpretedLanguageExecutor(
             interpreter_cmd=["python3"], file_ext=".py"
         )
 
@@ -491,7 +505,7 @@ class TestInterpretationResourceManagement:
 
     def test_temporary_file_lifecycle(self):
         """Test temporary file creation and cleanup lifecycle."""
-        executor = InterpretedLanguageExecutor(
+        executor = MockInterpretedLanguageExecutor(
             interpreter_cmd=["python3"], file_ext=".py"
         )
 
@@ -515,7 +529,7 @@ class TestInterpretationResourceManagement:
 
     def test_multiple_execution_file_reuse(self):
         """Test that multiple executions reuse the same file path."""
-        executor = InterpretedLanguageExecutor(
+        executor = MockInterpretedLanguageExecutor(
             interpreter_cmd=["python3"], file_ext=".py"
         )
 
@@ -559,7 +573,7 @@ class TestInterpretationResourceManagement:
 
         def run_interpreter(interpreter_id):
             try:
-                executor = InterpretedLanguageExecutor(
+                executor = MockInterpretedLanguageExecutor(
                     interpreter_cmd=["python3"], file_ext=".py"
                 )
 
@@ -620,7 +634,7 @@ class TestInterpretationErrorPropagation:
             "No such file or directory: 'nonexistent_interpreter'"
         )
 
-        executor = InterpretedLanguageExecutor(
+        executor = MockInterpretedLanguageExecutor(
             interpreter_cmd=["nonexistent_interpreter"], file_ext=".xyz"
         )
 
@@ -640,7 +654,7 @@ class TestInterpretationErrorPropagation:
         """Test error propagation for permission errors."""
         mock_run.side_effect = PermissionError("Permission denied")
 
-        executor = InterpretedLanguageExecutor(
+        executor = MockInterpretedLanguageExecutor(
             interpreter_cmd=["python3"], file_ext=".py"
         )
 
@@ -666,7 +680,7 @@ class TestInterpretationErrorPropagation:
             Exception("Generic exception"),
         ]
 
-        executor = InterpretedLanguageExecutor(
+        executor = MockInterpretedLanguageExecutor(
             interpreter_cmd=["python3"], file_ext=".py"
         )
 

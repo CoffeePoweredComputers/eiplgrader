@@ -36,13 +36,11 @@ class MockCompiledExecutor(CompiledLanguageExecutor):
         return code
 
 
-
 class MockInterpretedExecutor(InterpretedLanguageExecutor):
     """Mock interpreted executor for testing."""
 
     def prepare_code(self, code: str, test_case: Dict[str, Any]) -> str:
         return code
-
 
 
 class TestLanguageExecutorBase:

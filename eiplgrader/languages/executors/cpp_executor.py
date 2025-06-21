@@ -23,7 +23,9 @@ class CppExecutor(CompiledLanguageExecutor):
 
         function_name = test_case.get("function_name", "foo")
         parameters = test_case.get("parameters", {})
-        parameter_types = test_case["parameter_types"]  # Required field after validation
+        parameter_types = test_case[
+            "parameter_types"
+        ]  # Required field after validation
         expected_type = test_case["expected_type"]  # Required field after validation
         inplace_mode = test_case.get("inplace", "0")
 
@@ -132,7 +134,9 @@ class CppExecutor(CompiledLanguageExecutor):
                         elif "string" in param_type:
                             inner_str = ", ".join(f'"{v}"' for v in inner_list)
                         elif "bool" in param_type:
-                            inner_str = ", ".join("true" if v else "false" for v in inner_list)
+                            inner_str = ", ".join(
+                                "true" if v else "false" for v in inner_list
+                            )
                         else:
                             inner_str = ", ".join(str(v) for v in inner_list)
                         inner_vectors.append(f"{{{inner_str}}}")

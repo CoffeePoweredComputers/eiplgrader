@@ -55,7 +55,7 @@ class TestHaskellExecutor:  # pylint: disable=too-many-public-methods
         }
 
         result = self.executor.execute_test(haskell_samples.ADD_NUMBERS, test_case)
-        
+
         assert result["passed"] is False
         assert "Missing required type information" in result["error"]
         assert "parameter_types not provided" in result["error"]
@@ -71,7 +71,7 @@ class TestHaskellExecutor:  # pylint: disable=too-many-public-methods
         }
 
         result = self.executor.execute_test(haskell_samples.ADD_NUMBERS, test_case)
-        
+
         assert result["passed"] is False
         assert "Missing required type information" in result["error"]
         assert "expected_type not provided" in result["error"]
@@ -88,7 +88,7 @@ class TestHaskellExecutor:  # pylint: disable=too-many-public-methods
         }
 
         result = self.executor.execute_test(haskell_samples.ADD_NUMBERS, test_case)
-        
+
         assert result["passed"] is False
         assert "parameter_types['b'] not provided" in result["error"]
 
@@ -424,7 +424,7 @@ divideByZero x = x `div` 0
         }
 
         result = self.executor.execute_test(haskell_samples.ADD_NUMBERS, test_case)
-        
+
         assert result["passed"] is False
         error_message = result["error"]
         assert "Missing required type information" in error_message

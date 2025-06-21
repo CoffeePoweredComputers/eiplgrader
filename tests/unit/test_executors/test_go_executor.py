@@ -159,12 +159,11 @@ class TestGoExecutor:  # pylint: disable=too-many-public-methods
             "expected_type": "int",
             "inplace": "0",
         }
-    
+
         result = self.executor.execute_test(go_samples.SUM_EVEN_NUMBERS, test_case)
-    
+
         assert result["passed"] is True
         assert result["actual"] == 0
-
 
     def test_type_inference_string_slices(self):
         """Test type inference with string slice parameters."""
@@ -464,7 +463,6 @@ func largeNumberOperation(x int) int {
         # For now, test a simpler Go-specific feature like defer (which we can't really test)
         # or just skip this test
         pytest.skip("Multiple return values not currently supported by Go executor")
-
 
     def test_function_call_display(self):
         """Test that function call is properly formatted for display."""

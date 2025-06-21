@@ -19,7 +19,7 @@ from eiplgrader.languages.executors.haskell_executor import HaskellExecutor
 
 class MockCompiledLanguageExecutor(CompiledLanguageExecutor):
     """Concrete test implementation of CompiledLanguageExecutor."""
-    
+
     def prepare_code(self, code: str, test_case: Dict[str, Any]) -> str:
         """Simple prepare_code implementation for testing."""
         return code
@@ -562,8 +562,6 @@ class TestCompilationExecutionIntegration:
 
             finally:
                 executor.cleanup()
-
-
 
 
 class TestCompilationErrorRecovery:

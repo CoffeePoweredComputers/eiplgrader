@@ -82,8 +82,6 @@ class LanguageExecutor(ABC):
         return "unknown"
 
 
-
-
 class CompiledLanguageExecutor(LanguageExecutor):
     """Base executor for compiled languages (C, C++, Java, Go, Haskell)."""
 
@@ -193,12 +191,15 @@ class CompiledLanguageExecutor(LanguageExecutor):
 
     def cleanup(self) -> None:
         """Clean up temporary directory"""
-        if hasattr(self, 'temp_dir') and self.temp_dir and os.path.exists(self.temp_dir):
+        if (
+            hasattr(self, "temp_dir")
+            and self.temp_dir
+            and os.path.exists(self.temp_dir)
+        ):
             try:
                 shutil.rmtree(self.temp_dir)
             except (OSError, PermissionError):
                 pass  # Directory already removed or inaccessible
-
 
 
 class InterpretedLanguageExecutor(LanguageExecutor):
@@ -214,17 +215,16 @@ class InterpretedLanguageExecutor(LanguageExecutor):
         # For interpreted languages, types are optional
         if "parameter_types" not in test_case:
             test_case["parameter_types"] = {}
-        
+
         # Infer types for any missing parameter types
         for param_name, value in test_case.get("parameters", {}).items():
             if param_name not in test_case["parameter_types"]:
                 test_case["parameter_types"][param_name] = self.infer_type(value)
-    
+
         if "expected_type" not in test_case:
             test_case["expected_type"] = self.infer_type(test_case.get("expected"))
-    
-        return test_case
 
+        return test_case
 
     def execute_test(self, code: str, test_case: Dict[str, Any]) -> Dict[str, Any]:
         """Execute test with interpreter"""
@@ -289,7 +289,11 @@ class InterpretedLanguageExecutor(LanguageExecutor):
 
     def cleanup(self) -> None:
         """Clean up temporary directory"""
-        if hasattr(self, 'temp_dir') and self.temp_dir and os.path.exists(self.temp_dir):
+        if (
+            hasattr(self, "temp_dir")
+            and self.temp_dir
+            and os.path.exists(self.temp_dir)
+        ):
             try:
                 shutil.rmtree(self.temp_dir)
             except (OSError, PermissionError):
