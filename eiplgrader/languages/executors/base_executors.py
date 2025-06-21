@@ -67,14 +67,21 @@ class LanguageExecutor(ABC):
         elif isinstance(value, str):
             return "string"
         elif isinstance(value, list):
-            if value and isinstance(value[0], int):
-                return "List[int]"
-            elif value and isinstance(value[0], float):
-                return "List[double]"
-            elif value and isinstance(value[0], str):
-                return "List[string]"
+            if value:
+                # Check first element, but bool must be checked after int
+                if isinstance(value[0], bool):
+                    # In Python, bool is subclass of int, so treat as generic
+                    return "List"
+                elif isinstance(value[0], int):
+                    return "List[int]"
+                elif isinstance(value[0], float):
+                    return "List[double]"
+                elif isinstance(value[0], str):
+                    return "List[string]"
             return "List"
         return "unknown"
+
+
 
 
 class CompiledLanguageExecutor(LanguageExecutor):
@@ -151,10 +158,14 @@ class CompiledLanguageExecutor(LanguageExecutor):
                 }
 
             # Parse output
-            try:
-                actual = json.loads(result.stdout.strip())
-            except json.JSONDecodeError:
-                actual = result.stdout.strip()
+            output = result.stdout.strip()
+            if output:
+                try:
+                    actual = json.loads(output)
+                except json.JSONDecodeError:
+                    actual = output
+            else:
+                actual = ""
 
             passed = actual == test_case.get("expected")
 
@@ -182,8 +193,12 @@ class CompiledLanguageExecutor(LanguageExecutor):
 
     def cleanup(self) -> None:
         """Clean up temporary directory"""
-        if os.path.exists(self.temp_dir):
-            shutil.rmtree(self.temp_dir)
+        if hasattr(self, 'temp_dir') and self.temp_dir and os.path.exists(self.temp_dir):
+            try:
+                shutil.rmtree(self.temp_dir)
+            except (OSError, PermissionError):
+                pass  # Directory already removed or inaccessible
+
 
 
 class InterpretedLanguageExecutor(LanguageExecutor):
@@ -235,10 +250,14 @@ class InterpretedLanguageExecutor(LanguageExecutor):
                 }
 
             # Parse output
-            try:
-                actual = json.loads(result.stdout.strip())
-            except json.JSONDecodeError:
-                actual = result.stdout.strip()
+            output = result.stdout.strip()
+            if output:
+                try:
+                    actual = json.loads(output)
+                except json.JSONDecodeError:
+                    actual = output
+            else:
+                actual = ""
 
             passed = actual == test_case.get("expected")
 
@@ -266,5 +285,9 @@ class InterpretedLanguageExecutor(LanguageExecutor):
 
     def cleanup(self) -> None:
         """Clean up temporary directory"""
-        if os.path.exists(self.temp_dir):
-            shutil.rmtree(self.temp_dir)
+        if hasattr(self, 'temp_dir') and self.temp_dir and os.path.exists(self.temp_dir):
+            try:
+                shutil.rmtree(self.temp_dir)
+            except (OSError, PermissionError):
+                pass  # Directory already removed or inaccessible
+

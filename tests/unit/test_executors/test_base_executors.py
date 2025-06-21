@@ -35,8 +35,6 @@ class MockCompiledExecutor(CompiledLanguageExecutor):
     def prepare_code(self, code: str, test_case: Dict[str, Any]) -> str:
         return code
 
-    def cleanup(self) -> None:
-        pass
 
 
 class MockInterpretedExecutor(InterpretedLanguageExecutor):
@@ -45,8 +43,6 @@ class MockInterpretedExecutor(InterpretedLanguageExecutor):
     def prepare_code(self, code: str, test_case: Dict[str, Any]) -> str:
         return code
 
-    def cleanup(self) -> None:
-        pass
 
 
 class TestLanguageExecutorBase:
@@ -376,7 +372,7 @@ class TestCompiledLanguageExecutor:
         result = executor.execute_test("code", test_case)
 
         assert result["passed"] is True
-        assert result["actual"] == "15"  # String because JSON decode failed
+        assert result["actual"] == 15  # JSON successfully parses "15" as integer
 
         # Should pass JSON input
         expected_json = '{"x": 5, "y": 10}'
@@ -702,8 +698,8 @@ class TestInterpretedLanguageExecutor:
         mock_run.return_value = Mock(returncode=0, stdout="42", stderr="")
         test_case = {"parameters": {}, "expected": 42}
         result = self.executor.execute_test("code", test_case)
-        assert result["actual"] == "42"  # String because JSON decode failed
-        assert result["passed"] is False  # 42 != "42"
+        assert result["actual"] == 42  # JSON successfully parses "42" as integer
+        assert result["passed"] is True  # 42 == 42
 
 
 class TestExecutorComparison:
