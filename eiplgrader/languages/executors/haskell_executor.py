@@ -88,9 +88,11 @@ class HaskellExecutor(CompiledLanguageExecutor):
         elif param_type == "[Double]" and isinstance(value, list):
             return f"    let {name} = {value} :: [Double]\n"
         elif param_type == "[String]" and isinstance(value, list):
-            values_str = ", ".join(
-                f'"{v.replace("\\", "\\\\").replace("\"", "\\\"")}"' for v in value
-            )
+            escaped_values = []
+            for v in value:
+                escaped = v.replace("\\", "\\\\").replace('"', '\\"')
+                escaped_values.append(f'"{escaped}"')
+            values_str = ", ".join(escaped_values)
             return f"    let {name} = [{values_str}] :: [String]\n"
         else:
             return f"    let {name} = {value} :: {param_type}\n"
