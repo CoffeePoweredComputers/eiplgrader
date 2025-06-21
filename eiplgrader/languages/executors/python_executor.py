@@ -14,9 +14,10 @@ class PythonExecutor(InterpretedLanguageExecutor):
     """Executor for Python language code testing."""
 
     def __init__(self):
-        super().__init__(interpreter_cmd=["python"], file_ext=".py")
+        super().__init__(interpreter_cmd=["python3"], file_ext=".py")
         self.temp_module = None
         self.temp_files = []
+
 
     def prepare_code(self, code: str, test_case: Dict[str, Any]) -> str:
         """Prepare Python code for execution with test harness."""
