@@ -137,7 +137,7 @@ EiplGrader can generate and test code in multiple programming languages:
 For dynamic languages (Python, JavaScript, Go), test cases can use the simplified format where types are automatically inferred from values. For static languages (Java, C++, C, Haskell), explicit type annotations are required.
 
 ## Python Version
-This package supports Python 3.10, 3.11, 3.12, and 3.13.
+This package supports Python 3.13.
 
 ## Research
 This autograder has been evaluated and used in the following research:

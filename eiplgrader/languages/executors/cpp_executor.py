@@ -181,6 +181,3 @@ class CppExecutor(CompiledLanguageExecutor):
             return code
         else:
             return f"    std::cout << {var_name} << std::endl;\n"
-
-
-

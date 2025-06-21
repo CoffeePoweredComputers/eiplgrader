@@ -54,11 +54,11 @@ class TestHaskellExecutor:  # pylint: disable=too-many-public-methods
             "inplace": "0",
         }
 
-        result = self.executor.execute_test(haskell_samples.ADD_NUMBERS, test_case)
+        with pytest.raises(ValueError) as exc_info:
+            self.executor.execute_test(haskell_samples.ADD_NUMBERS, test_case)
 
-        assert result["passed"] is False
-        assert "Missing required type information" in result["error"]
-        assert "parameter_types not provided" in result["error"]
+        assert "Missing required type information" in str(exc_info.value)
+        assert "parameter_types not provided" in str(exc_info.value)
 
     def test_explicit_types_required_missing_expected_type(self):
         """Test that missing expected_type raises validation error."""
@@ -70,11 +70,11 @@ class TestHaskellExecutor:  # pylint: disable=too-many-public-methods
             "inplace": "0",
         }
 
-        result = self.executor.execute_test(haskell_samples.ADD_NUMBERS, test_case)
+        with pytest.raises(ValueError) as exc_info:
+            self.executor.execute_test(haskell_samples.ADD_NUMBERS, test_case)
 
-        assert result["passed"] is False
-        assert "Missing required type information" in result["error"]
-        assert "expected_type not provided" in result["error"]
+        assert "Missing required type information" in str(exc_info.value)
+        assert "expected_type not provided" in str(exc_info.value)
 
     def test_explicit_types_required_missing_individual_parameter_type(self):
         """Test that missing individual parameter type raises validation error."""
@@ -87,10 +87,10 @@ class TestHaskellExecutor:  # pylint: disable=too-many-public-methods
             "inplace": "0",
         }
 
-        result = self.executor.execute_test(haskell_samples.ADD_NUMBERS, test_case)
+        with pytest.raises(ValueError) as exc_info:
+            self.executor.execute_test(haskell_samples.ADD_NUMBERS, test_case)
 
-        assert result["passed"] is False
-        assert "parameter_types['b'] not provided" in result["error"]
+        assert "parameter_types['b'] not provided" in str(exc_info.value)
 
     def test_integer_types_explicit(self):
         """Test execution with explicit Int types."""
@@ -423,10 +423,10 @@ divideByZero x = x `div` 0
             "inplace": "0",
         }
 
-        result = self.executor.execute_test(haskell_samples.ADD_NUMBERS, test_case)
+        with pytest.raises(ValueError) as exc_info:
+            self.executor.execute_test(haskell_samples.ADD_NUMBERS, test_case)
 
-        assert result["passed"] is False
-        error_message = result["error"]
+        error_message = str(exc_info.value)
         assert "Missing required type information" in error_message
         assert "parameter_types not provided" in error_message
         assert "expected_type not provided" in error_message

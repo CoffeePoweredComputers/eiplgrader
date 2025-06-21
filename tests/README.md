@@ -209,7 +209,7 @@ The test suite is designed for CI/CD integration with:
 
 ### Test Environment Requirements
 
-- **Python 3.10+**: Base runtime
+- **Python 3.13+**: Base runtime
 - **Language Compilers**: gcc, g++, javac, ghc, go (for compiled language tests)
 - **Node.js**: For JavaScript executor tests
 - **Pytest**: Test runner with coverage support

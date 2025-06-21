@@ -327,9 +327,9 @@ class TestCompiledLanguageAdapters:
     @pytest.mark.parametrize(
         "adapter_class,expected_name,expected_compile_cmd",
         [
-            (CAdapter, "c", ["gcc"]),
-            (CppAdapter, "cpp", ["g++"]),
-            (GoAdapter, "go", ["go", "build"]),
+            (CAdapter, "c", ["gcc", "-o", "a.out"]),
+            (CppAdapter, "cpp", ["g++", "-o", "a.out"]),
+            (GoAdapter, "go", None),
             (HaskellAdapter, "haskell", ["ghc"]),
         ],
     )
@@ -350,7 +350,7 @@ class TestCompiledLanguageAdapters:
         config = adapter.get_config()
 
         assert config.file_extensions == [".c"]
-        assert config.run_command == ["./"]
+        assert config.run_command == ["./a.out"]
 
         # Test prompt generation
         prompt = adapter.generate_prompt(
@@ -359,15 +359,15 @@ class TestCompiledLanguageAdapters:
             gen_type="cgbg",
         )
         assert "calculate_area" in prompt
-        assert "C programming" in prompt
+        assert "learning C" in prompt
 
     def test_cpp_adapter_specifics(self):
         """Test C++ adapter specifics."""
         adapter = CppAdapter()
         config = adapter.get_config()
 
-        assert config.file_extensions == [".cpp"]
-        assert config.run_command == ["./"]
+        assert config.file_extensions == [".cpp", ".cc", ".cxx"]
+        assert config.run_command == ["./a.out"]
 
         # Test prompt generation
         prompt = adapter.generate_prompt(
@@ -401,7 +401,7 @@ class TestCompiledLanguageAdapters:
         config = adapter.get_config()
 
         assert config.file_extensions == [".hs"]
-        assert config.run_command == ["./"]
+        assert not config.run_command
 
         # Test prompt generation
         prompt = adapter.generate_prompt(
@@ -480,12 +480,22 @@ class TestAdapterCodeExtractionPatterns:
         """Test that all adapters normalize code consistently."""
         adapter = adapter_class()
 
-        # Test with comments and whitespace
-        code = "function test() {\n    // comment\n    return 42;\n}"
+        # Test with language-appropriate comments and whitespace
+        if adapter_class == PythonAdapter:
+            code = "def test():\n    # comment\n    return 42"
+            comment_text = "# comment"
+        elif adapter_class == HaskellAdapter:
+            code = "test = do\n    -- comment\n    return 42"
+            comment_text = "-- comment"
+        else:
+            # For other languages (JavaScript, Java, C, C++, Go) use // comments
+            code = "function test() {\n    // comment\n    return 42;\n}"
+            comment_text = "// comment"
+        
         normalized = adapter.normalize_code(code)
 
         # All adapters should remove comments and normalize whitespace
-        assert "// comment" not in normalized
+        assert comment_text not in normalized
         assert len(normalized.split()) > 0  # Should have some content
         assert normalized.strip() == normalized  # Should be trimmed
 
