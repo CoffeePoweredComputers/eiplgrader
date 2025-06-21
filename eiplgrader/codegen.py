@@ -174,7 +174,7 @@ class CodeGenerator:
             raise ValueError(
                 f"Segmentation is not supported for generation type '{gen_type}'."
             )
-        
+
         if not segmentation_few_shot_file:
             return {"code": code_blocks, "language": lang}
 

@@ -56,7 +56,7 @@ SINGLE_LINE_COMMENT_PATTERN = r"//.*"
 MULTI_LINE_COMMENT_PATTERN = r"/\*.*?\*/"
 
 # Whitespace normalization pattern
-EXTRA_BLANK_LINES =  r"\n\s*\n" 
+EXTRA_BLANK_LINES = r"\n\s*\n"
 
 
 class JavaAdapter(LanguageAdapter):
@@ -82,18 +82,18 @@ class JavaAdapter(LanguageAdapter):
         **kwargs,
     ) -> str:
         """Generate Java-specific prompt for LLM."""
-        
+
         prompt = DEFAULT_STUDENT_PERSONA_JAVA.strip()
-        
+
         if gen_type == "cgbg":
             prompt += "\n" + DEFAULT_CGBG_PROMPT_JAVA.format(
                 function_name=function_name, student_response=student_response
             )
-            
+
             prompt += "\n" + DEFAULT_RETURN_FORMAT_JAVA.format(
                 function_name=function_name
             )
-            
+
             return prompt
 
         elif gen_type == "redef":
@@ -103,14 +103,13 @@ class JavaAdapter(LanguageAdapter):
             assumptions = kwargs.get("assumptions", "")
 
             prompt += "\n" + DEFAULT_REDEF_PROMPT_JAVA.format(
-                function_signature=function_signature,
-                assumptions=assumptions
+                function_signature=function_signature, assumptions=assumptions
             )
-            
+
             prompt += "\n" + DEFAULT_REDEF_RETURN_FORMAT_JAVA.format(
                 function_signature=function_signature
             )
-            
+
             return prompt
 
         else:

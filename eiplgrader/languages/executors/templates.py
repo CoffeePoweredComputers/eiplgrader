@@ -692,7 +692,11 @@ def generate_haskell_param_declaration(
     try:
         if param_type == "Int":
             # Handle both int and float values that should be integers
-            int_value = int(param_value) if isinstance(param_value, (int, float)) else param_value
+            int_value = (
+                int(param_value)
+                if isinstance(param_value, (int, float))
+                else param_value
+            )
             builder.add_line(f"let {param_name} = {int_value} :: Int")
         elif param_type == "String":
             escaped_value = escape_string_literal(str(param_value))
@@ -702,26 +706,36 @@ def generate_haskell_param_declaration(
             if isinstance(param_value, bool):
                 haskell_bool = "True" if param_value else "False"
             elif isinstance(param_value, str):
-                haskell_bool = "True" if param_value.lower() in ('true', '1', 'yes') else "False"
+                haskell_bool = (
+                    "True" if param_value.lower() in ("true", "1", "yes") else "False"
+                )
             else:
                 haskell_bool = "True" if param_value else "False"
             builder.add_line(f"let {param_name} = {haskell_bool} :: Bool")
         elif param_type == "Double":
             # Ensure proper double formatting
-            double_value = float(param_value) if isinstance(param_value, (int, float, str)) else param_value
+            double_value = (
+                float(param_value)
+                if isinstance(param_value, (int, float, str))
+                else param_value
+            )
             builder.add_line(f"let {param_name} = {double_value} :: Double")
         elif param_type == "[Int]" and isinstance(param_value, list):
             # Handle list of integers with validation
             int_values = []
             for v in param_value:
-                int_values.append(str(int(v)) if isinstance(v, (int, float)) else str(v))
+                int_values.append(
+                    str(int(v)) if isinstance(v, (int, float)) else str(v)
+                )
             values = ", ".join(int_values)
             builder.add_line(f"let {param_name} = [{values}] :: [Int]")
         elif param_type == "[Double]" and isinstance(param_value, list):
             # Handle list of doubles with validation
             double_values = []
             for v in param_value:
-                double_values.append(str(float(v)) if isinstance(v, (int, float)) else str(v))
+                double_values.append(
+                    str(float(v)) if isinstance(v, (int, float)) else str(v)
+                )
             values = ", ".join(double_values)
             builder.add_line(f"let {param_name} = [{values}] :: [Double]")
         elif param_type == "[String]" and isinstance(param_value, list):
@@ -735,12 +749,21 @@ def generate_haskell_param_declaration(
             nested_lists = []
             for sublist in param_value:
                 if isinstance(sublist, list):
-                    int_values = [str(int(v)) if isinstance(v, (int, float)) else str(v) for v in sublist]
+                    int_values = [
+                        str(int(v)) if isinstance(v, (int, float)) else str(v)
+                        for v in sublist
+                    ]
                     nested_lists.append(f"[{', '.join(int_values)}]")
                 else:
                     nested_lists.append(f"[{sublist}]")
-            builder.add_line(f"let {param_name} = [{', '.join(nested_lists)}] :: [[Int]]")
-        elif param_type.startswith("(") and param_type.endswith(")") and "," in param_type:
+            builder.add_line(
+                f"let {param_name} = [{', '.join(nested_lists)}] :: [[Int]]"
+            )
+        elif (
+            param_type.startswith("(")
+            and param_type.endswith(")")
+            and "," in param_type
+        ):
             # Handle tuple types like "(Int, String)", "(Bool, Double)"
             if isinstance(param_value, (list, tuple)) and len(param_value) >= 2:
                 # Convert Python list/tuple to Haskell tuple literal
@@ -763,17 +786,18 @@ def generate_haskell_param_declaration(
 
     except (ValueError, TypeError) as e:
         # If type conversion fails, use raw value with a comment
-        builder.add_line(f"let {param_name} = {param_value} :: {param_type}  -- Warning: type conversion failed")
+        builder.add_line(
+            f"let {param_name} = {param_value} :: {param_type}  -- Warning: type conversion failed"
+        )
 
     return builder.build()
-
 
 
 def generate_haskell_output(data_type: Optional[str], value_expr: str) -> str:
     """Generate Haskell output formatting code."""
     if not data_type:
         return f"print {value_expr}"
-    
+
     # Handle specific data types with proper JSON-compatible output
     if data_type == "Bool":
         # Boolean values should output as "true"/"false" (lowercase for JSON compatibility)
@@ -782,7 +806,7 @@ def generate_haskell_output(data_type: Optional[str], value_expr: str) -> str:
         # Integer values can be printed directly
         return f"print {value_expr}"
     elif data_type == "Double":
-        # Double values can be printed directly  
+        # Double values can be printed directly
         return f"print {value_expr}"
     elif data_type == "String":
         # String values need to be JSON-quoted
@@ -810,7 +834,6 @@ def generate_haskell_output(data_type: Optional[str], value_expr: str) -> str:
     else:
         # Generic fallback for any other types
         return f"print {value_expr}"
-
 
 
 def generate_inplace_function_call(

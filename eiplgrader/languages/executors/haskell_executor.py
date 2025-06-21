@@ -80,33 +80,33 @@ class HaskellExecutor(CompiledLanguageExecutor):
         # Module header
         builder.add_line("module Main where")
         builder.add_line()
-        
+
         # Standard imports
         builder.add_line("import System.IO")
         builder.add_line("import Text.Read (readMaybe)")
-        
+
         # Check if code contains additional imports and add them
-        code_lines = code.strip().split('\n')
+        code_lines = code.strip().split("\n")
         user_imports = []
         user_code_lines = []
-        
+
         for line in code_lines:
             stripped_line = line.strip()
-            if stripped_line.startswith('import '):
+            if stripped_line.startswith("import "):
                 # Extract user imports
                 user_imports.append(line)
             elif stripped_line:  # Skip empty lines when building user code
                 user_code_lines.append(line)
-        
+
         # Add user imports if any
         if user_imports:
             for import_line in user_imports:
                 builder.add_line(import_line)
-        
+
         builder.add_line()
 
         # Add the student's code (excluding import lines)
-        clean_code = '\n'.join(user_code_lines)
+        clean_code = "\n".join(user_code_lines)
         builder.add_lines(clean_code)
         builder.add_line()
 
@@ -142,7 +142,6 @@ class HaskellExecutor(CompiledLanguageExecutor):
             builder.add_line(output_code)
 
         return builder.build()
-
 
     def compile(self, code_path: str) -> Tuple[bool, str, str]:
         """Compile Haskell code, return (success, output_path, error)"""

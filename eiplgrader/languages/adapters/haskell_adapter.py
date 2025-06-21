@@ -55,7 +55,8 @@ SINGLE_LINE_COMMENT_DELIMITER = "--"
 BLOCK_COMMENT_PATTERN = r"{-.*?-}"
 
 # Whitespace normalization pattern
-EXTRA_BLANK_LINES =  r"\n\s*\n" 
+EXTRA_BLANK_LINES = r"\n\s*\n"
+
 
 class HaskellAdapter(LanguageAdapter):
     """Haskell language adapter with 4 core methods."""
@@ -80,18 +81,18 @@ class HaskellAdapter(LanguageAdapter):
         **kwargs,
     ) -> str:
         """Generate Haskell-specific prompt for LLM."""
-        
+
         prompt = DEFAULT_STUDENT_PERSONA_HASKELL.strip()
-        
+
         if gen_type == "cgbg":
             prompt += "\n" + DEFAULT_CGBG_PROMPT_HASKELL.format(
                 function_name=function_name, student_response=student_response
             )
-            
+
             prompt += "\n" + DEFAULT_RETURN_FORMAT_HASKELL.format(
                 function_name=function_name
             )
-            
+
             return prompt
 
         elif gen_type == "redef":
@@ -99,14 +100,13 @@ class HaskellAdapter(LanguageAdapter):
             assumptions = kwargs.get("assumptions", "")
 
             prompt += "\n" + DEFAULT_REDEF_PROMPT_HASKELL.format(
-                function_signature=function_signature,
-                assumptions=assumptions
+                function_signature=function_signature, assumptions=assumptions
             )
-            
+
             prompt += "\n" + DEFAULT_REDEF_RETURN_FORMAT_HASKELL.format(
                 function_signature=function_signature
             )
-            
+
             return prompt
 
         else:

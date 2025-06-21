@@ -55,11 +55,12 @@ CODE_BLOCK_PATTERNS = [
 
 # Comment patterns
 SINGLE_LINE_COMMENT_PATTERN = r"//.*"
-SINGLE_INLINE_COMMENT_PATTERN = r"\s*//.*" 
+SINGLE_INLINE_COMMENT_PATTERN = r"\s*//.*"
 MULTI_LINE_COMMENT_PATTERN = r"/\*.*?\*/"
 
 # Whitespace normalization pattern
-EXTRA_BLANK_LINES =  r"\n\s*\n" 
+EXTRA_BLANK_LINES = r"\n\s*\n"
+
 
 class CAdapter(LanguageAdapter):
     """C language adapter with 4 core methods."""
@@ -84,18 +85,16 @@ class CAdapter(LanguageAdapter):
         **kwargs,
     ) -> str:
         """Generate C-specific prompt for LLM."""
-        
+
         prompt = DEFAULT_STUDENT_PERSONA_C.strip()
-        
+
         if gen_type == "cgbg":
             prompt += "\n" + DEFAULT_CGBG_PROMPT_C.format(
                 function_name=function_name, student_response=student_response
             )
-            
-            prompt += "\n" + DEFAULT_RETURN_FORMAT_C.format(
-                function_name=function_name
-            )
-            
+
+            prompt += "\n" + DEFAULT_RETURN_FORMAT_C.format(function_name=function_name)
+
             return prompt
 
         elif gen_type == "redef":
@@ -105,14 +104,13 @@ class CAdapter(LanguageAdapter):
             assumptions = kwargs.get("assumptions", "")
 
             prompt += "\n" + DEFAULT_REDEF_PROMPT_C.format(
-                function_signature=function_signature,
-                assumptions=assumptions
+                function_signature=function_signature, assumptions=assumptions
             )
-            
+
             prompt += "\n" + DEFAULT_REDEF_RETURN_FORMAT_C.format(
                 function_signature=function_signature
             )
-            
+
             return prompt
 
         else:
@@ -133,7 +131,7 @@ class CAdapter(LanguageAdapter):
         # Remove single-line comments
         code = re.sub(SINGLE_LINE_COMMENT_PATTERN, "", code)
 
-        # Remove lines that come inline after a comment like 
+        # Remove lines that come inline after a comment like
         code = re.sub(SINGLE_INLINE_COMMENT_PATTERN, "", code)
 
         # Remove multi-line comments
