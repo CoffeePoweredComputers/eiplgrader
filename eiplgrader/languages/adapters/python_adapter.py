@@ -3,6 +3,7 @@
 import re
 from typing import List
 from ..base import LanguageAdapter, LanguageConfig
+import ast
 
 
 DEFAULT_STUDENT_PERSONA_PYTHON = """
@@ -35,6 +36,8 @@ which has the code wrapped in markdown of a python code block:
 def {function_name}():
     pass
 ```"""
+# Whitespace normalization pattern
+EXTRA_BLANK_LINES =  r"\n\s*\n" 
 
 class PythonAdapter(LanguageAdapter):
     """Python language adapter with 4 core methods."""
@@ -107,21 +110,11 @@ class PythonAdapter(LanguageAdapter):
 
     def normalize_code(self, code: str) -> str:
         """Normalize Python code by removing comments and standardizing format."""
-        lines = []
-        for line in code.split("\n"):
-            # Remove comments (everything after #)
-            if "#" in line:
-                line = line[: line.index("#")]
-
-            # Skip empty lines and whitespace-only lines
-            stripped = line.strip()
-            if stripped:
-                lines.append(stripped)
-
-        # Join lines and normalize whitespace
-        if not lines:
-            return ""
-
-        normalized = " ".join(lines)
-        normalized = re.sub(r"\s+", " ", normalized)
-        return normalized.strip()
+        parsed_python = ast.parse(code)
+        for node in ast.walk(parsed_python):
+            if isinstance(node, ast.Expr) and isinstance(node.value, ast.Str):
+                # Remove string literals that are comments
+                if re.match(r'^\s*#', node.value.s):
+                    parsed_python.body.remove(node)
+        code_without_comments = ast.unparse(parsed_python)
+        return code_without_comments

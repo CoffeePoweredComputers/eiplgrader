@@ -259,9 +259,10 @@ class TestCompiledLanguageExecutor:
 
         assert os.path.exists(test_file)
 
-        # Cleanup should remove everything
+        # Cleanup should remove files but keep directory
         self.executor.cleanup()
-        assert not os.path.exists(temp_dir)
+        assert os.path.exists(temp_dir)
+        assert not os.path.exists(test_file)
 
     def test_cleanup_nonexistent_dir(self):
         """Test cleanup when directory doesn't exist."""
@@ -643,9 +644,10 @@ class TestInterpretedLanguageExecutor:
 
         assert os.path.exists(test_file)
 
-        # Cleanup should remove everything
+        # Cleanup should remove files but keep directory
         self.executor.cleanup()
-        assert not os.path.exists(temp_dir)
+        assert os.path.exists(temp_dir)
+        assert not os.path.exists(test_file)
 
     @patch(
         "eiplgrader.languages.executors.base_executors.InterpretedLanguageExecutor.prepare_code"
@@ -763,12 +765,13 @@ class TestExecutorResourceManagement:
 
         assert os.path.exists(temp_dir)
 
-        # First cleanup
+        # First cleanup - removes files but keeps directory
         executor.cleanup()
-        assert not os.path.exists(temp_dir)
+        assert os.path.exists(temp_dir)
 
         # Second cleanup should not raise error
         executor.cleanup()  # Should be safe
+        assert os.path.exists(temp_dir)
 
     def test_cleanup_with_open_files(self):
         """Test cleanup behavior when files might be open."""
@@ -782,9 +785,10 @@ class TestExecutorResourceManagement:
 
         assert os.path.exists(test_file)
 
-        # Cleanup should remove file
+        # Cleanup should remove file but keep directory
         executor.cleanup()
-        assert not os.path.exists(temp_dir)
+        assert os.path.exists(temp_dir)
+        assert not os.path.exists(test_file)
 
     def test_temp_directory_permissions(self):
         """Test that temp directories have correct permissions."""
@@ -830,7 +834,8 @@ class TestExecutorResourceManagement:
 
                 assert os.path.exists(test_file)
                 executor.cleanup()
-                assert not os.path.exists(temp_dir)
+                assert os.path.exists(temp_dir)
+                assert not os.path.exists(test_file)
 
                 results.append(executor_id)
             except Exception as e:

@@ -13,7 +13,7 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.13"]
-        test-category: ["type-system", "infrastructure", "edge-cases"]
+        test-category: ["unit", "integration", "edge-cases"]
 
     steps:
     - uses: actions/checkout@v4
@@ -58,7 +58,7 @@ jobs:
     
     - name: Run comprehensive test suite - ${{ matrix.test-category }}
       run: |
-        python tests/test_comprehensive_suite.py --category=${{ matrix.test-category }} --verbose
+        python tests/run_tests.py --category=${{ matrix.test-category }} --verbose
         echo "### Test Results - ${{ matrix.test-category }} 🧪" >> $GITHUB_STEP_SUMMARY
         echo "Python ${{ matrix.python-version }} - ${{ matrix.test-category }} tests completed" >> $GITHUB_STEP_SUMMARY
     
@@ -108,7 +108,7 @@ jobs:
     
     - name: Run full comprehensive test suite
       run: |
-        python tests/test_comprehensive_suite.py --full-suite
+        python tests/run_tests.py --coverage --verbose
     
     - name: Run integration tests
       run: |

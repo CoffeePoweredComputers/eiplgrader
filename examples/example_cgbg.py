@@ -29,8 +29,7 @@ if not api_key:
 print("="*80)
 print("CGBG (CODE GENERATION BASED GRADING) EXAMPLES")
 print("="*80)
-print("
-NOTE: Type annotations are optional for Python and JavaScript only!")
+print(" NOTE: Type annotations are optional for Python and JavaScript only!")
 print("      Type annotations are required for C, C++, Java, Go, and Haskell.")
 print("="*80)
 
@@ -259,9 +258,7 @@ print(f"Tests passed: {test_result.successes}/{test_result.testsRun}")
 # ============================================================================
 # Example 7: Go CGBG - String Processing (REQUIRES TYPE ANNOTATIONS)
 # ============================================================================
-print("
-
-7. Go CGBG - String Processing (REQUIRES TYPE ANNOTATIONS)")
+print("7. Go CGBG - String Processing (REQUIRES TYPE ANNOTATIONS)")
 print("-" * 50)
 print("Note: Go is statically typed and requires explicit type annotations")
 

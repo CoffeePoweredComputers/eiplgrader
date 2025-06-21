@@ -92,7 +92,7 @@ class TestPythonAdapter:
             student_response="unused",
             function_name="test_func",
             gen_type="redef",
-            function_signature="def test_func(x, y):",
+            params="x, y",
             assumptions="x and y are integers",
         )
 

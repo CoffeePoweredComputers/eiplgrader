@@ -167,11 +167,14 @@ class CodeGenerator:
         # Extract code using language adapter
         code_blocks = adapter.extract_code(raw_response)
 
+        # Normalize whitespace and remove any comments that might have leaked through
+        code_blocks = [adapter.normalize_code(code) for code in code_blocks]
+
         if gen_type != "cgbg" and segmentation_few_shot_file:
             raise ValueError(
                 f"Segmentation is not supported for generation type '{gen_type}'."
             )
-
+        
         if not segmentation_few_shot_file:
             return {"code": code_blocks, "language": lang}
 

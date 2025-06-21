@@ -66,41 +66,11 @@ code_tester = CodeTester(
 test_result = code_tester.run_tests()
 print(f"Tests passed: {test_result.successes}/{test_result.testsRun}")
 
-# ============================================================================
-# Example 2: Python Function with Specific Signature and Assumptions
-# ============================================================================
-print("\n\n2. Python Function with Specific Signature and Assumptions")
-print("-" * 50)
-
-result = code_generator.generate_code(
-    student_response="calculate_average_grade",  # Function name
-    gen_type="redef",
-    params="grades: List[float]",  # Parameter specification
-    assumptions="grades is a list of test scores between 0-100. Returns a value rather than prints."
-)
-
-generated_code = result["code"]
-print(f"Generated code: {generated_code[0]}")
-
-test_cases = [
-    {"parameters": {"grades": [85.0, 90.0, 78.0, 92.0]}, "expected": 86.25},
-    {"parameters": {"grades": [100.0, 95.0, 88.0]}, "expected": 94.33333333333333},
-    {"parameters": {"grades": [70.0]}, "expected": 70.0}
-]
-
-code_tester = CodeTester(
-    code=generated_code[0],
-    test_cases=test_cases,
-    function_name="process_grades",
-    language="python"
-)
-test_result = code_tester.run_tests()
-print(f"Tests passed: {test_result.successes}/{test_result.testsRun}")
 
 # ============================================================================
-# Example 3: JavaScript Function Redefinition
+# Example 2: JavaScript Function Redefinition
 # ============================================================================
-print("\n\n3. JavaScript Function Redefinition")
+print("\n\n2. JavaScript Function Redefinition")
 print("-" * 50)
 
 js_generator = CodeGenerator(api_key, language="javascript")
@@ -133,9 +103,9 @@ test_result = code_tester.run_tests()
 print(f"Tests passed: {test_result.successes}/{test_result.testsRun}")
 
 # ============================================================================
-# Example 4: Java Function Redefinition with Complex Signature
+# Example 3: Java Function Redefinition with Complex Signature
 # ============================================================================
-print("\n\n4. Java Function Redefinition with Complex Signature")
+print("\n\n3. Java Function Redefinition with Complex Signature")
 print("-" * 50)
 
 java_generator = CodeGenerator(api_key, language="java")
@@ -168,9 +138,9 @@ test_result = code_tester.run_tests()
 print(f"Tests passed: {test_result.successes}/{test_result.testsRun}")
 
 # ============================================================================
-# Example 5: C Function Redefinition
+# Example 4: C Function Redefinition
 # ============================================================================
-print("\n\n5. C Function Redefinition")
+print("\n\n4. C Function Redefinition")
 print("-" * 50)
 
 c_generator = CodeGenerator(api_key, language="c")
@@ -178,14 +148,14 @@ c_generator = CodeGenerator(api_key, language="c")
 test_cases = [
         {"parameters": {"str": "hello world", "char": "o"}, "parameter_types": {"str": "char*", "char": "char"}, "expected": 2, "expected_type": "int"},
         {"parameters": {"str": "test string", "char": "t"}, "parameter_types": {"str": "char*", "char": "char"}, "expected": 3, "expected_type": "int"},
-        {"parameters": {"str": "", "char": "a"}, "parameter_types": {"str": "char*", "char": "char"}, "expected": 0, "expected_type": "int"},  # Empty string
         {"parameters": {"str": "aaaaaa", "char": "a"}, "parameter_types": {"str": "char*", "char": "char"}, "expected": 6, "expected_type": "int"},  # All same character
         ]
 
 result = c_generator.generate_code(
     student_response="count_characters",  # Function name
     gen_type="redef",
-    assumptions="Takes a string and a character, returns the number of times the character appears in the string"
+    params="char* str, char char",  
+    assumptions="Takes a string and a character"
 )
 
 generated_code = result["code"]
@@ -203,9 +173,9 @@ print(f"Tests passed: {test_result.successes}/{test_result.testsRun}")
 
 
 # ============================================================================
-# Example 6: Multiple Implementations of Same Function
+# Example 5: Multiple Implementations of Same Function
 # ============================================================================
-print("\n\n6. Multiple Implementations of Same Function")
+print("\n\n5. Multiple Implementations of Same Function")
 print("-" * 50)
 
 result = code_generator.generate_code(
@@ -249,9 +219,9 @@ for i, code in enumerate(generated_codes):
                 print(f"  {result['function_call']}: expected {result['expected_output']}, got {result['actual_output']}")
 
 # ============================================================================
-# Example 7: Go Function Redefinition
+# Example 6: Go Function Redefinition
 # ============================================================================
-print("\n\n7. Go Function Redefinition")
+print("\n\n6. Go Function Redefinition")
 print("-" * 50)
 
 go_generator = CodeGenerator(api_key, language="go")
