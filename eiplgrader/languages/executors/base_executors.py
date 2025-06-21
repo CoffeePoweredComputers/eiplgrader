@@ -80,7 +80,30 @@ class LanguageExecutor(ABC):
                     return "List[string]"
             return "List"
         return "unknown"
-
+    
+    def normalize_output(self, raw_output: str, expected_type: str = None) -> Any:
+        """Override in subclasses for language-specific output normalization."""
+        output = raw_output.strip()
+        
+        # Default: try JSON, fallback to raw
+        if output:
+            try:
+                return json.loads(output)
+            except json.JSONDecodeError:
+                return output
+        else:
+            return ""
+    
+    def enhance_error_message(self, error_msg: str, stderr: str = "") -> str:
+        """Override in subclasses for language-specific error message enhancement."""
+        return error_msg
+    
+    def generate_function_call_repr(self, test_case: Dict[str, Any]) -> str:
+        """Generate standardized function call representation."""
+        function_name = test_case.get("function_name", "foo")
+        params = test_case.get("parameters", {})
+        args = list(params.values())
+        return f"{function_name}({', '.join(map(repr, args))})"
 
 class CompiledLanguageExecutor(LanguageExecutor):
     """Base executor for compiled languages (C, C++, Java, Go, Haskell)."""
@@ -119,9 +142,10 @@ class CompiledLanguageExecutor(LanguageExecutor):
         # Compile
         success, output_path, error = self.compile(code_path)
         if not success:
+            enhanced_error = self.enhance_error_message(f"Compilation failed: {error}", error)
             return {
                 "passed": False,
-                "error": f"Compilation failed: {error}",
+                "error": enhanced_error,
                 "actual": None,
                 "expected": test_case.get("expected"),
             }
@@ -148,23 +172,16 @@ class CompiledLanguageExecutor(LanguageExecutor):
                 )
 
             if result.returncode != 0:
+                enhanced_error = self.enhance_error_message(f"Runtime error: {result.stderr}", result.stderr)
                 return {
                     "passed": False,
-                    "error": f"Runtime error: {result.stderr}",
+                    "error": enhanced_error,
                     "actual": None,
                     "expected": test_case.get("expected"),
                 }
 
-            # Parse output
-            output = result.stdout.strip()
-            if output:
-                try:
-                    actual = json.loads(output)
-                except json.JSONDecodeError:
-                    actual = output
-            else:
-                actual = ""
-
+            # Use normalize_output hook for language-specific output parsing
+            actual = self.normalize_output(result.stdout, test_case.get("expected_type"))
             passed = actual == test_case.get("expected")
 
             return {
@@ -172,6 +189,7 @@ class CompiledLanguageExecutor(LanguageExecutor):
                 "actual": actual,
                 "expected": test_case.get("expected"),
                 "output": result.stdout,
+                "function_call": self.generate_function_call_repr(test_case),
             }
 
         except subprocess.TimeoutExpired:
@@ -182,12 +200,14 @@ class CompiledLanguageExecutor(LanguageExecutor):
                 "expected": test_case.get("expected"),
             }
         except Exception as e:
+            enhanced_error = self.enhance_error_message(str(e))
             return {
                 "passed": False,
-                "error": str(e),
+                "error": enhanced_error,
                 "actual": None,
                 "expected": test_case.get("expected"),
             }
+
 
     def cleanup(self) -> None:
         """Clean up temporary directory"""
@@ -246,23 +266,16 @@ class InterpretedLanguageExecutor(LanguageExecutor):
             )
 
             if result.returncode != 0:
+                enhanced_error = self.enhance_error_message(f"Runtime error: {result.stderr}", result.stderr)
                 return {
                     "passed": False,
-                    "error": f"Runtime error: {result.stderr}",
+                    "error": enhanced_error,
                     "actual": None,
                     "expected": test_case.get("expected"),
                 }
 
-            # Parse output
-            output = result.stdout.strip()
-            if output:
-                try:
-                    actual = json.loads(output)
-                except json.JSONDecodeError:
-                    actual = output
-            else:
-                actual = ""
-
+            # Use normalize_output hook for language-specific output parsing
+            actual = self.normalize_output(result.stdout, test_case.get("expected_type"))
             passed = actual == test_case.get("expected")
 
             return {
@@ -270,6 +283,7 @@ class InterpretedLanguageExecutor(LanguageExecutor):
                 "actual": actual,
                 "expected": test_case.get("expected"),
                 "output": result.stdout,
+                "function_call": self.generate_function_call_repr(test_case),
             }
 
         except subprocess.TimeoutExpired:
@@ -280,12 +294,14 @@ class InterpretedLanguageExecutor(LanguageExecutor):
                 "expected": test_case.get("expected"),
             }
         except Exception as e:
+            enhanced_error = self.enhance_error_message(str(e))
             return {
                 "passed": False,
-                "error": str(e),
+                "error": enhanced_error,
                 "actual": None,
                 "expected": test_case.get("expected"),
             }
+
 
     def cleanup(self) -> None:
         """Clean up temporary directory"""

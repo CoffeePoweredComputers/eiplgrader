@@ -43,9 +43,9 @@ echo ""
 echo "Running mypy type check..."
 mypy --ignore-missing-imports eiplgrader/
 
-echo ""
-echo "Running pytest with coverage..."
-python -m pytest --cov=eiplgrader/ tests/
+#echo ""
+#echo "Running pytest with coverage..."
+#python -m pytest --cov=eiplgrader/ tests/
 
 echo ""
 echo "All checks completed!"

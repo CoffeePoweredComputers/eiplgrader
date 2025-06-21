@@ -41,8 +41,13 @@ class CExecutor(CompiledLanguageExecutor):
             raise ValueError(error_msg)
 
         # Validate all parameters have types
+
+        if parameter_types is None:
+            print("ASAD")
+            raise ValueError("Missing required type information")
+
         for param_name in parameters:
-            if parameter_types is None or param_name not in parameter_types:
+            if param_name not in parameter_types:
                 raise ValueError(
                     f"Missing required type information:\n- parameter_types['{param_name}'] not provided"
                 )

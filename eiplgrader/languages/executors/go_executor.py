@@ -281,21 +281,37 @@ class GoExecutor(CompiledLanguageExecutor):
 
         return code + "\n" + main_code
 
-    def execute_test(self, code: str, test_case: Dict[str, Any]) -> Dict[str, Any]:
-        """Execute test with embedded values."""
-        # No type inference - types must be provided
-        result = super().execute_test(code, test_case)
+    def normalize_output(self, raw_output: str, expected_type: str = None) -> Any:
+        """Handle Go-specific output parsing."""
+        output = raw_output.strip()
+        
+        # Handle string outputs that might have extra quotes
+        if output.startswith('"') and output.endswith('"') and len(output) > 2:
+            try:
+                # Try to parse as serialized string
+                return json.loads(output)
+            except Exception:
+                # If it fails, fall back to parent normalize_output
+                pass
+        
+        # Otherwise call parent normalize_output for default behavior
+        return super().normalize_output(raw_output, expected_type)
 
-        # Clean up serialized output if needed
-        if result.get("output") and not result.get("error"):
-            output = result["output"].strip()
-            # Handle string outputs that might have extra quotes
-            if output.startswith('"') and output.endswith('"') and len(output) > 2:
-                try:
-                    # Try to parse as serialized string
-                    result["actual"] = json.loads(output)
-                except Exception:
-                    # If it fails, use the raw output
-                    result["actual"] = output
+    # def execute_test(self, code: str, test_case: Dict[str, Any]) -> Dict[str, Any]:
+    #     """Execute test with embedded values."""
+    #     # No type inference - types must be provided
+    #     result = super().execute_test(code, test_case)
 
-        return result
+    #     # Clean up serialized output if needed
+    #     if result.get("output") and not result.get("error"):
+    #         output = result["output"].strip()
+    #         # Handle string outputs that might have extra quotes
+    #         if output.startswith('"') and output.endswith('"') and len(output) > 2:
+    #             try:
+    #                 # Try to parse as serialized string
+    #                 result["actual"] = json.loads(output)
+    #             except Exception:
+    #                 # If it fails, use the raw output
+    #                 result["actual"] = output
+
+    #     return result

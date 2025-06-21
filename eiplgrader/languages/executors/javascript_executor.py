@@ -111,40 +111,23 @@ class JavaScriptExecutor(InterpretedLanguageExecutor):
 """
         return harness
 
-    def execute_test(self, code: str, test_case: Dict[str, Any]) -> Dict[str, Any]:
-        """Execute JavaScript code with test case."""
-        try:
-            # Use parent class implementation with custom error handling
-            result = super().execute_test(code, test_case)
+    # execute_test() method removed - using base class implementation
+    # Error handling moved to enhance_error_message() method
 
-            # If there was an error in stderr, check if it's a JSON error response
-            if not result["passed"] and "error" in result:
-                error_msg = result["error"]
-                if "Runtime error:" in error_msg:
-                    # Try to parse JSON error from stderr
-                    stderr_content = error_msg.replace("Runtime error:", "").strip()
-                    try:
-                        error_json = json.loads(stderr_content)
-                        if "error" in error_json:
-                            result["error"] = error_json["error"]
-                    except json.JSONDecodeError:
-                        pass
-
-            # Add function call representation
-            if "error" not in result:
-                params = test_case.get("parameters", {})
-                function_name = test_case.get("function_name", "foo")
-                args = list(params.values())
-                result["function_call"] = (
-                    f"{function_name}({', '.join(map(repr, args))})"
-                )
-
-            return result
-
-        except Exception as e:
-            return {
-                "passed": False,
-                "error": str(e),
-                "actual": None,
-                "expected": test_case.get("expected"),
-            }
+    def enhance_error_message(self, error_msg: str, stderr: str = "") -> str:
+        """Handle JavaScript-specific error parsing."""
+        # Check if "Runtime error:" is in error_msg
+        if "Runtime error:" in error_msg:
+            # Extract stderr content by removing "Runtime error:" prefix and strip whitespace
+            stderr_content = error_msg.replace("Runtime error:", "").strip()
+            
+            # Try to parse as JSON and extract the "error" field if present
+            try:
+                error_json = json.loads(stderr_content)
+                if "error" in error_json:
+                    return error_json["error"]
+            except json.JSONDecodeError:
+                pass
+        
+        # Return the original error_msg if no enhancement was possible
+        return error_msg

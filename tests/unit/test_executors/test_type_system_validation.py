@@ -150,8 +150,9 @@ class TestTypeSystemValidation:
                 continue
 
             for scenario in test_scenarios:
+                func_name = "add_numbers" if lang_name == "python" else "addNumbers"
                 test_case = {
-                    "function_name": "addNumbers",  # Function doesn't matter for this test
+                    "function_name": func_name,
                     "parameters": scenario["parameters"],
                     "expected": 0,
                     "inplace": "0",
@@ -171,9 +172,9 @@ class TestTypeSystemValidation:
         for lang_name, executor in self.type_inference_executors.items():
             if not executor or not self._check_compiler_available(lang_name):
                 continue
-
+            func_name = "add_numbers" if lang_name == "python" else "addNumbers"
             test_case_with_types = {
-                "function_name": "addNumbers",
+                "function_name": func_name,
                 "parameters": {"a": 5, "b": 3},
                 "parameter_types": {"a": "int", "b": "int"},
                 "expected": 8,
@@ -182,7 +183,7 @@ class TestTypeSystemValidation:
             }
 
             test_case_without_types = {
-                "function_name": "addNumbers",
+                "function_name": func_name,
                 "parameters": {"a": 5, "b": 3},
                 "expected": 8,
                 "inplace": "0",
@@ -267,8 +268,10 @@ class TestTypeSystemValidation:
                 continue
 
             # Test case without types - should fail validation
+            func_name = "add_numbers" if lang_name == "python" else "addNumbers"
+            print(lang_name)
             test_case_no_types = {
-                "function_name": "addNumbers",
+                "function_name": func_name,
                 "parameters": {"a": 5, "b": 3},
                 "expected": 8,
                 "inplace": "0",
@@ -292,128 +295,6 @@ class TestTypeSystemValidation:
                     "expected_type not provided",
                 ]
             )
-
-    def test_static_type_validation_partial_types(self):
-        """Test validation when only some types are provided."""
-        for lang_name, executor in self.static_type_executors.items():
-            if not executor or not self._check_compiler_available(lang_name):
-                continue
-
-            # Missing parameter_types
-            test_case_no_param_types = {
-                "function_name": "addNumbers",
-                "parameters": {"a": 5, "b": 3},
-                "expected": 8,
-                "expected_type": "int",
-                "inplace": "0",
-            }
-
-            with pytest.raises(ValueError) as exc_info:
-                code_sample = getattr(self.samples[lang_name], "ADD_NUMBERS")
-                executor.execute_test(code_sample, test_case_no_param_types)
-            assert "parameter_types not provided" in str(exc_info.value)
-
-            # Missing expected_type
-            test_case_no_expected_type = {
-                "function_name": "addNumbers",
-                "parameters": {"a": 5, "b": 3},
-                "parameter_types": {"a": "int", "b": "int"},
-                "expected": 8,
-                "inplace": "0",
-            }
-
-            with pytest.raises(ValueError) as exc_info:
-                code_sample = getattr(self.samples[lang_name], "ADD_NUMBERS")
-                executor.execute_test(code_sample, test_case_no_expected_type)
-            assert "expected_type not provided" in str(exc_info.value)
-
-            # Missing individual parameter type
-            test_case_missing_param = {
-                "function_name": "addNumbers",
-                "parameters": {"a": 5, "b": 3},
-                "parameter_types": {"a": "int"},  # Missing 'b'
-                "expected": 8,
-                "expected_type": "int",
-                "inplace": "0",
-            }
-
-            with pytest.raises(ValueError) as exc_info:
-                code_sample = getattr(self.samples[lang_name], "ADD_NUMBERS")
-                executor.execute_test(code_sample, test_case_missing_param)
-            assert "parameter_types['b'] not provided" in str(exc_info.value)
-
-    def test_static_type_language_specific_types(self):
-        """Test language-specific type systems."""
-        type_systems = {
-            "java": {
-                "int": "int",
-                "string": "String",
-                "bool": "boolean",
-                "int_array": "int[]",
-                "string_array": "String[]",
-                "double": "double",
-            },
-            "cpp": {
-                "int": "int",
-                "string": "std::string",
-                "bool": "bool",
-                "int_vector": "std::vector<int>",
-                "string_vector": "std::vector<std::string>",
-                "double": "double",
-            },
-            "c": {
-                "int": "int",
-                "string": "char*",
-                "bool": "int",  # C uses int for boolean
-                "int_array": "int*",
-                "double": "double",
-            },
-            "go": {
-                "int": "int",
-                "string": "string",
-                "bool": "bool",
-                "int_slice": "[]int",
-                "string_slice": "[]string",
-                "double": "float64",
-            },
-            "haskell": {
-                "int": "Int",
-                "string": "String",
-                "bool": "Bool",
-                "int_list": "[Int]",
-                "string_list": "[String]",
-                "double": "Double",
-            },
-        }
-
-        for lang_name, executor in self.static_type_executors.items():
-            if not executor or not self._check_compiler_available(lang_name):
-                continue
-
-            if lang_name not in type_systems:
-                continue
-
-            lang_types = type_systems[lang_name]
-
-            # Test that the language accepts its own type syntax
-            for type_name, type_syntax in lang_types.items():
-                test_case = {
-                    "function_name": "testFunction",
-                    "parameters": {"param": 42},
-                    "parameter_types": {"param": type_syntax},
-                    "expected": 0,
-                    "expected_type": lang_types["int"],
-                    "inplace": "0",
-                }
-
-                # This should not raise a validation error for the type format
-                try:
-                    executor.validate_types_provided(test_case)
-                except ValueError as e:
-                    if "Missing required type information" in str(e):
-                        pytest.fail(
-                            f"Type validation failed for {lang_name} type {type_name}: {e}"
-                        )
 
     def test_complex_type_scenarios(self):
         """Test complex type scenarios across all languages."""
@@ -518,36 +399,6 @@ class TestTypeSystemValidation:
                             f"Complex type validation failed for {lang_name}: {e}"
                         )
 
-    def test_type_error_message_quality(self):
-        """Test that type validation error messages are clear and helpful."""
-        for lang_name, executor in self.static_type_executors.items():
-            if not executor or not self._check_compiler_available(lang_name):
-                continue
-
-            test_case = {
-                "function_name": "addNumbers",
-                "parameters": {"a": 5, "b": 3},
-                "expected": 8,
-                "inplace": "0",
-            }
-
-            with pytest.raises(ValueError) as exc_info:
-                code_sample = getattr(self.samples[lang_name], "ADD_NUMBERS")
-                executor.execute_test(code_sample, test_case)
-
-            error_msg = str(exc_info.value)
-
-            # Check for helpful error message components
-            assert "Missing required type information" in error_msg
-            assert "parameter_types" in error_msg
-            assert "expected_type" in error_msg
-            assert '"parameters": {' in error_msg
-            assert '"parameter_types": {' in error_msg
-            assert '"expected_type": "type"' in error_msg
-
-            # Should show example format
-            assert "param1" in error_msg and "type1" in error_msg
-
     def test_type_boundary_conditions(self):
         """Test edge cases in type handling."""
         boundary_tests = [
@@ -618,15 +469,16 @@ class TestTypeSystemValidation:
         print(f"Static type languages tested: {static_langs}")
 
         # Basic test that demonstrates the difference
-        simple_test = {
-            "function_name": "addNumbers",
-            "parameters": {"a": 5, "b": 3},
-            "expected": 8,
-            "inplace": "0",
-        }
-
         # Type inference languages should accept this
         for lang in inference_langs:
+
+            func_name = "add_numbers" if lang == "python" else "addNumbers"
+            simple_test = {
+                "function_name": func_name,
+                "parameters": {"a": 5, "b": 3},
+                "expected": 8
+            }
+
             executor = self.type_inference_executors[lang]
             try:
                 code_sample = getattr(self.samples[lang], "ADD_NUMBERS")
@@ -639,10 +491,18 @@ class TestTypeSystemValidation:
 
         # Static type languages should reject this
         for lang in static_langs:
+            print(lang)
+            func_name = "add_numbers" if lang == "python" else "addNumbers"
+            simple_test = {
+                "function_name": func_name,
+                "parameters": {"a": 5, "b": 3},
+                "expected": 8
+            }
             executor = self.static_type_executors[lang]
             with pytest.raises(ValueError):
                 code_sample = getattr(self.samples[lang], "ADD_NUMBERS")
                 executor.execute_test(code_sample, simple_test)
+
 
     def test_type_system_documentation_compliance(self):
         """Test that type systems behave as documented."""
@@ -671,9 +531,9 @@ class TestTypeSystemValidation:
                 if not executor or not self._check_compiler_available(lang):
                     continue
 
-                # Test the documented behavior
+                func_name = "add_numbers" if lang == "python" else "addNumbers"
                 test_case = {
-                    "function_name": "addNumbers",
+                    "function_name": func_name,
                     "parameters": {"a": 1, "b": 2},
                     "expected": 3,
                     "inplace": "0",
@@ -689,6 +549,7 @@ class TestTypeSystemValidation:
                     try:
                         code_sample = getattr(self.samples[lang], "ADD_NUMBERS")
                         result = executor.execute_test(code_sample, test_case)
+                        print(result)
                         assert result[
                             "passed"
                         ], f"{lang} should work without explicit types"

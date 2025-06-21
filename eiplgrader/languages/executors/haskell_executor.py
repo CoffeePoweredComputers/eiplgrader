@@ -111,39 +111,25 @@ class HaskellExecutor(CompiledLanguageExecutor):
         else:
             return False, output_path, result.stderr.strip()
 
-    def execute_test(self, code: str, test_case: Dict[str, Any]) -> Dict[str, Any]:
-        """Execute Haskell test."""
+
+
+    def normalize_output(self, raw_output: str, expected_type: str = None) -> Any:
+        """Handle Haskell-specific output parsing."""
+        output = raw_output.strip()
+        
+        # Handle boolean output
+        if output == "true":
+            return True
+        elif output == "false":
+            return False
+        
+        # Handle string output (remove quotes)
+        if output.startswith('"') and output.endswith('"'):
+            return output[1:-1]
+        
+        # Try to parse as JSON
         try:
-            result = super().execute_test(code, test_case)
-
-            # Clean up output if needed
-            if result.get("output"):
-                output = result["output"].strip()
-
-                # Handle boolean output
-                if output == "true":
-                    result["actual"] = True
-                elif output == "false":
-                    result["actual"] = False
-                # Handle string output (remove quotes)
-                elif output.startswith('"') and output.endswith('"'):
-                    result["actual"] = output[1:-1]
-                else:
-                    # Try to parse as JSON
-                    try:
-                        result["actual"] = json.loads(output)
-                    except:
-                        result["actual"] = output
-
-                # Re-check if test passed
-                result["passed"] = result["actual"] == test_case.get("expected")
-
-            return result
-
-        except Exception as e:
-            return {
-                "passed": False,
-                "error": str(e),
-                "actual": None,
-                "expected": test_case.get("expected"),
-            }
+            return json.loads(output)
+        except json.JSONDecodeError:
+            # If JSON parsing fails, return the raw output
+            return output
