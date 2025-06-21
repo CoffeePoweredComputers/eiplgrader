@@ -24,7 +24,7 @@ class GoExecutor(CompiledLanguageExecutor):
         if go_type in ["int", "float64", "string", "bool"]:
             return f'    fmt.Println({var_name})\n'
         elif go_type in ["[]int", "[]float64", "[]string", "[]bool"] or go_type.startswith("map"):
-            # Use JSON for complex types
+            # Use encoding/json to serialize complex types
             return f"""    encoder := json.NewEncoder(os.Stdout)
         encoder.Encode({var_name})
     """
@@ -108,12 +108,12 @@ class GoExecutor(CompiledLanguageExecutor):
             # Need output for return value
             imports_needed.add("fmt")
         
-        # Check if we need json for output based on expected_type
+        # Check if we need encoding/json for output based on expected_type
         if inplace_mode != "1":  # For modes 0 and 2, check expected_type
             if expected_type in ["[]int", "[]string", "[]float64", "[]bool"] or expected_type.startswith("map"):
                 imports_needed.add("encoding/json")
                 imports_needed.add("os")
-                imports_needed.discard("fmt")  # Don't need fmt if using json
+                imports_needed.discard("fmt")  # Don't need fmt if using encoding/json
         
         # Combine with existing imports
         all_imports = sorted(existing_imports.union(imports_needed))
@@ -122,7 +122,7 @@ class GoExecutor(CompiledLanguageExecutor):
         if len(all_imports) == 1:
             import_block = f'import "{list(all_imports)[0]}"\n'
         else:
-            import_block = "import (\n"
+            import_lines = ["import ("]
             for imp in all_imports:
                 import_block += f'    "{imp}"\n'
             import_block += ")\n"
@@ -242,17 +242,16 @@ class GoExecutor(CompiledLanguageExecutor):
         # No type inference - types must be provided
         result = super().execute_test(code, test_case)
     
-        # Clean up JSON output if needed
+        # Clean up serialized output if needed
         if result.get("output") and not result.get("error"):
             output = result["output"].strip()
             # Handle string outputs that might have extra quotes
             if output.startswith('"') and output.endswith('"') and len(output) > 2:
                 try:
-                    # Try to parse as JSON string
+                    # Try to parse as serialized string
                     result["actual"] = json.loads(output)
                 except Exception:
                     # If it fails, use the raw output
                     result["actual"] = output
     
         return result
-
