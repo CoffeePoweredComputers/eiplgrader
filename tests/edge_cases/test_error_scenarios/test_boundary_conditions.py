@@ -317,7 +317,7 @@ def process_special_string(s):
             # Special characters
             {"parameters": {"s": "!@#$%^&*()"}, "expected": 10},
             # Mixed
-            {"parameters": {"s": "test\\r\\n123!@#"}, "expected": 9},
+            {"parameters": {"s": "test\r\n123!@#"}, "expected": 10},
             # Only whitespace
             {"parameters": {"s": "   \\n\\t\\r  "}, "expected": 0},
         ]

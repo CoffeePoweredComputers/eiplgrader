@@ -8,6 +8,7 @@ import json
 from copy import deepcopy
 from typing import Dict, Any
 from .base_executors import InterpretedLanguageExecutor
+from .string_utils import process_test_parameters
 
 
 class PythonExecutor(InterpretedLanguageExecutor):
@@ -28,6 +29,10 @@ class PythonExecutor(InterpretedLanguageExecutor):
         """Execute Python code with test case."""
         # Auto-infer types if not provided
         test_case = self.validate_or_infer_types(test_case)
+        
+        # Process parameters to decode escape sequences in strings
+        if "parameters" in test_case:
+            test_case["parameters"] = process_test_parameters(test_case["parameters"])
 
         try:
             # Write code to temporary file

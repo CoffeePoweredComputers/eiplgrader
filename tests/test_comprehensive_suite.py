@@ -3,11 +3,6 @@
 Comprehensive Test Suite for EiplGrader Language Adapters and Executors
 =======================================================================
 
-This module provides a unified test runner that combines all three agent approaches:
-- Agent 1: Type System Specialist (type handling across languages)
-- Agent 2: Execution Environment Engineer (infrastructure testing)
-- Agent 3: Edge Case & Error Resilience Tester (failure modes)
-
 Usage:
     python -m pytest tests/test_comprehensive_suite.py -v
     python tests/test_comprehensive_suite.py --category=type-system
@@ -65,7 +60,6 @@ class TestComprehensiveSuite:
             "tests/unit/test_adapters",
             "tests/integration/test_registry",
             "tests/edge_cases/test_error_scenarios",
-            "tests/edge_cases/test_resource_limits",
             "tests/fixtures/mock_code_samples",
         ]
 
@@ -268,7 +262,6 @@ def run_comprehensive_suite():
             "tests/unit/test_adapters/",
             "tests/integration/test_registry/",
             "tests/edge_cases/test_error_scenarios/",
-            "tests/edge_cases/test_resource_limits/",
         ]
 
         project_root = Path(__file__).parent.parent

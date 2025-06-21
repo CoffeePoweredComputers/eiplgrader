@@ -8,12 +8,11 @@ and indentation.
 """
 
 import json
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 from .string_utils import (
     CodeBuilder,
     dedent_template,
     escape_string_literal,
-    build_parameter_list,
 )
 
 
@@ -513,15 +512,68 @@ def generate_go_param_declaration(
     elif param_type == "[]bool":
         values = ", ".join(str(v).lower() for v in param_value)
         return f"    {param_name} := []bool{{{values}}}"
+    elif param_type == "[][]int":
+        # Handle nested integer slices
+        inner_slices = []
+        for inner_list in param_value:
+            if isinstance(inner_list, list):
+                inner_values = ", ".join(str(v) for v in inner_list)
+                inner_slices.append(f"[]int{{{inner_values}}}")
+            else:
+                inner_slices.append(f"[]int{{{inner_list}}}")
+        values = ", ".join(inner_slices)
+        return f"    {param_name} := [][]int{{{values}}}"
+    elif param_type == "[][]string":
+        # Handle nested string slices
+        inner_slices = []
+        for inner_list in param_value:
+            if isinstance(inner_list, list):
+                inner_values = ", ".join(
+                    f'"{str(v).replace("\\", "\\\\").replace('"', '\\"')}"' for v in inner_list
+                )
+                inner_slices.append(f"[]string{{{inner_values}}}")
+            else:
+                inner_slices.append(f'[]string{{"{str(inner_list).replace("\\", "\\\\").replace('"', '\\"')}"}}')
+        values = ", ".join(inner_slices)
+        return f"    {param_name} := [][]string{{{values}}}"
+    elif param_type == "[][]float64":
+        # Handle nested float slices
+        inner_slices = []
+        for inner_list in param_value:
+            if isinstance(inner_list, list):
+                inner_values = ", ".join(str(v) for v in inner_list)
+                inner_slices.append(f"[]float64{{{inner_values}}}")
+            else:
+                inner_slices.append(f"[]float64{{{inner_list}}}")
+        values = ", ".join(inner_slices)
+        return f"    {param_name} := [][]float64{{{values}}}"
     else:
         return f"    // Unsupported type {param_type} for {param_name}"
+
 
 
 def generate_go_output(data_type: str, value_expr: str) -> str:
     """Generate Go output formatting code."""
     builder = CodeBuilder()
 
-    if data_type in ["int", "float64", "string", "bool"]:
+    # Handle multiple return values (tuple-like types)
+    if data_type.startswith("(") and data_type.endswith(")"):
+        # Extract individual types from tuple notation like "(int, string)"
+        inner_types = data_type[1:-1].split(", ")
+        builder.add_line(f"result := {value_expr}")
+        
+        # Create a slice to hold all return values
+        builder.add_line("values := []interface{}{}")
+        for i, _ in enumerate(inner_types):
+            if i == 0:
+                builder.add_line(f"values = append(values, result)")
+            # Note: Go functions with multiple returns would need special handling
+            # For now, this handles the output formatting part
+        
+        builder.add_line("jsonBytes, _ := json.Marshal(values)")
+        builder.add_line("os.Stdout.Write(jsonBytes)")
+        builder.add_line('os.Stdout.WriteString("\\n")')
+    elif data_type in ["int", "float64", "string", "bool"]:
         builder.add_line(f'fmt.Printf("%v\\n", {value_expr})')
     elif data_type in [
         "[]int",
@@ -536,6 +588,7 @@ def generate_go_output(data_type: str, value_expr: str) -> str:
         builder.add_line(f'fmt.Printf("%v\\n", {value_expr})')
 
     return builder.build()
+
 
 
 def generate_cpp_param_declaration(
@@ -651,6 +704,22 @@ def generate_haskell_param_declaration(
             escaped_values.append(escape_string_literal(str(v)))
         values_str = ", ".join(escaped_values)
         builder.add_line(f"let {param_name} = [{values_str}] :: [String]")
+    elif param_type.startswith("(") and param_type.endswith(")") and "," in param_type:
+        # Handle tuple types like "(Int, String)"
+        if isinstance(param_value, (list, tuple)) and len(param_value) >= 2:
+            # Convert Python list/tuple to Haskell tuple literal
+            tuple_values = []
+            for v in param_value:
+                if isinstance(v, str):
+                    tuple_values.append(escape_string_literal(v))
+                elif isinstance(v, bool):
+                    tuple_values.append("True" if v else "False")
+                else:
+                    tuple_values.append(str(v))
+            tuple_literal = f"({', '.join(tuple_values)})"
+            builder.add_line(f"let {param_name} = {tuple_literal} :: {param_type}")
+        else:
+            builder.add_line(f"let {param_name} = {param_value} :: {param_type}")
     else:
         builder.add_line(f"let {param_name} = {param_value} :: {param_type}")
 
@@ -660,7 +729,11 @@ def generate_haskell_param_declaration(
 
 def generate_haskell_output(data_type: str, value_expr: str) -> str:
     """Generate Haskell output formatting code."""
-    if data_type == "Bool":
+    # Handle tuple types like "(Int, String)"
+    if data_type.startswith("(") and data_type.endswith(")") and "," in data_type:
+        # Tuple type - convert to JSON array format
+        return f'print {value_expr}'  # Haskell tuples naturally print as JSON-like format
+    elif data_type == "Bool":
         return f'putStrLn $ if {value_expr} then "true" else "false"'
     elif data_type in ["Int", "Double"]:
         return f"print {value_expr}"
@@ -670,6 +743,7 @@ def generate_haskell_output(data_type: str, value_expr: str) -> str:
         return f"print {value_expr}"
     else:
         return f"print {value_expr}"
+
 
 
 
@@ -699,11 +773,30 @@ def generate_inplace_function_call(
                 generate_java_output(expected_type, "result", is_direct_call=True)
             )
         elif language == "go":
-            if param_names:
-                builder.add_line(f"result := {function_name}({', '.join(param_names)})")
+            # Handle multiple return values
+            if expected_type and expected_type.startswith("(") and expected_type.endswith(")"):
+                # Multiple return values - need special handling
+                if param_names:
+                    inner_types = expected_type[1:-1].split(", ")
+                    result_vars = [f"result{i+1}" for i in range(len(inner_types))]
+                    builder.add_line(
+                        f"{', '.join(result_vars)} := {function_name}({', '.join(param_names)})"
+                    )
+                else:
+                    inner_types = expected_type[1:-1].split(", ")
+                    result_vars = [f"result{i+1}" for i in range(len(inner_types))]
+                    builder.add_line(f"{', '.join(result_vars)} := {function_name}()")
+                
+                # Create a slice with all return values
+                builder.add_line(f"values := []interface{{{{{', '.join(result_vars)}}}}}")
+                builder.add_lines(generate_go_output("[]interface{}", "values"))
             else:
-                builder.add_line(f"result := {function_name}()")
-            builder.add_lines(generate_go_output(expected_type, "result"))
+                # Single return value
+                if param_names:
+                    builder.add_line(f"result := {function_name}({', '.join(param_names)})")
+                else:
+                    builder.add_line(f"result := {function_name}()")
+                builder.add_lines(generate_go_output(expected_type, "result"))
         elif language == "cpp":
             if param_names:
                 builder.add_line(
@@ -862,10 +955,10 @@ OUTPUT_GENERATORS = {
 }
 
 
-def generate_javascript_parameter_setup(parameters: Dict[str, Any], parameter_types: Dict[str, str], expected_type: str) -> str:
+def generate_javascript_parameter_setup(
+    parameters: Dict[str, Any], parameter_types: Dict[str, str], expected_type: str
+) -> str:
     """Generate JavaScript parameter setup code."""
-    from .string_utils import CodeBuilder
-    import json
     
     builder = CodeBuilder()
     
@@ -900,7 +993,6 @@ def generate_javascript_parameter_setup(parameters: Dict[str, Any], parameter_ty
 
 def generate_javascript_function_check(function_name: str) -> str:
     """Generate JavaScript function existence check."""
-    from .string_utils import CodeBuilder
     
     builder = CodeBuilder()
     
@@ -919,7 +1011,6 @@ def generate_javascript_function_check(function_name: str) -> str:
 
 def generate_javascript_error_handler() -> str:
     """Generate JavaScript error handling code."""
-    from .string_utils import CodeBuilder
     
     builder = CodeBuilder()
     
@@ -937,7 +1028,6 @@ def generate_javascript_error_handler() -> str:
 
 def generate_javascript_async_wrapper(inner_code: str) -> str:
     """Generate JavaScript async wrapper function."""
-    from .string_utils import CodeBuilder
     
     builder = CodeBuilder()
     

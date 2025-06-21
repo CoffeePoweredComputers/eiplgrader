@@ -92,20 +92,50 @@ class HaskellExecutor(CompiledLanguageExecutor):
     def normalize_output(self, raw_output: str, expected_type: str = None) -> Any:
         """Handle Haskell-specific output parsing."""
         output = raw_output.strip()
-
+    
         # Handle boolean output
         if output == "true":
             return True
         elif output == "false":
             return False
-
+    
+        # Handle tuple output like "(3,2)" -> [3, 2]
+        if (expected_type and expected_type.startswith("(") and 
+            expected_type.endswith(")") and "," in expected_type):
+            # Haskell tuple format: (value1,value2,...)
+            if output.startswith("(") and output.endswith(")"):
+                # Remove parentheses and split by comma
+                inner = output[1:-1]
+                parts = []
+                # Simple split by comma (works for basic types)
+                for part in inner.split(","):
+                    part = part.strip()
+                    # Try to parse each part
+                    if part == "True":
+                        parts.append(True)
+                    elif part == "False":
+                        parts.append(False)
+                    elif part.startswith('"') and part.endswith('"'):
+                        parts.append(part[1:-1])  # Remove quotes
+                    else:
+                        try:
+                            # Try integer first, then float
+                            if '.' in part:
+                                parts.append(float(part))
+                            else:
+                                parts.append(int(part))
+                        except ValueError:
+                            parts.append(part)  # Keep as string
+                return parts
+    
         # Handle string output (remove quotes)
         if output.startswith('"') and output.endswith('"'):
             return output[1:-1]
-
+    
         # Try to parse as JSON
         try:
             return json.loads(output)
         except json.JSONDecodeError:
             # If JSON parsing fails, return the raw output
             return output
+

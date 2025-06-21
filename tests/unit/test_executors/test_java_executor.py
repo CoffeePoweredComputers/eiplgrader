@@ -494,7 +494,7 @@ public class Solution {
         # Check that parameters are embedded
         assert "int a = 42;" in prepared_code
         assert "int b = 13;" in prepared_code
-        assert "Solution.addNumbers(a, b)" in prepared_code
+        assert "solution.addNumbers(a, b)" in prepared_code
 
         # Execute to ensure it works
         result = self.executor.execute_test(java_samples.ADD_NUMBERS, test_case)

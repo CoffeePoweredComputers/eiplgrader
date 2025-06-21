@@ -33,7 +33,7 @@ echo "========== Running Linting Checks =========="
 
 echo ""
 echo "Running pylint..."
-pylint --disable=C0111,C0103,E0401,R0913,R0917,R0914,C0301  eiplgrader/ tests/
+pylint eiplgrader/ tests/
 
 echo ""
 echo "Running black code formatting check..."

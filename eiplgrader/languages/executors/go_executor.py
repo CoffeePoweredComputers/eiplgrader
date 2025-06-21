@@ -1,6 +1,7 @@
 """Go language executor for code testing."""
 
 import json
+import re
 from typing import Dict, Any
 from .base_executors import CompiledLanguageExecutor
 
@@ -13,19 +14,13 @@ class GoExecutor(CompiledLanguageExecutor):
             compile_cmd=["go", "build"],
             run_cmd=["go", "run"],
             file_ext=".go",
-            use_json_input=False,  # Go now uses embedded values
+            use_json_input=False,  # Go uses embedded values
         )
-
-    def _generate_output(self, go_type: str, var_name: str) -> str:
-        """Generate output code for a Go variable based on its type."""
-        from .templates import generate_go_output
-        
-        return generate_go_output(go_type, var_name)
 
     def prepare_code(self, code: str, test_case: Dict[str, Any]) -> str:
         """Prepare Go code for execution with embedded test values."""
         from .string_utils import CodeBuilder
-        from .templates import generate_go_param_declaration, generate_inplace_function_call
+        from .templates import generate_go_param_declaration, generate_go_output
         
         # Use common validation to ensure types are provided
         self.validate_types_provided(test_case)
@@ -41,187 +36,202 @@ class GoExecutor(CompiledLanguageExecutor):
             code = "package main\n\n" + code
 
         # Extract existing imports from code
-        import re
-
         import_pattern = r'^import\s+"([^"]+)"$'
         multi_import_pattern = r"^import\s+\(\s*([^)]+)\s*\)$"
+        
         existing_imports = set()
-
-        lines = code.split("\n")
-        new_lines = []
-        in_import_block = False
-
+        lines = code.split('\n')
+        
+        # Find existing imports
         for line in lines:
-            # Single import statement
-            single_match = re.match(import_pattern, line.strip())
+            line = line.strip()
+            single_match = re.match(import_pattern, line)
             if single_match:
                 existing_imports.add(single_match.group(1))
-                continue  # Skip this line, we'll add imports later
-
-            # Multi-import block start
-            if line.strip() == "import (" or re.match(r"^import\s+\($", line.strip()):
-                in_import_block = True
-                continue
-
-            # Inside import block
-            if in_import_block:
-                if line.strip() == ")":
-                    in_import_block = False
-                    continue
-                # Extract import from quoted string
-                import_match = re.match(r'\s*"([^"]+)"', line)
-                if import_match:
-                    existing_imports.add(import_match.group(1))
-                continue
-
-            new_lines.append(line)
-
-        code = "\n".join(new_lines)
-
-        # Get param names for import determination
-        param_names = list(params.keys())
-
-        # Add necessary imports based on what we'll use
-        imports_needed = set()
-
-        # Determine if we need fmt
-        if inplace_mode == "0":
-            # Always need output for return values
-            imports_needed.add("fmt")
-        elif inplace_mode == "1":
-            # Only need fmt if we're outputting the modified value
-            if param_names:
-                first_param_type = param_types.get(param_names[0], "")
-                if first_param_type in ["int", "float64", "string", "bool"]:
-                    imports_needed.add("fmt")
-                elif first_param_type in [
-                    "[]int",
-                    "[]float64",
-                    "[]string",
-                    "[]bool",
-                ] or first_param_type.startswith("map"):
-                    imports_needed.add("encoding/json")
-                    imports_needed.add("os")
-            else:
-                imports_needed.add("fmt")  # For null output
-        elif inplace_mode == "2":
-            # Need output for return value
-            imports_needed.add("fmt")
-
-        # Check if we need encoding/json for output based on expected_type
-        if inplace_mode != "1":  # For modes 0 and 2, check expected_type
-            if expected_type in [
-                "[]int",
-                "[]string",
-                "[]float64",
-                "[]bool",
-            ] or expected_type.startswith("map"):
-                imports_needed.add("encoding/json")
-                imports_needed.add("os")
-                imports_needed.discard("fmt")  # Don't need fmt if using encoding/json
-
-        # Combine with existing imports
-        all_imports = sorted(existing_imports.union(imports_needed))
-
-        # Build import block using CodeBuilder
-        import_builder = CodeBuilder()
-        if len(all_imports) == 1:
-            import_builder.add_line(f'import "{list(all_imports)[0]}"')
-        else:
-            import_builder.add_line("import (")
-            with import_builder.indent():
-                for imp in all_imports:
-                    import_builder.add_line(f'"{imp}"')
-            import_builder.add_line(")")
-
-        # Add imports after package declaration
-        lines = code.split("\n")
-        for i, line in enumerate(lines):
-            if line.strip().startswith("package"):
-                lines.insert(i + 1, "")
-                lines.insert(i + 2, import_builder.build())
-                break
-        code = "\n".join(lines)
-
-        # Generate parameter declarations using templates
-        param_declarations = []
-        for param_name in param_names:
-            param_value = params[param_name]
-            go_type = param_types[param_name]
             
-            # Handle special cases not covered by the template
-            if go_type == "[][]int":
-                # Handle nested int slices
-                inner_slices = []
-                for inner_list in param_value:
-                    inner_values = ", ".join(str(v) for v in inner_list)
-                    inner_slices.append(f"[]int{{{inner_values}}}")
-                param_declarations.append(
-                    f'    {param_name} := [][]int{{{", ".join(inner_slices)}}}'
-                )
-            elif go_type == "interface{}":
-                # Handle interface{} type - can be any value
-                if isinstance(param_value, str):
-                    escaped_value = (
-                        str(param_value).replace("\\", "\\\\").replace('"', '\\"')
-                    )
-                    param_declarations.append(
-                        f'    {param_name} := interface{{}}(\"{escaped_value}\")'
-                    )
-                elif isinstance(param_value, bool):
-                    param_declarations.append(
-                        f"    {param_name} := interface{{}}{str(param_value).lower()}"
-                    )
-                elif isinstance(param_value, (int, float)):
-                    param_declarations.append(
-                        f"    {param_name} := interface{{}}{param_value}"
-                    )
-                else:
-                    # For complex types, use a placeholder
-                    param_declarations.append(
-                        f"    // Complex interface{{}} value for {param_name}"
-                    )
-            else:
-                # Use the template function for standard types
-                param_declarations.append(
-                    generate_go_param_declaration(param_name, go_type, param_value)
-                )
+            multi_match = re.match(multi_import_pattern, line, re.DOTALL)
+            if multi_match:
+                import_block = multi_match.group(1)
+                for import_line in import_block.split('\n'):
+                    import_line = import_line.strip().strip('"')
+                    if import_line:
+                        existing_imports.add(import_line)
 
-        # Generate main function using CodeBuilder
-        main_builder = CodeBuilder()
-        main_builder.add_line("func main() {")
+        # Determine what imports we actually need based on what will be generated
+        required_imports = set()
         
-        # Add parameter declarations
-        with main_builder.indent():
-            if param_declarations:
-                for decl in param_declarations:
-                    # Remove the leading spaces since CodeBuilder handles indentation
-                    clean_decl = decl.strip()
-                    main_builder.add_line(clean_decl)
-                main_builder.add_line("")
+        # Determine if we need fmt based on output types
+        needs_fmt = False
+        needs_json = False
+        needs_os = False
+        
+        # Check parameter types and expected type for complex types that need JSON
+        all_types = list(param_types.values()) + [expected_type]
+        
+        for type_str in all_types:
+            # Check if this type will use JSON marshaling in the output
+            if (type_str.startswith("[]") or 
+                type_str.startswith("map") or 
+                (type_str.startswith("(") and type_str.endswith(")"))):  # tuple types
+                needs_json = True
+                needs_os = True
+                break
+        
+        # Also check if inplace mode 1 uses complex types for first parameter
+        if inplace_mode == "1" and params:
+            first_param_name = list(params.keys())[0]
+            first_param_type = param_types[first_param_name]
+            if (first_param_type.startswith("[]") or 
+                first_param_type.startswith("map") or 
+                (first_param_type.startswith("(") and first_param_type.endswith(")"))):
+                needs_json = True
+                needs_os = True
+        
+        # Determine if we need fmt - use it if we're not using JSON or for null output
+        if not needs_json or inplace_mode == "1":
+            needs_fmt = True
+        
+        if needs_fmt:
+            required_imports.add("fmt")
+        if needs_json:
+            required_imports.add("encoding/json")
+        if needs_os:
+            required_imports.add("os")
+        
+        # Build the final code with proper imports
+        builder = CodeBuilder()
+        builder.add_line("package main")
+        builder.add_line()
+        
+        # Combine existing and required imports, but avoid duplicates
+        all_imports = existing_imports | required_imports
+        
+        if all_imports:
+            builder.add_line("import (")
+            with builder.indent():
+                for imp in sorted(all_imports):
+                    builder.add_line(f'"{imp}"')
+            builder.add_line(")")
+            builder.add_line()
 
-            # Generate function call using templates
-            function_call = generate_inplace_function_call(
-                "go", function_name, param_names, inplace_mode, param_types, expected_type
-            )
-            main_builder.add_lines(function_call)
+        # Remove existing package and import declarations from code
+        code_lines = []
+        skip_mode = False
+        import_depth = 0
+        
+        for line in code.split('\n'):
+            stripped = line.strip()
+            
+            if stripped.startswith('package '):
+                continue
+            elif stripped.startswith('import ('):
+                skip_mode = True
+                import_depth = 1
+                continue
+            elif stripped.startswith('import '):
+                continue
+            elif skip_mode:
+                if '(' in stripped:
+                    import_depth += stripped.count('(')
+                if ')' in stripped:
+                    import_depth -= stripped.count(')')
+                if import_depth <= 0:
+                    skip_mode = False
+                continue
+            else:
+                code_lines.append(line)
+        
+        # Add the cleaned code
+        clean_code = '\n'.join(code_lines).strip()
+        if clean_code:
+            builder.add_line(clean_code)
+            builder.add_line()
 
-        main_builder.add_line("}")
+        # Generate main function
+        builder.add_line("func main() {")
+        with builder.indent():
+            # Generate parameter declarations with embedded values
+            param_names = list(params.keys())
+            for param_name in param_names:
+                param_value = params[param_name]
+                param_type = param_types[param_name]
+                declaration = generate_go_param_declaration(param_name, param_type, param_value)
+                builder.add_line(declaration)
+            
+            if param_names:
+                builder.add_line()
 
-        return code + "\n" + main_builder.build()
+            # Generate function call and output based on inplace mode
+            if inplace_mode == "0":
+                # Normal function call - returns a value
+                if param_names:
+                    function_call = f"{function_name}({', '.join(param_names)})"
+                else:
+                    function_call = f"{function_name}()"
+                builder.add_line(f"result := {function_call}")
+                output_code = generate_go_output(expected_type, "result")
+                builder.add_lines(output_code.rstrip().split('\n'))
+                
+            elif inplace_mode == "1":
+                # Function modifies arguments in-place
+                if param_names:
+                    function_call = f"{function_name}({', '.join(param_names)})"
+                    builder.add_line(function_call)
+                    # Output the first parameter (usually the modified one)
+                    first_param = param_names[0]
+                    first_type = param_types[first_param]
+                    output_code = generate_go_output(first_type, first_param)
+                    builder.add_lines(output_code.rstrip().split('\n'))
+                else:
+                    builder.add_line(f"{function_name}()")
+                    builder.add_line('fmt.Println("null")')
+                    
+            elif inplace_mode == "2":
+                # Function both modifies and returns
+                if param_names:
+                    function_call = f"{function_name}({', '.join(param_names)})"
+                else:
+                    function_call = f"{function_name}()"
+                builder.add_line(f"result := {function_call}")
+                output_code = generate_go_output(expected_type, "result")
+                builder.add_lines(output_code.rstrip().split('\n'))
+            else:
+                builder.add_line('fmt.Println("Error: Invalid inplace mode")')
 
-    def normalize_output(self, raw_output: str, expected_type: str = None) -> Any:
-        """Handle Go-specific output parsing."""
+        builder.add_line("}")
+        
+        return builder.build()
+
+    def normalize_output(self, raw_output: str, expected_type: str) -> Any:
+        """Normalize Go output to expected format."""
         output = raw_output.strip()
         
-        # Handle string outputs that might have extra quotes
-        if output.startswith('"') and output.endswith('"') and len(output) > 2:
+        # Try to parse as JSON first for complex types
+        if expected_type.startswith("[") or expected_type.startswith("map"):
             try:
-                # Try to parse as serialized string
                 return json.loads(output)
-            except Exception:
-                # If it fails, fall back to parent normalize_output
+            except (json.JSONDecodeError, ValueError):
+                # Fall back to string parsing if JSON fails
                 pass
         
-        # Otherwise call parent normalize_output for default behavior
-        return super().normalize_output(raw_output, expected_type)
+        # Handle basic types
+        if expected_type == "bool":
+            return output == "true"
+        elif expected_type == "int":
+            try:
+                return int(output)
+            except ValueError:
+                return output
+        elif expected_type == "float64":
+            try:
+                return float(output)
+            except ValueError:
+                return output
+        elif expected_type == "string":
+            return output
+        else:
+            # For unknown types, try JSON parsing first, then return as string
+            try:
+                return json.loads(output)
+            except (json.JSONDecodeError, ValueError):
+                return output

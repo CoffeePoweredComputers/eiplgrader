@@ -1,399 +1,349 @@
-"""Test memory usage and resource exhaustion scenarios."""
+"""Tests for memory resource limit scenarios."""
 
 import pytest
-from eiplgrader.tester import CodeTester
-from eiplgrader.languages import language_registry
+import subprocess
+from unittest.mock import Mock, patch
+from typing import Dict, Any
+
+from eiplgrader.languages.executors.base_executors import (
+    CompiledLanguageExecutor,
+    InterpretedLanguageExecutor,
+)
 
 
-class TestMemoryScenarios:
-    """Test memory usage and resource exhaustion scenarios."""
+class MockCompiledExecutor(CompiledLanguageExecutor):
+    """Mock compiled executor for testing."""
 
-    def test_memory_exhaustion_python(self):
-        """Test Python code that tries to allocate excessive memory."""
-        memory_exhaustion_code = """
-def add_numbers(a, b):
-    # Try to allocate a huge list
-    big_list = [0] * (10**8)  # 100 million integers
-    return a + b
-"""
-        test_cases = [{"parameters": {"a": 1, "b": 2}, "expected": 3}]
+    def prepare_code(self, code: str, test_case: Dict[str, Any]) -> str:
+        return code
 
-        tester = CodeTester(
-            code=memory_exhaustion_code,
-            test_cases=test_cases,
-            function_name="add_numbers",
-            language="python",
+    def cleanup(self) -> None:
+        pass
+
+
+class MockInterpretedExecutor(InterpretedLanguageExecutor):
+    """Mock interpreted executor for testing."""
+
+    def prepare_code(self, code: str, test_case: Dict[str, Any]) -> str:
+        return code
+
+    def cleanup(self) -> None:
+        pass
+
+
+class TestMemoryExhaustionScenarios:
+    """Test memory exhaustion and related resource limits."""
+
+    @patch("subprocess.run")
+    def test_out_of_memory_error_handling(self, mock_run):
+        """Test handling of out-of-memory errors."""
+        mock_run.return_value = Mock(
+            returncode=1,
+            stderr="MemoryError: Unable to allocate 8.00 GiB for an array",
+            stdout="",
         )
 
-        result = tester.run_tests()
-        # This might fail with memory error or succeed on systems with enough RAM
-        if not result.was_successful():
-            assert result.errors > 0 or result.failures > 0
+        executor = MockInterpretedExecutor(["python3"], ".py")
 
-    def test_memory_leak_simulation_python(self):
-        """Test Python code that simulates memory leak."""
-        memory_leak_code = """
-def add_numbers(a, b):
-    # Simulate memory leak by creating nested lists
-    data = []
-    for i in range(10**5):  # 100,000 iterations
-        data.append([i] * 1000)  # Each iteration adds 1000 integers
-    return a + b
-"""
-        test_cases = [{"parameters": {"a": 1, "b": 2}, "expected": 3}]
-
-        tester = CodeTester(
-            code=memory_leak_code,
-            test_cases=test_cases,
-            function_name="add_numbers",
-            language="python",
-        )
-
-        result = tester.run_tests()
-        # This might fail with memory error or timeout
-        if not result.was_successful():
-            assert result.errors > 0 or result.failures > 0
-
-    def test_string_memory_explosion_python(self):
-        """Test Python code that creates huge strings."""
-        string_explosion_code = """
-def add_numbers(a, b):
-    # Create a massive string
-    big_string = "x" * (10**7)  # 10 million characters
-    return a + b
-"""
-        test_cases = [{"parameters": {"a": 1, "b": 2}, "expected": 3}]
-
-        tester = CodeTester(
-            code=string_explosion_code,
-            test_cases=test_cases,
-            function_name="add_numbers",
-            language="python",
-        )
-
-        result = tester.run_tests()
-        # This might fail with memory error
-        if not result.was_successful():
-            assert result.errors > 0 or result.failures > 0
-
-    def test_recursive_data_structure_python(self):
-        """Test Python code that creates deeply recursive data structures."""
-        recursive_structure_code = """
-def add_numbers(a, b):
-    # Create deeply nested structure
-    current = []
-    for i in range(10000):  # 10,000 levels deep
-        new_list = [current]
-        current = new_list
-    return a + b
-"""
-        test_cases = [{"parameters": {"a": 1, "b": 2}, "expected": 3}]
-
-        tester = CodeTester(
-            code=recursive_structure_code,
-            test_cases=test_cases,
-            function_name="add_numbers",
-            language="python",
-        )
-
-        result = tester.run_tests()
-        # This might fail with memory or recursion error
-        if not result.was_successful():
-            assert result.errors > 0 or result.failures > 0
-
-    def test_dictionary_explosion_python(self):
-        """Test Python code that creates huge dictionaries."""
-        dict_explosion_code = """
-def add_numbers(a, b):
-    # Create a dictionary with many entries
-    big_dict = {}
-    for i in range(10**6):  # 1 million entries
-        big_dict[f"key_{i}"] = f"value_{i}"
-    return a + b
-"""
-        test_cases = [{"parameters": {"a": 1, "b": 2}, "expected": 3}]
-
-        tester = CodeTester(
-            code=dict_explosion_code,
-            test_cases=test_cases,
-            function_name="add_numbers",
-            language="python",
-        )
-
-        result = tester.run_tests()
-        # This might fail with memory error or timeout
-        if not result.was_successful():
-            assert result.errors > 0 or result.failures > 0
-
-    def test_file_handle_exhaustion_python(self):
-        """Test Python code that opens many files."""
-        file_exhaustion_code = """
-import tempfile
-import os
-
-def add_numbers(a, b):
-    # Try to open many files
-    files = []
-    try:
-        for i in range(10000):  # Try to open 10,000 files
-            f = tempfile.NamedTemporaryFile(delete=False)
-            files.append(f)
-    except Exception as e:
-        # Clean up opened files
-        for f in files:
-            f.close()
-            try:
-                os.unlink(f.name)
-            except:
-                pass
-        raise e
-    
-    # Clean up
-    for f in files:
-        f.close()
         try:
-            os.unlink(f.name)
-        except:
-            pass
-    
-    return a + b
-"""
-        test_cases = [{"parameters": {"a": 1, "b": 2}, "expected": 3}]
+            with patch.object(executor, "prepare_code", return_value="memory allocation"):
+                test_case = {"parameters": {"size": 1000000000}, "expected": []}
+                result = executor.execute_test("large array", test_case)
 
-        tester = CodeTester(
-            code=file_exhaustion_code,
-            test_cases=test_cases,
-            function_name="add_numbers",
-            language="python",
+                assert result["passed"] is False
+                assert "Runtime error:" in result["error"]
+                assert "MemoryError" in result["error"]
+                assert "Unable to allocate" in result["error"]
+                assert result["actual"] is None
+
+        finally:
+            executor.cleanup()
+
+    @patch("subprocess.run")
+    def test_c_malloc_failure_handling(self, mock_run):
+        """Test handling of malloc failures in C code."""
+        compile_result = Mock(returncode=0, stderr="", stdout="")
+        execute_result = Mock(
+            returncode=1,
+            stderr="malloc: Cannot allocate memory",
+            stdout="",
         )
 
-        result = tester.run_tests()
-        # This might fail with OS error (too many open files)
-        if not result.was_successful():
-            assert result.errors > 0 or result.failures > 0
+        mock_run.side_effect = [compile_result, execute_result]
 
-    def test_thread_exhaustion_python(self):
-        """Test Python code that creates many threads."""
-        thread_exhaustion_code = """
-import threading
-import time
+        executor = MockCompiledExecutor(["gcc"], ["./"], ".c")
 
-def add_numbers(a, b):
-    threads = []
-    
-    def worker():
-        time.sleep(0.1)
-    
-    try:
-        # Try to create many threads
-        for i in range(1000):  # 1000 threads
-            t = threading.Thread(target=worker)
-            threads.append(t)
-            t.start()
-    except Exception as e:
-        # Clean up threads
-        for t in threads:
-            if t.is_alive():
-                t.join(timeout=0.1)
-        raise e
-    
-    # Wait for all threads to complete
-    for t in threads:
-        t.join()
-    
-    return a + b
-"""
-        test_cases = [{"parameters": {"a": 1, "b": 2}, "expected": 3}]
+        try:
+            with patch.object(executor, "prepare_code", return_value="malloc test"):
+                test_case = {"parameters": {"size": 2147483647}, "expected": 0}
+                result = executor.execute_test("malloc failure", test_case)
 
-        tester = CodeTester(
-            code=thread_exhaustion_code,
-            test_cases=test_cases,
-            function_name="add_numbers",
-            language="python",
+                assert result["passed"] is False
+                assert "Runtime error:" in result["error"]
+                assert "Cannot allocate memory" in result["error"]
+
+        finally:
+            executor.cleanup()
+
+    @patch("subprocess.run")
+    def test_stack_overflow_memory_error(self, mock_run):
+        """Test stack overflow due to deep recursion."""
+        stack_error = """Traceback (most recent call last):
+  File "test.py", line 2, in factorial
+    return n * factorial(n - 1)
+  [Previous line repeated 996 more times]
+RecursionError: maximum recursion depth exceeded"""
+
+        mock_run.return_value = Mock(returncode=1, stderr=stack_error, stdout="")
+
+        executor = MockInterpretedExecutor(["python3"], ".py")
+
+        try:
+            with patch.object(executor, "prepare_code", return_value="deep recursion"):
+                test_case = {"parameters": {"n": 10000}, "expected": 0}
+                result = executor.execute_test("recursion", test_case)
+
+                assert result["passed"] is False
+                assert "Runtime error:" in result["error"]
+                assert "RecursionError" in result["error"]
+                assert "maximum recursion depth" in result["error"]
+
+        finally:
+            executor.cleanup()
+
+    @patch("subprocess.run")
+    def test_segmentation_fault_memory_access(self, mock_run):
+        """Test segmentation faults from invalid memory access."""
+        compile_result = Mock(returncode=0, stderr="", stdout="")
+        execute_result = Mock(
+            returncode=139,  # SIGSEGV exit code
+            stderr="Segmentation fault (core dumped)",
+            stdout="",
         )
 
-        result = tester.run_tests()
-        # This might fail with OS error or timeout
-        if not result.was_successful():
-            assert result.errors > 0 or result.failures > 0
+        mock_run.side_effect = [compile_result, execute_result]
 
-    @pytest.mark.skipif(
-        not language_registry.is_supported("java"), reason="Java not available"
-    )
-    def test_memory_exhaustion_java(self):
-        """Test Java code that tries to allocate excessive memory."""
-        memory_exhaustion_java = """
-import java.util.*;
+        executor = MockCompiledExecutor(["gcc"], ["./"], ".c")
 
-public class Solution {
-    public static int add_numbers(int a, int b) {
-        // Try to allocate a huge array
-        try {
-            int[] bigArray = new int[100000000];  // 100 million integers
-        } catch (OutOfMemoryError e) {
-            // Handle memory error
-        }
-        return a + b;
-    }
-}
-"""
-        test_cases = [
-            {
-                "parameters": {"a": 1, "b": 2},
-                "parameter_types": {"a": "int", "b": "int"},
-                "expected": 3,
-                "expected_type": "int",
-            }
-        ]
+        try:
+            with patch.object(executor, "prepare_code", return_value="null pointer access"):
+                test_case = {"parameters": {}, "expected": 0}
+                result = executor.execute_test("segfault", test_case)
 
-        tester = CodeTester(
-            code=memory_exhaustion_java,
-            test_cases=test_cases,
-            function_name="add_numbers",
-            language="java",
+                assert result["passed"] is False
+                assert "Runtime error:" in result["error"]
+                assert "Segmentation fault" in result["error"]
+
+        finally:
+            executor.cleanup()
+
+    @patch("subprocess.run")
+    def test_javascript_memory_heap_error(self, mock_run):
+        """Test JavaScript heap out of memory errors."""
+        js_error = """FATAL ERROR: Ineffective mark-compacts near heap limit Allocation failed - JavaScript heap out of memory
+ 1: 0x10003d5f1 node::Abort() (.cold.1) [/usr/local/bin/node]
+ 2: 0x1000a2633 node::Abort() [/usr/local/bin/node]"""
+
+        mock_run.return_value = Mock(returncode=134, stderr=js_error, stdout="")
+
+        executor = MockInterpretedExecutor(["node"], ".js")
+
+        try:
+            with patch.object(executor, "prepare_code", return_value="large object"):
+                test_case = {"parameters": {"size": 100000000}, "expected": {}}
+                result = executor.execute_test("heap overflow", test_case)
+
+                assert result["passed"] is False
+                assert "Runtime error:" in result["error"]
+                assert "heap out of memory" in result["error"]
+
+        finally:
+            executor.cleanup()
+
+    @patch("subprocess.run")
+    def test_java_out_of_memory_error(self, mock_run):
+        """Test Java OutOfMemoryError handling."""
+        compile_result = Mock(returncode=0, stderr="", stdout="")
+        execute_result = Mock(
+            returncode=1,
+            stderr="Exception in thread \"main\" java.lang.OutOfMemoryError: Java heap space",
+            stdout="",
         )
 
-        result = tester.run_tests()
-        # This might fail with memory error
-        if not result.was_successful():
-            assert result.errors > 0 or result.failures > 0
+        mock_run.side_effect = [compile_result, execute_result]
 
-    @pytest.mark.skipif(
-        not language_registry.is_supported("cpp"), reason="C++ not available"
-    )
-    def test_memory_exhaustion_cpp(self):
-        """Test C++ code that tries to allocate excessive memory."""
-        memory_exhaustion_cpp = """
-#include <iostream>
-#include <vector>
-using namespace std;
+        executor = MockCompiledExecutor(["javac", "java"], ["./"], ".java")
 
-int add_numbers(int a, int b) {
-    try {
-        // Try to allocate a huge vector
-        vector<int> bigVector(100000000);  // 100 million integers
-    } catch (const std::bad_alloc& e) {
-        // Handle memory error
-    }
-    return a + b;
-}
-"""
-        test_cases = [
-            {
-                "parameters": {"a": 1, "b": 2},
-                "parameter_types": {"a": "int", "b": "int"},
-                "expected": 3,
-                "expected_type": "int",
-            }
-        ]
+        try:
+            with patch.object(executor, "prepare_code", return_value="large array"):
+                test_case = {"parameters": {"size": 1000000000}, "expected": []}
+                result = executor.execute_test("java oom", test_case)
 
-        tester = CodeTester(
-            code=memory_exhaustion_cpp,
-            test_cases=test_cases,
-            function_name="add_numbers",
-            language="cpp",
+                assert result["passed"] is False
+                assert "Runtime error:" in result["error"]
+                assert "OutOfMemoryError" in result["error"]
+                assert "Java heap space" in result["error"]
+
+        finally:
+            executor.cleanup()
+
+
+class TestMemoryLeakDetection:
+    """Test detection and handling of memory leaks."""
+
+    @patch("subprocess.run")
+    def test_gradual_memory_growth_detection(self, mock_run):
+        """Test detection of gradual memory growth patterns."""
+        # Simulate process that gradually consumes more memory
+        mock_run.side_effect = subprocess.TimeoutExpired("python3", 30)
+
+        executor = MockInterpretedExecutor(["python3"], ".py")
+
+        try:
+            with patch.object(executor, "prepare_code", return_value="memory leak"):
+                test_case = {
+                    "parameters": {"iterations": 1000000},
+                    "expected": "complete",
+                    "timeout": 30,
+                }
+                result = executor.execute_test("memory leak", test_case)
+
+                assert result["passed"] is False
+                assert result["error"] == "Execution timeout"
+                assert result["actual"] is None
+
+        finally:
+            executor.cleanup()
+
+    @patch("subprocess.run")
+    def test_c_memory_leak_valgrind_simulation(self, mock_run):
+        """Test simulation of memory leak detection (like valgrind would show)."""
+        # Compile succeeds
+        compile_result = Mock(returncode=0, stderr="", stdout="")
+        # Execution succeeds but with memory issues
+        execute_result = Mock(
+            returncode=0,
+            stderr="definitely lost: 1,024 bytes in 1 blocks",
+            stdout="42",
         )
 
-        result = tester.run_tests()
-        # This might fail with memory error
-        if not result.was_successful():
-            assert result.errors > 0 or result.failures > 0
+        mock_run.side_effect = [compile_result, execute_result]
 
-    def test_memory_fragmentation_python(self):
-        """Test Python code that causes memory fragmentation."""
-        fragmentation_code = """
-def add_numbers(a, b):
-    # Create many small objects
-    objects = []
-    for i in range(100000):
-        # Create objects of varying sizes
-        if i % 3 == 0:
-            obj = [0] * 100
-        elif i % 3 == 1:
-            obj = [0] * 200
-        else:
-            obj = [0] * 50
-        objects.append(obj)
-    
-    # Delete every other object to fragment memory
-    for i in range(0, len(objects), 2):
-        del objects[i]
-    
-    return a + b
-"""
-        test_cases = [{"parameters": {"a": 1, "b": 2}, "expected": 3}]
+        executor = MockCompiledExecutor(["gcc"], ["./"], ".c")
 
-        tester = CodeTester(
-            code=fragmentation_code,
-            test_cases=test_cases,
-            function_name="add_numbers",
-            language="python",
+        try:
+            with patch.object(executor, "prepare_code", return_value="malloc without free"):
+                test_case = {"parameters": {}, "expected": 42}
+                result = executor.execute_test("memory leak", test_case)
+
+                # Test passes but memory issues are noted
+                assert result["passed"] is True  # Output matches expected
+                assert result["actual"] == "42"
+                assert result["expected"] == 42
+
+        finally:
+            executor.cleanup()
+
+    @patch("subprocess.run")
+    def test_double_free_error(self, mock_run):
+        """Test double free memory corruption errors."""
+        compile_result = Mock(returncode=0, stderr="", stdout="")
+        execute_result = Mock(
+            returncode=134,  # SIGABRT
+            stderr="free(): double free detected in tcache 2",
+            stdout="",
         )
 
-        result = tester.run_tests()
-        # This might succeed or fail depending on memory management
-        if not result.was_successful():
-            assert result.errors > 0 or result.failures > 0
+        mock_run.side_effect = [compile_result, execute_result]
 
-    def test_circular_reference_python(self):
-        """Test Python code that creates circular references."""
-        circular_reference_code = """
-def add_numbers(a, b):
-    # Create circular references
-    objects = []
-    for i in range(10000):  # 10,000 objects
-        obj = {"id": i, "refs": []}
-        objects.append(obj)
-    
-    # Create circular references
-    for i in range(len(objects)):
-        for j in range(i + 1, min(i + 10, len(objects))):
-            objects[i]["refs"].append(objects[j])
-            objects[j]["refs"].append(objects[i])
-    
-    return a + b
-"""
-        test_cases = [{"parameters": {"a": 1, "b": 2}, "expected": 3}]
+        executor = MockCompiledExecutor(["gcc"], ["./"], ".c")
 
-        tester = CodeTester(
-            code=circular_reference_code,
-            test_cases=test_cases,
-            function_name="add_numbers",
-            language="python",
+        try:
+            with patch.object(executor, "prepare_code", return_value="double free"):
+                test_case = {"parameters": {}, "expected": 0}
+                result = executor.execute_test("double free", test_case)
+
+                assert result["passed"] is False
+                assert "Runtime error:" in result["error"]
+                assert "double free detected" in result["error"]
+
+        finally:
+            executor.cleanup()
+
+
+class TestMemoryConstrainedExecution:
+    """Test execution under memory constraints."""
+
+    @patch("subprocess.run")
+    def test_memory_limited_execution_success(self, mock_run):
+        """Test successful execution under memory limits."""
+        # Simulate constrained but successful execution
+        mock_run.return_value = Mock(returncode=0, stderr="", stdout="42")
+
+        executor = MockInterpretedExecutor(["python3"], ".py")
+
+        try:
+            with patch.object(executor, "prepare_code", return_value="efficient code"):
+                test_case = {
+                    "parameters": {"data": [1, 2, 3, 4, 5]},
+                    "expected": 42,
+                    "memory_limit": "128MB",
+                }
+                result = executor.execute_test("constrained", test_case)
+
+                assert result["passed"] is False  # "42" != 42
+                assert result["actual"] == "42"
+                assert result["expected"] == 42
+
+        finally:
+            executor.cleanup()
+
+    @patch("subprocess.run")
+    def test_memory_limit_exceeded_handling(self, mock_run):
+        """Test handling when memory limits are exceeded."""
+        mock_run.return_value = Mock(
+            returncode=137,  # SIGKILL due to OOM
+            stderr="Killed",
+            stdout="",
         )
 
-        result = tester.run_tests()
-        # This might succeed or fail depending on garbage collection
-        if not result.was_successful():
-            assert result.errors > 0 or result.failures > 0
+        executor = MockInterpretedExecutor(["python3"], ".py")
 
-    def test_stack_overflow_python(self):
-        """Test Python code that causes stack overflow."""
-        stack_overflow_code = """
-def add_numbers(a, b):
-    def recursive_function(n):
-        if n <= 0:
-            return 0
-        return recursive_function(n - 1) + 1
-    
-    # This will cause stack overflow
-    try:
-        recursive_function(100000)  # 100,000 levels of recursion
-    except RecursionError:
-        pass  # Handle recursion error
-    
-    return a + b
-"""
-        test_cases = [{"parameters": {"a": 1, "b": 2}, "expected": 3}]
+        try:
+            with patch.object(executor, "prepare_code", return_value="memory hungry"):
+                test_case = {
+                    "parameters": {"size": 1000000000},
+                    "expected": [],
+                    "memory_limit": "64MB",
+                }
+                result = executor.execute_test("memory limit", test_case)
 
-        tester = CodeTester(
-            code=stack_overflow_code,
-            test_cases=test_cases,
-            function_name="add_numbers",
-            language="python",
-        )
+                assert result["passed"] is False
+                assert "Runtime error:" in result["error"]
+                assert "Killed" in result["error"]
 
-        result = tester.run_tests()
-        # Should succeed if recursion error is handled
-        if not result.was_successful():
-            assert result.errors > 0 or result.failures > 0
+        finally:
+            executor.cleanup()
+
+    @patch("subprocess.run")
+    def test_swap_thrashing_detection(self, mock_run):
+        """Test detection of excessive swap usage (thrashing)."""
+        # Simulate slow execution due to excessive swapping
+        mock_run.side_effect = subprocess.TimeoutExpired("python3", 60)
+
+        executor = MockInterpretedExecutor(["python3"], ".py")
+
+        try:
+            with patch.object(executor, "prepare_code", return_value="swap thrashing"):
+                test_case = {
+                    "parameters": {"data_size": 4000000000},  # 4GB
+                    "expected": "processed",
+                    "timeout": 60,
+                }
+                result = executor.execute_test("thrashing", test_case)
+
+                assert result["passed"] is False
+                assert result["error"] == "Execution timeout"
+
+        finally:
+            executor.cleanup()

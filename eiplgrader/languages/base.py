@@ -2,10 +2,7 @@
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import List, Optional, Dict, Any, Union
-import subprocess
-import tempfile
-import os
+from typing import List, Optional
 
 
 @dataclass
@@ -26,7 +23,7 @@ class LanguageAdapter(ABC):
     @abstractmethod
     def get_config(self) -> LanguageConfig:
         """Return language configuration."""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def generate_prompt(
@@ -38,14 +35,14 @@ class LanguageAdapter(ABC):
         **kwargs,
     ) -> str:
         """Generate language-specific prompt for LLM."""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def extract_code(self, llm_response: str) -> List[str]:
         """Extract code blocks from LLM response."""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def normalize_code(self, code: str) -> str:
         """Normalize code by removing comments and standardizing format."""
-        pass
+        raise NotImplementedError

@@ -3,7 +3,7 @@
 import json
 import os
 import subprocess
-import tempfile
+
 from typing import Dict, Any, Tuple
 from ..executors.base_executors import CompiledLanguageExecutor
 
@@ -22,7 +22,7 @@ class JavaExecutor(CompiledLanguageExecutor):
     def prepare_code(self, code: str, test_case: Dict[str, Any]) -> str:
         """Prepare Java code for execution with test harness."""
         from .string_utils import CodeBuilder
-        from .templates import generate_java_param_declaration, generate_java_output
+        from .templates import generate_java_param_declaration
         
         # Use common validation
         self.validate_types_provided(test_case)
@@ -126,7 +126,9 @@ class JavaExecutor(CompiledLanguageExecutor):
         
         if inplace_mode == "0":
             # Normal function call - returns a value
-            function_call = f"Solution.{function_name}({', '.join(param_names)})"
+            # Create Solution instance and call method
+            builder.add_line("Solution solution = new Solution();")
+            function_call = f"solution.{function_name}({', '.join(param_names)})"
             if expected_type in ["int", "double", "boolean", "String"]:
                 builder.add_line(f"{expected_type} result = {function_call};")
                 output_code = generate_java_output(expected_type, "result")
@@ -138,30 +140,33 @@ class JavaExecutor(CompiledLanguageExecutor):
         elif inplace_mode == "1":
             # In-place modification (for arrays/lists)
             if param_names:
+                builder.add_line("Solution solution = new Solution();")
                 first_param = param_names[0]
                 other_params = ", ".join(param_names[1:]) if len(param_names) > 1 else ""
                 if other_params:
-                    function_call = f"Solution.{function_name}({first_param}, {other_params})"
+                    function_call = f"solution.{function_name}({first_param}, {other_params})"
                 else:
-                    function_call = f"Solution.{function_name}({first_param})"
+                    function_call = f"solution.{function_name}({first_param})"
                 builder.add_line(f"{function_call};")
                 first_type = param_types[first_param]
                 output_code = generate_java_output(first_type, first_param)
                 builder.add_lines(output_code)
             else:
-                function_call = f"Solution.{function_name}()"
+                builder.add_line("Solution solution = new Solution();")
+                function_call = f"solution.{function_name}()"
                 builder.add_line(f'{function_call};')
                 builder.add_line('System.out.println("null");')
                 
         elif inplace_mode == "2":
             # Both modifies and returns
             if param_names:
+                builder.add_line("Solution solution = new Solution();")
                 first_param = param_names[0]
                 other_params = ", ".join(param_names[1:]) if len(param_names) > 1 else ""
                 if other_params:
-                    function_call = f"Solution.{function_name}({first_param}, {other_params})"
+                    function_call = f"solution.{function_name}({first_param}, {other_params})"
                 else:
-                    function_call = f"Solution.{function_name}({first_param})"
+                    function_call = f"solution.{function_name}({first_param})"
                 if expected_type in ["int", "double", "boolean", "String"]:
                     builder.add_line(f"{expected_type} result = {function_call};")
                     output_code = generate_java_output(expected_type, "result")
@@ -170,7 +175,8 @@ class JavaExecutor(CompiledLanguageExecutor):
                     output_code = generate_java_output(expected_type, "result")
                 builder.add_lines(output_code)
             else:
-                function_call = f"Solution.{function_name}()"
+                builder.add_line("Solution solution = new Solution();")
+                function_call = f"solution.{function_name}()"
                 if expected_type in ["int", "double", "boolean", "String"]:
                     builder.add_line(f"{expected_type} result = {function_call};")
                     output_code = generate_java_output(expected_type, "result")
@@ -266,7 +272,7 @@ class JavaExecutor(CompiledLanguageExecutor):
                 "actual": None,
                 "expected": test_case.get("expected"),
             }
-        except Exception as e:
+        except (OSError, subprocess.SubprocessError) as e:
             return {
                 "passed": False,
                 "error": str(e),

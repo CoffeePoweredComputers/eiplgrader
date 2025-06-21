@@ -4,6 +4,7 @@ import json
 import os
 from typing import Dict, Any
 from ..executors.base_executors import InterpretedLanguageExecutor
+from .string_utils import process_test_parameters
 
 
 class JavaScriptExecutor(InterpretedLanguageExecutor):
@@ -151,8 +152,14 @@ class JavaScriptExecutor(InterpretedLanguageExecutor):
 
 
 
-    # execute_test() method removed - using base class implementation
-    # Error handling moved to enhance_error_message() method
+    def execute_test(self, code: str, test_case: Dict[str, Any]) -> Dict[str, Any]:
+        """Execute JavaScript code with test case, processing escape sequences."""
+        # Process parameters to decode escape sequences in strings
+        if "parameters" in test_case:
+            test_case["parameters"] = process_test_parameters(test_case["parameters"])
+        
+        # Call the base class implementation
+        return super().execute_test(code, test_case)
 
     def enhance_error_message(self, error_msg: str, stderr: str = "") -> str:
         """Handle JavaScript-specific error parsing."""

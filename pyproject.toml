@@ -17,7 +17,6 @@ keywords = [
 [tool.poetry.dependencies]
 python = ">=3.13,<3.15"
 openai = "^1.37.0"
-importlib = "^1.0.4"
 requests = "^2.31.0"
 python-dotenv = "^1.0.0"
 
@@ -40,35 +39,41 @@ include = '\.pyi?$'
 
 [tool.pylint.messages_control]
 disable = [
+  # Documentation - reasonable to disable for now
   "missing-module-docstring",
-  "missing-class-docstring",
+  "missing-class-docstring", 
   "missing-function-docstring",
+  # Design - too restrictive for this codebase
   "too-few-public-methods",
-  "invalid-name",
-  "import-error",
   "too-many-arguments",
   "too-many-positional-arguments",
-  "duplicate-code",
-  "unnecessary-pass",
-  "unused-import",
-  "unused-variable",
-  "broad-exception-caught",
   "too-many-branches",
-  "too-many-statements",
+  "too-many-statements", 
   "too-many-return-statements",
+  "too-many-nested-blocks",
+  # Style - handled by black
+  "invalid-name",
+  "trailing-whitespace",
+  "wrong-import-order",
+  # Specific patterns that are acceptable in this codebase
+  "duplicate-code",
   "no-else-return",
   "no-else-break",
-  "too-many-nested-blocks",
   "protected-access",
   "attribute-defined-outside-init",
   "import-outside-toplevel",
-  "wrong-import-order",
-  "trailing-whitespace",
   "f-string-without-interpolation",
   "unspecified-encoding",
-  "subprocess-run-check",
-  "bare-except"
+  "subprocess-run-check"
 ]
+
+# Re-enable important code quality checks that were previously disabled:
+# - unused-import: catches dead imports
+# - unused-variable: catches dead variables  
+# - broad-exception-caught: catches poor error handling
+# - bare-except: catches dangerous catch-all exceptions
+# - import-error: catches missing dependencies
+# - unnecessary-pass: catches redundant code
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

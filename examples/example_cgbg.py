@@ -275,18 +275,17 @@ print(f"Generated Go code: {generated_code[0]}")
 
 # Go now supports type inference! No need to specify types.
 test_cases = [
-    {"parameters": {"s": "racecar"}, "expected": True, "parameter_types": {"s": "string"}},
-    {"parameters": {"s": "hello"}, "expected": False, "parameter_types": {"s": "string"}},
-    {"parameters": {"s": "a"}, "expected": True, "parameter_types": {"s": "string"}},
-    {"parameters": {"s": ""}, "expected": True, "parameter_types": {"s": "string"}}
+    {"parameters": {"s": "racecar"}, "expected": True, "parameter_types": {"s": "string"}, "expected_type": "bool"},
+    {"parameters": {"s": "hello"}, "expected": False, "parameter_types": {"s": "string"}, "expected_type": "bool"},
+    {"parameters": {"s": "a"}, "expected": True, "parameter_types": {"s": "string"}, "expected_type": "bool"},
+    {"parameters": {"s": ""}, "expected": True, "parameter_types": {"s": "string"}, "expected_type": "bool"},
 ]
 
 code_tester = CodeTester(
     code=generated_code[0],
     test_cases=test_cases,
     function_name="isPalindrome",
-    language="go",
-    expected_type="bool"  
+    language="go"
 )
 test_result = code_tester.run_tests()
 print(f"Tests passed: {test_result.successes}/{test_result.testsRun}")

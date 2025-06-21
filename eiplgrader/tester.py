@@ -1,7 +1,4 @@
-import tempfile
-import importlib
-import importlib.util
-import os
+import subprocess
 from copy import deepcopy
 from typing import List, Dict, Any, Union
 from .languages import language_registry
@@ -87,7 +84,6 @@ class CodeTester:
     ):
         self.code = code
         self.test_cases = test_cases
-        self.current_test = None
         self.inplace = inplace
         self.function_name = function_name
         self.language = language
@@ -145,7 +141,7 @@ class CodeTester:
                         test_result.get("actual", None),
                         test_result.get("error", "Test failed"),
                     )
-            except Exception as e:
+            except (RuntimeError, ValueError, OSError, subprocess.TimeoutExpired) as e:
                 result.add_error("Error executing test", str(e))
 
         # Clean up
