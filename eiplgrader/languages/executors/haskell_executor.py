@@ -37,7 +37,7 @@ class HaskellExecutor(CompiledLanguageExecutor):
 
         if matches:
             # Return the first function found (usually the main one)
-            return matches[0]
+            return str(matches[0])
 
         # Fallback: look for function definition pattern: functionName args =
         func_def_pattern = r"^(\w+)(?:\s+\w+)*\s*="
@@ -48,7 +48,7 @@ class HaskellExecutor(CompiledLanguageExecutor):
             keywords = {"main", "let", "where", "case", "if", "then", "else", "do"}
             valid_functions = [m for m in matches if m not in keywords]
             if valid_functions:
-                return valid_functions[0]
+                return str(valid_functions[0])
 
         # If nothing found, return a default
         return "main"

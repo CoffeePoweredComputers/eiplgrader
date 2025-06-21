@@ -146,15 +146,15 @@ print("-" * 50)
 c_generator = CodeGenerator(api_key, language="c")
 
 test_cases = [
-        {"parameters": {"str": "hello world", "char": "o"}, "parameter_types": {"str": "char*", "char": "char"}, "expected": 2, "expected_type": "int"},
-        {"parameters": {"str": "test string", "char": "t"}, "parameter_types": {"str": "char*", "char": "char"}, "expected": 3, "expected_type": "int"},
-        {"parameters": {"str": "aaaaaa", "char": "a"}, "parameter_types": {"str": "char*", "char": "char"}, "expected": 6, "expected_type": "int"},  # All same character
+        {"parameters": {"str": "hello world", "c": "o"}, "parameter_types": {"str": "char*", "c": "char"}, "expected": 2, "expected_type": "int"},
+        {"parameters": {"str": "test string", "c": "t"}, "parameter_types": {"str": "char*", "c": "char"}, "expected": 3, "expected_type": "int"},
+        {"parameters": {"str": "aaaaaa", "c": "a"}, "parameter_types": {"str": "char*", "c": "char"}, "expected": 6, "expected_type": "int"},  # All same character
         ]
 
 result = c_generator.generate_code(
     student_response="count_characters",  # Function name
     gen_type="redef",
-    params="char* str, char char",  
+    params="char* str, char c",  
     assumptions="Takes a string and a character"
 )
 
