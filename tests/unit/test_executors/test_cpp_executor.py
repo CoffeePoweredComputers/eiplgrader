@@ -11,19 +11,23 @@ This module tests the CppExecutor's ability to:
 7. Handle C++-specific types and features
 """
 
-import pytest
-import sys
 import os
 import subprocess
+import sys
+import pytest
 
 # Add the project root to the path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../.."))
 
-from eiplgrader.languages.executors.cpp_executor import CppExecutor
-from tests.fixtures.mock_code_samples import cpp_samples
+from eiplgrader.languages.executors.cpp_executor import (
+    CppExecutor,
+)  # pylint: disable=wrong-import-position
+from tests.fixtures.mock_code_samples import (
+    cpp_samples,
+)  # pylint: disable=wrong-import-position
 
 
-class TestCppExecutor:
+class TestCppExecutor:  # pylint: disable=too-many-public-methods
     """Test suite for C++ executor with focus on STL types and explicit type validation."""
 
     def setup_method(self):
@@ -40,7 +44,9 @@ class TestCppExecutor:
         try:
             subprocess.run(["g++", "--version"], capture_output=True, check=True)
         except (subprocess.CalledProcessError, FileNotFoundError):
-            pytest.skip("C++ compiler (g++) not available - skipping C++ executor tests")
+            pytest.skip(
+                "C++ compiler (g++) not available - skipping C++ executor tests"
+            )
 
     def test_explicit_types_required_missing_parameter_types(self):
         """Test that missing parameter_types raises validation error."""
@@ -49,12 +55,12 @@ class TestCppExecutor:
             "parameters": {"a": 5, "b": 3},
             "expected": 8,
             "expected_type": "int",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         with pytest.raises(ValueError) as exc_info:
             self.executor.execute_test(cpp_samples.ADD_NUMBERS, test_case)
-        
+
         assert "Missing required type information" in str(exc_info.value)
         assert "parameter_types not provided" in str(exc_info.value)
 
@@ -65,12 +71,12 @@ class TestCppExecutor:
             "parameters": {"a": 5, "b": 3},
             "parameter_types": {"a": "int", "b": "int"},
             "expected": 8,
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         with pytest.raises(ValueError) as exc_info:
             self.executor.execute_test(cpp_samples.ADD_NUMBERS, test_case)
-        
+
         assert "Missing required type information" in str(exc_info.value)
         assert "expected_type not provided" in str(exc_info.value)
 
@@ -82,12 +88,12 @@ class TestCppExecutor:
             "parameter_types": {"a": "int"},  # Missing "b"
             "expected": 8,
             "expected_type": "int",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         with pytest.raises(ValueError) as exc_info:
             self.executor.execute_test(cpp_samples.ADD_NUMBERS, test_case)
-        
+
         assert "parameter_types['b'] not provided" in str(exc_info.value)
 
     def test_integer_types_explicit(self):
@@ -98,11 +104,11 @@ class TestCppExecutor:
             "parameter_types": {"a": "int", "b": "int"},
             "expected": 8,
             "expected_type": "int",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(cpp_samples.ADD_NUMBERS, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == 8
         assert result["expected"] == 8
@@ -115,11 +121,11 @@ class TestCppExecutor:
             "parameter_types": {"str": "std::string"},
             "expected": 3,
             "expected_type": "int",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(cpp_samples.COUNT_VOWELS, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == 3
 
@@ -131,11 +137,11 @@ class TestCppExecutor:
             "parameter_types": {"s": "std::string"},
             "expected": True,
             "expected_type": "bool",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(cpp_samples.IS_PALINDROME, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] is True
 
@@ -147,11 +153,11 @@ class TestCppExecutor:
             "parameter_types": {"numbers": "std::vector<int>"},
             "expected": 12,
             "expected_type": "int",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(cpp_samples.SUM_EVEN_NUMBERS, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == 12
 
@@ -163,11 +169,11 @@ class TestCppExecutor:
             "parameter_types": {"a": "double", "b": "double"},
             "expected": 8.9,
             "expected_type": "double",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(cpp_samples.CALCULATE_AVERAGE, test_case)
-        
+
         assert result["passed"] is True
         assert abs(result["actual"] - 8.9) < 0.001
 
@@ -179,11 +185,11 @@ class TestCppExecutor:
             "parameter_types": {"words": "std::vector<std::string>"},
             "expected": "hello world cpp",
             "expected_type": "std::string",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(cpp_samples.JOIN_STRINGS, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == "hello world cpp"
 
@@ -192,14 +198,17 @@ class TestCppExecutor:
         test_case = {
             "function_name": "multiplyDoubles",
             "parameters": {"numbers": [1.5, 2.5, 3.5], "multiplier": 2.0},
-            "parameter_types": {"numbers": "std::vector<double>", "multiplier": "double"},
+            "parameter_types": {
+                "numbers": "std::vector<double>",
+                "multiplier": "double",
+            },
             "expected": [3.0, 5.0, 7.0],
             "expected_type": "std::vector<double>",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(cpp_samples.MULTIPLY_DOUBLES, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == [3.0, 5.0, 7.0]
 
@@ -211,11 +220,11 @@ class TestCppExecutor:
             "parameter_types": {"n": "int"},
             "expected": 120,
             "expected_type": "int",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(cpp_samples.FACTORIAL, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == 120
 
@@ -227,11 +236,11 @@ class TestCppExecutor:
             "parameter_types": {"arr": "std::vector<int>"},
             "expected": [1, 1, 3, 4, 5],
             "expected_type": "std::vector<int>",
-            "inplace": "1"
+            "inplace": "1",
         }
-        
+
         result = self.executor.execute_test(cpp_samples.SORT_VECTOR, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == [1, 1, 3, 4, 5]
 
@@ -255,11 +264,11 @@ int processAndReturn(std::vector<int>& arr) {
             "parameter_types": {"arr": "std::vector<int>"},
             "expected": 3,
             "expected_type": "int",
-            "inplace": "2"
+            "inplace": "2",
         }
-        
+
         result = self.executor.execute_test(code, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == 3
 
@@ -271,11 +280,11 @@ int processAndReturn(std::vector<int>& arr) {
             "parameter_types": {"arr": "std::vector<int>"},
             "expected": [2, 4, 6, 8],
             "expected_type": "std::vector<int>",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(cpp_samples.DOUBLE_VECTOR, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == [2, 4, 6, 8]
 
@@ -287,11 +296,11 @@ int processAndReturn(std::vector<int>& arr) {
             "parameter_types": {"numbers": "std::vector<int>"},
             "expected": 9,
             "expected_type": "int",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(cpp_samples.FIND_MAX, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == 9
 
@@ -303,11 +312,11 @@ int processAndReturn(std::vector<int>& arr) {
             "parameter_types": {"input": "std::vector<int>"},
             "expected": [1, 2, 3, 4, 5],
             "expected_type": "std::vector<int>",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(cpp_samples.GET_UNIQUE_ELEMENTS, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == [1, 2, 3, 4, 5]
 
@@ -319,11 +328,11 @@ int processAndReturn(std::vector<int>& arr) {
             "parameter_types": {"arr": "std::vector<int>", "target": "int"},
             "expected": 2,
             "expected_type": "int",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(cpp_samples.LINEAR_SEARCH, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == 2
 
@@ -335,11 +344,11 @@ int processAndReturn(std::vector<int>& arr) {
             "parameter_types": {"nested": "std::vector<std::vector<int>>"},
             "expected": [1, 2, 3, 4, 5],
             "expected_type": "std::vector<int>",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(cpp_samples.FLATTEN_NESTED, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == [1, 2, 3, 4, 5]
 
@@ -356,11 +365,11 @@ int brokenFunction(int x) {
             "parameter_types": {"x": "int"},
             "expected": 2,
             "expected_type": "int",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(invalid_code, test_case)
-        
+
         assert result["passed"] is False
         assert "error" in result
         assert "Compilation failed" in result["error"]
@@ -378,11 +387,11 @@ int divideByZero(int x) {
             "parameter_types": {"x": "int"},
             "expected": None,
             "expected_type": "int",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(code, test_case)
-        
+
         assert result["passed"] is False
         # C++ division by zero behavior is undefined
 
@@ -394,11 +403,11 @@ int divideByZero(int x) {
             "parameter_types": {"numbers": "std::vector<int>"},
             "expected": 0,
             "expected_type": "int",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(cpp_samples.SUM_EVEN_NUMBERS, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == 0
 
@@ -415,11 +424,11 @@ int largeNumberOperation(int x) {
             "parameter_types": {"x": "int"},
             "expected": 999999000,
             "expected_type": "int",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(code, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == 999999000
 
@@ -431,11 +440,11 @@ int largeNumberOperation(int x) {
             "parameter_types": {"s": "std::string"},
             "expected": 11,
             "expected_type": "int",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(cpp_samples.COUNT_CHARACTERS, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == 11
 
@@ -445,12 +454,12 @@ int largeNumberOperation(int x) {
             "function_name": "addNumbers",
             "parameters": {"a": 5, "b": 3},
             "expected": 8,
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         with pytest.raises(ValueError) as exc_info:
             self.executor.execute_test(cpp_samples.ADD_NUMBERS, test_case)
-        
+
         error_message = str(exc_info.value)
         assert "Missing required type information" in error_message
         assert "parameter_types not provided" in error_message
@@ -466,17 +475,17 @@ int largeNumberOperation(int x) {
             "parameter_types": {"a": "int", "b": "int"},
             "expected": 55,
             "expected_type": "int",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         # Test the prepare_code method to check parameter embedding
         prepared_code = self.executor.prepare_code(cpp_samples.ADD_NUMBERS, test_case)
-        
+
         # Check that parameters are embedded
         assert "int a = 42;" in prepared_code
         assert "int b = 13;" in prepared_code
         assert "addNumbers(a, b)" in prepared_code
-        
+
         # Execute to ensure it works
         result = self.executor.execute_test(cpp_samples.ADD_NUMBERS, test_case)
         assert result["passed"] is True
@@ -486,15 +495,25 @@ int largeNumberOperation(int x) {
         """Test functions with multiple different parameter types."""
         test_case = {
             "function_name": "formatInfo",
-            "parameters": {"name": "Alice", "age": 30, "isActive": True, "salary": 75000.50},
-            "parameter_types": {"name": "std::string", "age": "int", "isActive": "bool", "salary": "double"},
+            "parameters": {
+                "name": "Alice",
+                "age": 30,
+                "isActive": True,
+                "salary": 75000.50,
+            },
+            "parameter_types": {
+                "name": "std::string",
+                "age": "int",
+                "isActive": "bool",
+                "salary": "double",
+            },
             "expected": "Alice,30,true,75000.50",
             "expected_type": "std::string",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(cpp_samples.FORMAT_INFO, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == "Alice,30,true,75000.50"
 
@@ -502,33 +521,25 @@ int largeNumberOperation(int x) {
         """Test C++-specific type system requirements."""
         # Test that we handle STL container types properly
         test_cases = [
-            {
-                "name": "vector_int",
-                "param_type": "std::vector<int>",
-                "valid": True
-            },
+            {"name": "vector_int", "param_type": "std::vector<int>", "valid": True},
             {
                 "name": "vector_double",
                 "param_type": "std::vector<double>",
-                "valid": True
+                "valid": True,
             },
             {
                 "name": "vector_string",
                 "param_type": "std::vector<std::string>",
-                "valid": True
+                "valid": True,
             },
             {
                 "name": "nested_vector",
                 "param_type": "std::vector<std::vector<int>>",
-                "valid": True
+                "valid": True,
             },
-            {
-                "name": "string",
-                "param_type": "std::string",
-                "valid": True
-            }
+            {"name": "string", "param_type": "std::string", "valid": True},
         ]
-        
+
         for case in test_cases:
             test_case = {
                 "function_name": "testFunction",
@@ -536,9 +547,9 @@ int largeNumberOperation(int x) {
                 "parameter_types": {"param": case["param_type"]},
                 "expected": 0,
                 "expected_type": "int",
-                "inplace": "0"
+                "inplace": "0",
             }
-            
+
             # This should not raise a validation error for the type format
             try:
                 # We expect this to fail at compilation since testFunction doesn't exist
@@ -550,23 +561,20 @@ int largeNumberOperation(int x) {
 
     def test_cleanup_temp_files(self):
         """Test that temporary files are properly cleaned up."""
-        import tempfile
-        import os
-        
         test_case = {
             "function_name": "addNumbers",
             "parameters": {"a": 1, "b": 2},
             "parameter_types": {"a": "int", "b": "int"},
             "expected": 3,
             "expected_type": "int",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         # Run test
         result = self.executor.execute_test(cpp_samples.ADD_NUMBERS, test_case)
-        
+
         # Clean up
         self.executor.cleanup()
-        
+
         # Verify the test passed
         assert result["passed"] is True

@@ -9,19 +9,24 @@ This module tests the JavaScriptExecutor's ability to:
 5. Work with Node.js runtime environment
 """
 
-import pytest
-import sys
 import os
 import subprocess
+import sys
+
+import pytest
 
 # Add the project root to the path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../.."))
 
-from eiplgrader.languages.executors.javascript_executor import JavaScriptExecutor
-from tests.fixtures.mock_code_samples import javascript_samples
+from eiplgrader.languages.executors.javascript_executor import (
+    JavaScriptExecutor,
+)  # pylint: disable=wrong-import-position
+from tests.fixtures.mock_code_samples import (
+    javascript_samples,
+)  # pylint: disable=wrong-import-position
 
 
-class TestJavaScriptExecutor:
+class TestJavaScriptExecutor:  # pylint: disable=too-many-public-methods
     """Test suite for JavaScript executor with focus on type inference."""
 
     def setup_method(self):
@@ -46,11 +51,11 @@ class TestJavaScriptExecutor:
             "function_name": "addNumbers",
             "parameters": {"a": 5, "b": 3},
             "expected": 8,
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(javascript_samples.ADD_NUMBERS, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == 8
         assert result["expected"] == 8
@@ -67,11 +72,11 @@ function calculateAverage(a, b) {
             "function_name": "calculateAverage",
             "parameters": {"a": 10.5, "b": 7.3},
             "expected": 8.9,
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(code, test_case)
-        
+
         assert result["passed"] is True
         assert abs(result["actual"] - 8.9) < 0.001
 
@@ -81,11 +86,11 @@ function calculateAverage(a, b) {
             "function_name": "countVowels",
             "parameters": {"str": "hello world"},
             "expected": 3,
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(javascript_samples.COUNT_VOWELS, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == 3
 
@@ -95,11 +100,13 @@ function calculateAverage(a, b) {
             "function_name": "sumEvenNumbers",
             "parameters": {"numbers": [1, 2, 3, 4, 5, 6]},
             "expected": 12,
-            "inplace": "0"
+            "inplace": "0",
         }
-        
-        result = self.executor.execute_test(javascript_samples.SUM_EVEN_NUMBERS, test_case)
-        
+
+        result = self.executor.execute_test(
+            javascript_samples.SUM_EVEN_NUMBERS, test_case
+        )
+
         assert result["passed"] is True
         assert result["actual"] == 12
 
@@ -109,11 +116,11 @@ function calculateAverage(a, b) {
             "function_name": "isPalindrome",
             "parameters": {"s": "racecar"},
             "expected": True,
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(javascript_samples.IS_PALINDROME, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] is True
 
@@ -128,11 +135,11 @@ function formatInfo(name, age, isStudent) {
             "function_name": "formatInfo",
             "parameters": {"name": "Alice", "age": 25, "isStudent": False},
             "expected": "Alice is 25 years old and is not a student",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(code, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == "Alice is 25 years old and is not a student"
 
@@ -142,11 +149,13 @@ function formatInfo(name, age, isStudent) {
             "function_name": "sumEvenNumbers",
             "parameters": {"numbers": []},
             "expected": 0,
-            "inplace": "0"
+            "inplace": "0",
         }
-        
-        result = self.executor.execute_test(javascript_samples.SUM_EVEN_NUMBERS, test_case)
-        
+
+        result = self.executor.execute_test(
+            javascript_samples.SUM_EVEN_NUMBERS, test_case
+        )
+
         assert result["passed"] is True
         assert result["actual"] == 0
 
@@ -156,11 +165,11 @@ function formatInfo(name, age, isStudent) {
             "function_name": "findMax",
             "parameters": {"numbers": []},
             "expected": None,
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(javascript_samples.FIND_MAX, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] is None
 
@@ -170,11 +179,11 @@ function formatInfo(name, age, isStudent) {
             "function_name": "factorial",
             "parameters": {"n": 5},
             "expected": 120,
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(javascript_samples.FACTORIAL, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == 120
 
@@ -184,11 +193,11 @@ function formatInfo(name, age, isStudent) {
             "function_name": "sortArray",
             "parameters": {"arr": [3, 1, 4, 1, 5]},
             "expected": [1, 1, 3, 4, 5],
-            "inplace": "1"
+            "inplace": "1",
         }
-        
+
         result = self.executor.execute_test(javascript_samples.SORT_ARRAY, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == [1, 1, 3, 4, 5]
 
@@ -204,11 +213,11 @@ function processAndReturn(arr) {
             "function_name": "processAndReturn",
             "parameters": {"arr": [1, 2, 3]},
             "expected": 4,
-            "inplace": "2"
+            "inplace": "2",
         }
-        
+
         result = self.executor.execute_test(code, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == 4
 
@@ -218,11 +227,11 @@ function processAndReturn(arr) {
             "function_name": "doubleArray",
             "parameters": {"arr": [1, 2, 3, 4]},
             "expected": [2, 4, 6, 8],
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(javascript_samples.DOUBLE_ARRAY, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == [2, 4, 6, 8]
 
@@ -232,11 +241,13 @@ function processAndReturn(arr) {
             "function_name": "reverseString",
             "parameters": {"s": "hello"},
             "expected": "olleh",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
-        result = self.executor.execute_test(javascript_samples.REVERSE_STRING, test_case)
-        
+
+        result = self.executor.execute_test(
+            javascript_samples.REVERSE_STRING, test_case
+        )
+
         assert result["passed"] is True
         assert result["actual"] == "olleh"
 
@@ -246,11 +257,11 @@ function processAndReturn(arr) {
             "function_name": "mergeObjects",
             "parameters": {"obj1": {"a": 1, "b": 2}, "obj2": {"c": 3, "d": 4}},
             "expected": {"a": 1, "b": 2, "c": 3, "d": 4},
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(javascript_samples.MERGE_OBJECTS, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == {"a": 1, "b": 2, "c": 3, "d": 4}
 
@@ -260,11 +271,13 @@ function processAndReturn(arr) {
             "function_name": "nonexistentFunction",
             "parameters": {"x": 1},
             "expected": None,
-            "inplace": "0"
+            "inplace": "0",
         }
-        
-        result = self.executor.execute_test("function someOtherFunction() { return 1; }", test_case)
-        
+
+        result = self.executor.execute_test(
+            "function someOtherFunction() { return 1; }", test_case
+        )
+
         assert result["passed"] is False
         assert "error" in result
 
@@ -279,11 +292,11 @@ function brokenFunction(x) {
             "function_name": "brokenFunction",
             "parameters": {"x": 1},
             "expected": 2,
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(invalid_code, test_case)
-        
+
         assert result["passed"] is False
         assert "error" in result
 
@@ -298,11 +311,11 @@ function throwError(x) {
             "function_name": "throwError",
             "parameters": {"x": 10},
             "expected": None,
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(code, test_case)
-        
+
         assert result["passed"] is False
         assert "error" in result
 
@@ -317,11 +330,11 @@ function largeNumberOperation(x) {
             "function_name": "largeNumberOperation",
             "parameters": {"x": 999999999},
             "expected": 999999999000000,
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(code, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == 999999999000000
 
@@ -336,11 +349,11 @@ function countCharacters(s) {
             "function_name": "countCharacters",
             "parameters": {"s": "héllo wörld 🌍"},
             "expected": 13,
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(code, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == 13
 
@@ -350,16 +363,16 @@ function countCharacters(s) {
             "function_name": "addNumbers",
             "parameters": {"a": 5, "b": 3},
             "expected": 8,
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         # Before execution, no types should be present
         assert "parameter_types" not in test_case
         assert "expected_type" not in test_case
-        
+
         # Execute the test
         result = self.executor.execute_test(javascript_samples.ADD_NUMBERS, test_case)
-        
+
         # The executor should have inferred and added types
         assert result["passed"] is True
 
@@ -371,11 +384,11 @@ function countCharacters(s) {
             "parameter_types": {"a": "int", "b": "int"},
             "expected": 8,
             "expected_type": "int",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(javascript_samples.ADD_NUMBERS, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == 8
 
@@ -390,11 +403,11 @@ function flattenArray(nested) {
             "function_name": "flattenArray",
             "parameters": {"nested": [[1, 2], [3, 4], [5]]},
             "expected": [1, 2, 3, 4, 5],
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(code, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == [1, 2, 3, 4, 5]
 
@@ -411,20 +424,14 @@ function processJSON(data) {
         test_case = {
             "function_name": "processJSON",
             "parameters": {
-                "data": {
-                    "items": [
-                        {"value": 10},
-                        {"value": 20},
-                        {"value": 30}
-                    ]
-                }
+                "data": {"items": [{"value": 10}, {"value": 20}, {"value": 30}]}
             },
             "expected": {"count": 3, "total": 60},
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(code, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == {"count": 3, "total": 60}
 
@@ -437,11 +444,11 @@ const multiplyByTwo = (x) => x * 2;
             "function_name": "multiplyByTwo",
             "parameters": {"x": 5},
             "expected": 10,
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(code, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == 10
 
@@ -461,36 +468,35 @@ function synchronousFunction(x) {
             "function_name": "synchronousFunction",
             "parameters": {"x": 5},
             "expected": 10,  # 0+1+2+3+4 = 10
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(code, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == 10
 
     def test_cleanup_temp_files(self):
         """Test that temporary files are properly cleaned up."""
         import tempfile
-        import os
-        
+
         # Count existing temp files
         temp_dir = tempfile.gettempdir()
         initial_files = os.listdir(temp_dir)
-        
+
         test_case = {
             "function_name": "addNumbers",
             "parameters": {"a": 1, "b": 2},
             "expected": 3,
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         # Run test
         result = self.executor.execute_test(javascript_samples.ADD_NUMBERS, test_case)
-        
+
         # Clean up
         self.executor.cleanup()
-        
+
         # Check that no excessive temp files remain
         final_files = os.listdir(temp_dir)
         # Allow for some temp files to be created by the system

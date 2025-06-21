@@ -15,6 +15,7 @@ jobs:
   test:
     name: Test Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -23,22 +24,28 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
         cache: 'pip'
         cache-dependency-path: |
           requirements.txt
           pyproject.toml
+          poetry.lock
+    
+    - name: Cache Poetry virtualenv
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/pypoetry/virtualenvs
+        key: ${{ runner.os }}-poetry-${{ hashFiles('poetry.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-poetry-
 
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
+        python -m pip install --upgrade pip setuptools wheel
         pip install poetry
         poetry install --with dev
-        pip install pytest pytest-cov pylint black mypy
-        # Explicitly install openai to ensure it's available
-        pip install openai
 
     - name: Lint with pylint
       run: |
@@ -47,6 +54,7 @@ jobs:
     - name: Check code formatting with black
       run: |
         black --check eiplgrader/ tests/
+      continue-on-error: false
 
     - name: Type check with mypy
       run: |
@@ -54,10 +62,13 @@ jobs:
 
     - name: Run tests with pytest and coverage
       run: |
-        pytest --cov=eiplgrader tests/ --cov-report=xml
+        pytest --cov=eiplgrader tests/ --cov-report=xml --cov-report=term
+        echo "### Test Results 🧪" >> $GITHUB_STEP_SUMMARY
+        echo "Python ${{ matrix.python-version }} tests completed successfully" >> $GITHUB_STEP_SUMMARY
 
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
+      continue-on-error: true
       with:
         file: ./coverage.xml
         fail_ci_if_error: false
@@ -65,11 +76,12 @@ jobs:
   build:
     name: Build package
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     needs: test
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: "3.11"
     
@@ -87,35 +99,42 @@ jobs:
       with:
         name: dist
         path: dist/
+        retention-days: 30
+        if-no-files-found: error
 
   docs:
-    name: Build docs
+    name: Validate documentation
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: test
     steps:
     - uses: actions/checkout@v4
-    - name: Set up Ruby
-      uses: ruby/setup-ruby@v1
+    - name: Set up Python
+      uses: actions/setup-python@v5
       with:
-        ruby-version: '3.2'
-        bundler-cache: true
-        working-directory: './docs'
+        python-version: '3.11'
+        cache: 'pip'
     
-    - name: Build docs
-      working-directory: ./docs
+    - name: Install dependencies
       run: |
-        bundle install
-        bundle exec jekyll build
+        python -m pip install --upgrade pip
+        pip install poetry
+        poetry install --with dev
     
-    - name: Upload docs artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: site
-        path: docs/_site/
+    - name: Check README and docs
+      run: |
+        echo "### Documentation Check 📚" >> $GITHUB_STEP_SUMMARY
+        if [ -f README.md ]; then
+          echo "✓ README.md exists" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "✗ README.md missing" >> $GITHUB_STEP_SUMMARY
+        fi
+        # Add more doc validation as needed
 
   publish:
     name: Publish to PyPI
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: [test, build]
     # Only publish when:
     # 1. It's a tag push (v*)

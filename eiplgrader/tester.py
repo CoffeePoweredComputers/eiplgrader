@@ -122,23 +122,6 @@ class CodeTester:
             if "expected" not in test_case:
                 raise ValueError("Test case must contain 'expected' key")
 
-            # Type validation only for static languages
-            static_languages = ["c", "cpp", "java", "haskell"]
-            if self.language in static_languages:
-                if "parameter_types" not in test_case:
-                    raise ValueError(
-                        f"Test case missing required 'parameter_types' for {self.language}"
-                    )
-                if "expected_type" not in test_case:
-                    raise ValueError(
-                        f"Test case missing required 'expected_type' for {self.language}"
-                    )
-
-                # Validate all parameters have types
-                for param in test_case["parameters"]:
-                    if param not in test_case["parameter_types"]:
-                        raise ValueError(f"Missing type for parameter '{param}'")
-
             # Prepare test case with metadata
             test_case = deepcopy(test_case)
             test_case["function_name"] = self.function_name

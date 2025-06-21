@@ -5,12 +5,27 @@ on: [push, pull_request]
 jobs:
   test-base:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
     steps:
-      - uses: actions/checkout@v3
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+      
+      - name: Cache system packages
+        uses: actions/cache@v4
+        with:
+          path: /var/cache/apt
+          key: ${{ runner.os }}-apt-${{ matrix.language.name }}-${{ hashFiles('.github/workflows/test-languages.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-apt-${{ matrix.language.name }}-
+            ${{ runner.os }}-apt-
+      
       - name: Install base dependencies
         run: |
           pip install -r requirements.txt
@@ -22,31 +37,28 @@ jobs:
   test-language:
     needs: test-base
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     strategy:
       matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
         language:
+          # Supported languages as per project documentation
           - {name: python, setup: ""}
-          - {name: javascript, setup: "sudo apt-get update && sudo apt-get install -y nodejs npm"}
-          - {name: go, setup: "sudo apt-get update && sudo apt-get install -y golang"}
-          - {name: rust, setup: "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y && source $HOME/.cargo/env"}
-          - {name: c, setup: "sudo apt-get update && sudo apt-get install -y gcc"}
-          - {name: cpp, setup: "sudo apt-get update && sudo apt-get install -y g++"}
-          - {name: java, setup: "sudo apt-get update && sudo apt-get install -y default-jdk"}
-          - {name: kotlin, setup: "sudo snap install kotlin --classic || sudo apt-get update && sudo apt-get install -y kotlin"}
-          - {name: ruby, setup: "sudo apt-get update && sudo apt-get install -y ruby"}
-          - {name: php, setup: "sudo apt-get update && sudo apt-get install -y php"}
-          - {name: bash, setup: ""}
-          - {name: sql, setup: "sudo apt-get update && sudo apt-get install -y sqlite3"}
-          - {name: haskell, setup: "sudo apt-get update && sudo apt-get install -y ghc"}
-          - {name: ocaml, setup: "sudo apt-get update && sudo apt-get install -y ocaml opam"}
-          - {name: typescript, setup: "sudo apt-get update && sudo apt-get install -y nodejs npm && npm install -g typescript"}
+          - {name: javascript, setup: "sudo apt-get update && sudo apt-get install -y --no-install-recommends nodejs npm"}
+          - {name: go, setup: "sudo apt-get update && sudo apt-get install -y --no-install-recommends golang"}
+          - {name: c, setup: "sudo apt-get update && sudo apt-get install -y --no-install-recommends gcc"}
+          - {name: cpp, setup: "sudo apt-get update && sudo apt-get install -y --no-install-recommends g++"}
+          - {name: java, setup: "sudo apt-get update && sudo apt-get install -y --no-install-recommends default-jdk"}
+          - {name: haskell, setup: "sudo apt-get update && sudo apt-get install -y --no-install-recommends ghc"}
+          # Unsupported languages removed: rust, kotlin, ruby, php, bash, sql, ocaml, typescript
     
     steps:
-      - uses: actions/checkout@v3
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
       
       - name: Install language tools
         run: ${{ matrix.language.setup }}

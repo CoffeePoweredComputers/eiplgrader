@@ -11,19 +11,24 @@ This module tests the HaskellExecutor's ability to:
 7. Handle Haskell-specific types and features
 """
 
-import pytest
-import sys
 import os
 import subprocess
+import sys
+
+import pytest
 
 # Add the project root to the path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../.."))
 
-from eiplgrader.languages.executors.haskell_executor import HaskellExecutor
-from tests.fixtures.mock_code_samples import haskell_samples
+from eiplgrader.languages.executors.haskell_executor import (
+    HaskellExecutor,
+)  # pylint: disable=wrong-import-position
+from tests.fixtures.mock_code_samples import (
+    haskell_samples,
+)  # pylint: disable=wrong-import-position
 
 
-class TestHaskellExecutor:
+class TestHaskellExecutor:  # pylint: disable=too-many-public-methods
     """Test suite for Haskell executor with focus on functional programming and explicit type validation."""
 
     def setup_method(self):
@@ -40,7 +45,9 @@ class TestHaskellExecutor:
         try:
             subprocess.run(["ghc", "--version"], capture_output=True, check=True)
         except (subprocess.CalledProcessError, FileNotFoundError):
-            pytest.skip("Haskell compiler (ghc) not available - skipping Haskell executor tests")
+            pytest.skip(
+                "Haskell compiler (ghc) not available - skipping Haskell executor tests"
+            )
 
     def test_explicit_types_required_missing_parameter_types(self):
         """Test that missing parameter_types raises validation error."""
@@ -49,12 +56,12 @@ class TestHaskellExecutor:
             "parameters": {"a": 5, "b": 3},
             "expected": 8,
             "expected_type": "Int",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         with pytest.raises(ValueError) as exc_info:
             self.executor.execute_test(haskell_samples.ADD_NUMBERS, test_case)
-        
+
         assert "Missing required type information" in str(exc_info.value)
         assert "parameter_types not provided" in str(exc_info.value)
 
@@ -65,12 +72,12 @@ class TestHaskellExecutor:
             "parameters": {"a": 5, "b": 3},
             "parameter_types": {"a": "Int", "b": "Int"},
             "expected": 8,
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         with pytest.raises(ValueError) as exc_info:
             self.executor.execute_test(haskell_samples.ADD_NUMBERS, test_case)
-        
+
         assert "Missing required type information" in str(exc_info.value)
         assert "expected_type not provided" in str(exc_info.value)
 
@@ -82,12 +89,12 @@ class TestHaskellExecutor:
             "parameter_types": {"a": "Int"},  # Missing "b"
             "expected": 8,
             "expected_type": "Int",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         with pytest.raises(ValueError) as exc_info:
             self.executor.execute_test(haskell_samples.ADD_NUMBERS, test_case)
-        
+
         assert "parameter_types['b'] not provided" in str(exc_info.value)
 
     def test_integer_types_explicit(self):
@@ -98,11 +105,11 @@ class TestHaskellExecutor:
             "parameter_types": {"a": "Int", "b": "Int"},
             "expected": 8,
             "expected_type": "Int",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(haskell_samples.ADD_NUMBERS, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == 8
         assert result["expected"] == 8
@@ -115,11 +122,11 @@ class TestHaskellExecutor:
             "parameter_types": {"str": "String"},
             "expected": 3,
             "expected_type": "Int",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(haskell_samples.COUNT_VOWELS, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == 3
 
@@ -131,11 +138,11 @@ class TestHaskellExecutor:
             "parameter_types": {"s": "String"},
             "expected": True,
             "expected_type": "Bool",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(haskell_samples.IS_PALINDROME, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] is True
 
@@ -147,11 +154,11 @@ class TestHaskellExecutor:
             "parameter_types": {"numbers": "[Int]"},
             "expected": 12,
             "expected_type": "Int",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(haskell_samples.SUM_EVEN_NUMBERS, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == 12
 
@@ -163,11 +170,13 @@ class TestHaskellExecutor:
             "parameter_types": {"a": "Double", "b": "Double"},
             "expected": 8.9,
             "expected_type": "Double",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
-        result = self.executor.execute_test(haskell_samples.CALCULATE_AVERAGE, test_case)
-        
+
+        result = self.executor.execute_test(
+            haskell_samples.CALCULATE_AVERAGE, test_case
+        )
+
         assert result["passed"] is True
         assert abs(result["actual"] - 8.9) < 0.001
 
@@ -179,11 +188,11 @@ class TestHaskellExecutor:
             "parameter_types": {"words": "[String]"},
             "expected": "hello world haskell",
             "expected_type": "String",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(haskell_samples.JOIN_WORDS, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == "hello world haskell"
 
@@ -195,11 +204,11 @@ class TestHaskellExecutor:
             "parameter_types": {"n": "Int"},
             "expected": 120,
             "expected_type": "Int",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(haskell_samples.FACTORIAL, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == 120
 
@@ -211,11 +220,11 @@ class TestHaskellExecutor:
             "parameter_types": {"xs": "[Int]"},
             "expected": [2, 4, 6, 8],
             "expected_type": "[Int]",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(haskell_samples.DOUBLE_ALL, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == [2, 4, 6, 8]
 
@@ -227,11 +236,11 @@ class TestHaskellExecutor:
             "parameter_types": {"xs": "[Int]"},
             "expected": [4, 16, 36],  # squares of [2, 4, 6]
             "expected_type": "[Int]",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(haskell_samples.SQUARE_EVENS, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == [4, 16, 36]
 
@@ -243,11 +252,11 @@ class TestHaskellExecutor:
             "parameter_types": {"n": "Int"},
             "expected": 8,  # fib(6) = 8
             "expected_type": "Int",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(haskell_samples.FIBONACCI, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == 8
 
@@ -259,11 +268,11 @@ class TestHaskellExecutor:
             "parameter_types": {"xs": "[Int]", "ys": "[Int]"},
             "expected": [1, 2, 3, 4, 5],
             "expected_type": "[Int]",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(haskell_samples.CONCAT_LISTS, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == [1, 2, 3, 4, 5]
 
@@ -275,11 +284,11 @@ class TestHaskellExecutor:
             "parameter_types": {"xs": "[Int]", "target": "Int"},
             "expected": 2,
             "expected_type": "Int",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(haskell_samples.LINEAR_SEARCH, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == 2
 
@@ -291,11 +300,11 @@ class TestHaskellExecutor:
             "parameter_types": {"nested": "[[Int]]"},
             "expected": [1, 2, 3, 4, 5],
             "expected_type": "[Int]",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(haskell_samples.FLATTEN_NESTED, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == [1, 2, 3, 4, 5]
 
@@ -307,11 +316,11 @@ class TestHaskellExecutor:
             "parameter_types": {"xs": "[Double]"},
             "expected": 3.0,
             "expected_type": "Double",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(haskell_samples.AVERAGE_LIST, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == 3.0
 
@@ -323,11 +332,11 @@ class TestHaskellExecutor:
             "parameter_types": {"xs": "[Int]"},
             "expected": [1, 2, 3],
             "expected_type": "[Int]",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(haskell_samples.FILTER_POSITIVE, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == [1, 2, 3]
 
@@ -339,11 +348,11 @@ class TestHaskellExecutor:
             "parameter_types": {"a": "Int", "b": "Int"},
             "expected": [3, 2],  # Tuple (3, 2) as list in JSON
             "expected_type": "(Int, Int)",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(haskell_samples.DIVMOD_OPERATION, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == [3, 2]
 
@@ -359,11 +368,11 @@ brokenFunction x = x +  -- Missing operand
             "parameter_types": {"x": "Int"},
             "expected": 2,
             "expected_type": "Int",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(invalid_code, test_case)
-        
+
         assert result["passed"] is False
         assert "error" in result
         assert "Compilation failed" in result["error"]
@@ -380,11 +389,11 @@ divideByZero x = x `div` 0
             "parameter_types": {"x": "Int"},
             "expected": None,
             "expected_type": "Int",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(code, test_case)
-        
+
         assert result["passed"] is False
         assert "error" in result
 
@@ -396,11 +405,11 @@ divideByZero x = x `div` 0
             "parameter_types": {"numbers": "[Int]"},
             "expected": 0,
             "expected_type": "Int",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(haskell_samples.SUM_EVEN_NUMBERS, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == 0
 
@@ -412,11 +421,11 @@ divideByZero x = x `div` 0
             "parameter_types": {"s": "String"},
             "expected": 11,
             "expected_type": "Int",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(haskell_samples.COUNT_CHARACTERS, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == 11
 
@@ -426,12 +435,12 @@ divideByZero x = x `div` 0
             "function_name": "addNumbers",
             "parameters": {"a": 5, "b": 3},
             "expected": 8,
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         with pytest.raises(ValueError) as exc_info:
             self.executor.execute_test(haskell_samples.ADD_NUMBERS, test_case)
-        
+
         error_message = str(exc_info.value)
         assert "Missing required type information" in error_message
         assert "parameter_types not provided" in error_message
@@ -447,17 +456,19 @@ divideByZero x = x `div` 0
             "parameter_types": {"a": "Int", "b": "Int"},
             "expected": 55,
             "expected_type": "Int",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         # Test the prepare_code method to check parameter embedding
-        prepared_code = self.executor.prepare_code(haskell_samples.ADD_NUMBERS, test_case)
-        
+        prepared_code = self.executor.prepare_code(
+            haskell_samples.ADD_NUMBERS, test_case
+        )
+
         # Check that parameters are embedded
         assert "a = 42" in prepared_code
         assert "b = 13" in prepared_code
         assert "addNumbers a b" in prepared_code
-        
+
         # Execute to ensure it works
         result = self.executor.execute_test(haskell_samples.ADD_NUMBERS, test_case)
         assert result["passed"] is True
@@ -467,15 +478,25 @@ divideByZero x = x `div` 0
         """Test functions with multiple different parameter types."""
         test_case = {
             "function_name": "formatInfo",
-            "parameters": {"name": "Alice", "age": 30, "isActive": True, "salary": 75000.50},
-            "parameter_types": {"name": "String", "age": "Int", "isActive": "Bool", "salary": "Double"},
+            "parameters": {
+                "name": "Alice",
+                "age": 30,
+                "isActive": True,
+                "salary": 75000.50,
+            },
+            "parameter_types": {
+                "name": "String",
+                "age": "Int",
+                "isActive": "Bool",
+                "salary": "Double",
+            },
             "expected": "Alice,30,True,75000.5",
             "expected_type": "String",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(haskell_samples.FORMAT_INFO, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == "Alice,30,True,75000.5"
 
@@ -483,38 +504,14 @@ divideByZero x = x `div` 0
         """Test Haskell-specific type system requirements."""
         # Test that we handle Haskell type syntax properly
         test_cases = [
-            {
-                "name": "int_list",
-                "param_type": "[Int]",
-                "valid": True
-            },
-            {
-                "name": "double_list",
-                "param_type": "[Double]",
-                "valid": True
-            },
-            {
-                "name": "string_list",
-                "param_type": "[String]",
-                "valid": True
-            },
-            {
-                "name": "nested_list",
-                "param_type": "[[Int]]",
-                "valid": True
-            },
-            {
-                "name": "tuple",
-                "param_type": "(Int, Int)",
-                "valid": True
-            },
-            {
-                "name": "maybe_type",
-                "param_type": "Maybe Int",
-                "valid": True
-            }
+            {"name": "int_list", "param_type": "[Int]", "valid": True},
+            {"name": "double_list", "param_type": "[Double]", "valid": True},
+            {"name": "string_list", "param_type": "[String]", "valid": True},
+            {"name": "nested_list", "param_type": "[[Int]]", "valid": True},
+            {"name": "tuple", "param_type": "(Int, Int)", "valid": True},
+            {"name": "maybe_type", "param_type": "Maybe Int", "valid": True},
         ]
-        
+
         for case in test_cases:
             test_case = {
                 "function_name": "testFunction",
@@ -522,9 +519,9 @@ divideByZero x = x `div` 0
                 "parameter_types": {"param": case["param_type"]},
                 "expected": 0,
                 "expected_type": "Int",
-                "inplace": "0"
+                "inplace": "0",
             }
-            
+
             # This should not raise a validation error for the type format
             try:
                 # We expect this to fail at compilation since testFunction doesn't exist
@@ -547,11 +544,11 @@ takeFirst n xs = take n xs
             "parameter_types": {"n": "Int", "xs": "[Int]"},
             "expected": [1, 2, 3],
             "expected_type": "[Int]",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(code, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == [1, 2, 3]
 
@@ -568,33 +565,30 @@ listLength (_:xs) = 1 + listLength xs
             "parameter_types": {"xs": "[Int]"},
             "expected": 4,
             "expected_type": "Int",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(code, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == 4
 
     def test_cleanup_temp_files(self):
         """Test that temporary files are properly cleaned up."""
-        import tempfile
-        import os
-        
         test_case = {
             "function_name": "addNumbers",
             "parameters": {"a": 1, "b": 2},
             "parameter_types": {"a": "Int", "b": "Int"},
             "expected": 3,
             "expected_type": "Int",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         # Run test
         result = self.executor.execute_test(haskell_samples.ADD_NUMBERS, test_case)
-        
+
         # Clean up
         self.executor.cleanup()
-        
+
         # Verify the test passed
         assert result["passed"] is True

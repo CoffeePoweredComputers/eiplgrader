@@ -7,7 +7,7 @@ from eiplgrader.languages import language_registry
 
 class TestTimeoutScenarios:
     """Test timeout scenarios and infinite loops."""
-    
+
     def test_infinite_loop_python(self):
         """Test Python code with infinite loop."""
         infinite_loop_code = """
@@ -17,20 +17,22 @@ def add_numbers(a, b):
     return a + b  # Never reached
 """
         test_cases = [{"parameters": {"a": 1, "b": 2}, "expected": 3}]
-        
+
         tester = CodeTester(
             code=infinite_loop_code,
             test_cases=test_cases,
             function_name="add_numbers",
-            language="python"
+            language="python",
         )
-        
+
         result = tester.run_tests()
         assert not result.was_successful()
         assert result.errors > 0
-        assert any("timeout" in str(test_result["error"]).lower() 
-                  for test_result in result.test_results)
-    
+        assert any(
+            "timeout" in str(test_result["error"]).lower()
+            for test_result in result.test_results
+        )
+
     def test_very_long_computation_python(self):
         """Test Python code that takes very long to compute."""
         long_computation_code = """
@@ -42,21 +44,21 @@ def add_numbers(a, b):
     return a + b
 """
         test_cases = [{"parameters": {"a": 1, "b": 2}, "expected": 3}]
-        
+
         tester = CodeTester(
             code=long_computation_code,
             test_cases=test_cases,
             function_name="add_numbers",
-            language="python"
+            language="python",
         )
-        
+
         result = tester.run_tests()
         # This might timeout or succeed depending on the system
         # The test is to ensure the system handles it gracefully
         if not result.was_successful():
             # If it fails, it should be due to timeout
             assert result.errors > 0 or result.failures > 0
-    
+
     def test_recursive_infinite_loop_python(self):
         """Test Python code with infinite recursion."""
         infinite_recursion_code = """
@@ -64,18 +66,18 @@ def add_numbers(a, b):
     return add_numbers(a, b)  # Stack overflow
 """
         test_cases = [{"parameters": {"a": 1, "b": 2}, "expected": 3}]
-        
+
         tester = CodeTester(
             code=infinite_recursion_code,
             test_cases=test_cases,
             function_name="add_numbers",
-            language="python"
+            language="python",
         )
-        
+
         result = tester.run_tests()
         assert not result.was_successful()
         assert result.errors > 0
-    
+
     def test_nested_loops_python(self):
         """Test Python code with deeply nested loops."""
         nested_loops_code = """
@@ -88,19 +90,19 @@ def add_numbers(a, b):
     return a + b
 """
         test_cases = [{"parameters": {"a": 1, "b": 2}, "expected": 3}]
-        
+
         tester = CodeTester(
             code=nested_loops_code,
             test_cases=test_cases,
             function_name="add_numbers",
-            language="python"
+            language="python",
         )
-        
+
         result = tester.run_tests()
         # This will likely timeout
         if not result.was_successful():
             assert result.errors > 0 or result.failures > 0
-    
+
     def test_sleep_function_python(self):
         """Test Python code that sleeps for too long."""
         sleep_code = """
@@ -111,14 +113,14 @@ def add_numbers(a, b):
     return a + b
 """
         test_cases = [{"parameters": {"a": 1, "b": 2}, "expected": 3}]
-        
+
         tester = CodeTester(
             code=sleep_code,
             test_cases=test_cases,
             function_name="add_numbers",
-            language="python"
+            language="python",
         )
-        
+
         result = tester.run_tests()
         # Note: Current implementation may not enforce timeouts properly
         # This test documents the expected behavior
@@ -128,9 +130,11 @@ def add_numbers(a, b):
         else:
             # If timeout is enforced, should fail with timeout error
             assert result.errors > 0
-            assert any("timeout" in str(test_result["error"]).lower() 
-                      for test_result in result.test_results)
-    
+            assert any(
+                "timeout" in str(test_result["error"]).lower()
+                for test_result in result.test_results
+            )
+
     def test_custom_timeout_setting(self):
         """Test custom timeout setting in test case."""
         slow_code = """
@@ -140,25 +144,27 @@ def add_numbers(a, b):
     time.sleep(2)  # Sleep for 2 seconds
     return a + b
 """
-        
+
         # Test with very short timeout
-        test_cases = [{
-            "parameters": {"a": 1, "b": 2}, 
-            "expected": 3,
-            "timeout": 1  # 1 second timeout
-        }]
-        
+        test_cases = [
+            {
+                "parameters": {"a": 1, "b": 2},
+                "expected": 3,
+                "timeout": 1,  # 1 second timeout
+            }
+        ]
+
         tester = CodeTester(
             code=slow_code,
             test_cases=test_cases,
             function_name="add_numbers",
-            language="python"
+            language="python",
         )
-        
+
         result = tester.run_tests()
         assert not result.was_successful()
         assert result.errors > 0
-    
+
     def test_blocking_io_operations(self):
         """Test code that performs blocking I/O operations."""
         blocking_io_code = """
@@ -177,22 +183,23 @@ def add_numbers(a, b):
     return a + b
 """
         test_cases = [{"parameters": {"a": 1, "b": 2}, "expected": 3}]
-        
+
         tester = CodeTester(
             code=blocking_io_code,
             test_cases=test_cases,
             function_name="add_numbers",
-            language="python"
+            language="python",
         )
-        
+
         result = tester.run_tests()
         # This might timeout or succeed depending on network
         # The test ensures the system handles it gracefully
         if not result.was_successful():
             assert result.errors > 0 or result.failures > 0
-    
-    @pytest.mark.skipif(not language_registry.is_supported("java"), 
-                       reason="Java not available")
+
+    @pytest.mark.skipif(
+        not language_registry.is_supported("java"), reason="Java not available"
+    )
     def test_infinite_loop_java(self):
         """Test Java code with infinite loop."""
         infinite_loop_java = """
@@ -205,26 +212,29 @@ public class Solution {
     }
 }
 """
-        test_cases = [{
-            "parameters": {"a": 1, "b": 2},
-            "parameter_types": {"a": "int", "b": "int"},
-            "expected": 3,
-            "expected_type": "int"
-        }]
-        
+        test_cases = [
+            {
+                "parameters": {"a": 1, "b": 2},
+                "parameter_types": {"a": "int", "b": "int"},
+                "expected": 3,
+                "expected_type": "int",
+            }
+        ]
+
         tester = CodeTester(
             code=infinite_loop_java,
             test_cases=test_cases,
             function_name="add_numbers",
-            language="java"
+            language="java",
         )
-        
+
         result = tester.run_tests()
         assert not result.was_successful()
         assert result.errors > 0
-    
-    @pytest.mark.skipif(not language_registry.is_supported("cpp"), 
-                       reason="C++ not available")
+
+    @pytest.mark.skipif(
+        not language_registry.is_supported("cpp"), reason="C++ not available"
+    )
     def test_infinite_loop_cpp(self):
         """Test C++ code with infinite loop."""
         infinite_loop_cpp = """
@@ -238,26 +248,29 @@ int add_numbers(int a, int b) {
     return a + b;  // Never reached
 }
 """
-        test_cases = [{
-            "parameters": {"a": 1, "b": 2},
-            "parameter_types": {"a": "int", "b": "int"},
-            "expected": 3,
-            "expected_type": "int"
-        }]
-        
+        test_cases = [
+            {
+                "parameters": {"a": 1, "b": 2},
+                "parameter_types": {"a": "int", "b": "int"},
+                "expected": 3,
+                "expected_type": "int",
+            }
+        ]
+
         tester = CodeTester(
             code=infinite_loop_cpp,
             test_cases=test_cases,
             function_name="add_numbers",
-            language="cpp"
+            language="cpp",
         )
-        
+
         result = tester.run_tests()
         assert not result.was_successful()
         assert result.errors > 0
-    
-    @pytest.mark.skipif(not language_registry.is_supported("go"), 
-                       reason="Go not available")
+
+    @pytest.mark.skipif(
+        not language_registry.is_supported("go"), reason="Go not available"
+    )
     def test_infinite_loop_go(self):
         """Test Go code with infinite loop."""
         infinite_loop_go = """
@@ -271,18 +284,18 @@ func add_numbers(a int, b int) int {
 }
 """
         test_cases = [{"parameters": {"a": 1, "b": 2}, "expected": 3}]
-        
+
         tester = CodeTester(
             code=infinite_loop_go,
             test_cases=test_cases,
             function_name="add_numbers",
-            language="go"
+            language="go",
         )
-        
+
         result = tester.run_tests()
         assert not result.was_successful()
         assert result.errors > 0
-    
+
     def test_multiple_timeout_scenarios(self):
         """Test multiple test cases with different timeout scenarios."""
         mixed_timeout_code = """
@@ -293,29 +306,29 @@ def process_data(data, delay):
         time.sleep(delay)
     return len(data) * 2
 """
-        
+
         test_cases = [
             # Fast case - should succeed
             {"parameters": {"data": "hello", "delay": 0}, "expected": 10},
             # Slow case - should timeout
             {"parameters": {"data": "world", "delay": 5}, "expected": 10, "timeout": 2},
             # Another fast case - should succeed
-            {"parameters": {"data": "test", "delay": 0}, "expected": 8}
+            {"parameters": {"data": "test", "delay": 0}, "expected": 8},
         ]
-        
+
         tester = CodeTester(
             code=mixed_timeout_code,
             test_cases=test_cases,
             function_name="process_data",
-            language="python"
+            language="python",
         )
-        
+
         result = tester.run_tests()
         assert not result.was_successful()
         assert result.successes == 2  # Two fast cases succeed
-        assert result.errors == 1     # One slow case times out
+        assert result.errors == 1  # One slow case times out
         assert result.testsRun == 3
-    
+
     def test_timeout_with_partial_computation(self):
         """Test timeout in the middle of computation."""
         partial_computation_code = """
@@ -331,20 +344,22 @@ def add_numbers(a, b):
     return result * 2
 """
         test_cases = [{"parameters": {"a": 1, "b": 2}, "expected": 3}]
-        
+
         tester = CodeTester(
             code=partial_computation_code,
             test_cases=test_cases,
             function_name="add_numbers",
-            language="python"
+            language="python",
         )
-        
+
         result = tester.run_tests()
         assert not result.was_successful()
         assert result.errors > 0
-        assert any("timeout" in str(test_result["error"]).lower() 
-                  for test_result in result.test_results)
-    
+        assert any(
+            "timeout" in str(test_result["error"]).lower()
+            for test_result in result.test_results
+        )
+
     def test_cpu_intensive_task(self):
         """Test CPU-intensive task that might timeout."""
         cpu_intensive_code = """
@@ -356,14 +371,14 @@ def add_numbers(a, b):
     return a + b
 """
         test_cases = [{"parameters": {"a": 1, "b": 2}, "expected": 3}]
-        
+
         tester = CodeTester(
             code=cpu_intensive_code,
             test_cases=test_cases,
             function_name="add_numbers",
-            language="python"
+            language="python",
         )
-        
+
         result = tester.run_tests()
         # This might succeed or timeout depending on system performance
         # The test ensures the system handles it gracefully

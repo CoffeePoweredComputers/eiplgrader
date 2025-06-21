@@ -10,25 +10,45 @@ This module tests:
 6. Validation error messages and clarity
 """
 
-import pytest
-import sys
 import os
 import subprocess
+import sys
+
+import pytest
 
 # Add the project root to the path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../.."))
 
-from eiplgrader.languages.executors.python_executor import PythonExecutor
-from eiplgrader.languages.executors.javascript_executor import JavaScriptExecutor
-from eiplgrader.languages.executors.go_executor import GoExecutor
-from eiplgrader.languages.executors.java_executor import JavaExecutor
-from eiplgrader.languages.executors.cpp_executor import CppExecutor
-from eiplgrader.languages.executors.c_executor import CExecutor
-from eiplgrader.languages.executors.haskell_executor import HaskellExecutor
+from eiplgrader.languages.executors.python_executor import (
+    PythonExecutor,
+)  # pylint: disable=wrong-import-position
+from eiplgrader.languages.executors.javascript_executor import (
+    JavaScriptExecutor,
+)  # pylint: disable=wrong-import-position
+from eiplgrader.languages.executors.go_executor import (
+    GoExecutor,
+)  # pylint: disable=wrong-import-position
+from eiplgrader.languages.executors.java_executor import (
+    JavaExecutor,
+)  # pylint: disable=wrong-import-position
+from eiplgrader.languages.executors.cpp_executor import (
+    CppExecutor,
+)  # pylint: disable=wrong-import-position
+from eiplgrader.languages.executors.c_executor import (
+    CExecutor,
+)  # pylint: disable=wrong-import-position
+from eiplgrader.languages.executors.haskell_executor import (
+    HaskellExecutor,
+)  # pylint: disable=wrong-import-position
 
-from tests.fixtures.mock_code_samples import (
-    python_samples, javascript_samples, go_samples, java_samples,
-    cpp_samples, c_samples, haskell_samples
+from tests.fixtures.mock_code_samples import (  # pylint: disable=wrong-import-position
+    python_samples,
+    javascript_samples,
+    go_samples,
+    java_samples,
+    cpp_samples,
+    c_samples,
+    haskell_samples,
 )
 
 
@@ -40,48 +60,48 @@ class TestTypeSystemValidation:
         self.type_inference_executors = {}
         self.static_type_executors = {}
         self.samples = {}
-        
+
         # Type inference languages (Python, JavaScript, Go)
         try:
-            self.type_inference_executors['python'] = PythonExecutor()
-            self.samples['python'] = python_samples
+            self.type_inference_executors["python"] = PythonExecutor()
+            self.samples["python"] = python_samples
         except Exception:
             pass
-            
+
         try:
-            self.type_inference_executors['javascript'] = JavaScriptExecutor()
-            self.samples['javascript'] = javascript_samples
+            self.type_inference_executors["javascript"] = JavaScriptExecutor()
+            self.samples["javascript"] = javascript_samples
         except Exception:
             pass
-            
+
         try:
-            self.type_inference_executors['go'] = GoExecutor()
-            self.samples['go'] = go_samples
+            self.type_inference_executors["go"] = GoExecutor()
+            self.samples["go"] = go_samples
         except Exception:
             pass
-        
+
         # Static type languages (Java, C++, C, Haskell)
         try:
-            self.static_type_executors['java'] = JavaExecutor()
-            self.samples['java'] = java_samples
+            self.static_type_executors["java"] = JavaExecutor()
+            self.samples["java"] = java_samples
         except Exception:
             pass
-            
+
         try:
-            self.static_type_executors['cpp'] = CppExecutor()
-            self.samples['cpp'] = cpp_samples
+            self.static_type_executors["cpp"] = CppExecutor()
+            self.samples["cpp"] = cpp_samples
         except Exception:
             pass
-            
+
         try:
-            self.static_type_executors['c'] = CExecutor()
-            self.samples['c'] = c_samples
+            self.static_type_executors["c"] = CExecutor()
+            self.samples["c"] = c_samples
         except Exception:
             pass
-            
+
         try:
-            self.static_type_executors['haskell'] = HaskellExecutor()
-            self.samples['haskell'] = haskell_samples
+            self.static_type_executors["haskell"] = HaskellExecutor()
+            self.samples["haskell"] = haskell_samples
         except Exception:
             pass
 
@@ -97,18 +117,18 @@ class TestTypeSystemValidation:
     def _check_compiler_available(self, language):
         """Check if compiler/interpreter for language is available."""
         checks = {
-            'python': ['python3', '--version'],
-            'javascript': ['node', '--version'],
-            'go': ['go', 'version'],
-            'java': ['javac', '-version'],
-            'cpp': ['g++', '--version'],
-            'c': ['gcc', '--version'],
-            'haskell': ['ghc', '--version']
+            "python": ["python3", "--version"],
+            "javascript": ["node", "--version"],
+            "go": ["go", "version"],
+            "java": ["javac", "-version"],
+            "cpp": ["g++", "--version"],
+            "c": ["gcc", "--version"],
+            "haskell": ["ghc", "--version"],
         }
-        
+
         if language not in checks:
             return False
-            
+
         try:
             subprocess.run(checks[language], capture_output=True, check=True)
             return True
@@ -123,49 +143,49 @@ class TestTypeSystemValidation:
             {
                 "name": "integers",
                 "parameters": {"a": 5, "b": 3},
-                "expected_inference": {"a": "int", "b": "int"}
+                "expected_inference": {"a": "int", "b": "int"},
             },
             {
                 "name": "floats",
                 "parameters": {"x": 3.14, "y": 2.71},
-                "expected_inference": {"x": "double", "y": "double"}
+                "expected_inference": {"x": "double", "y": "double"},
             },
             {
                 "name": "strings",
                 "parameters": {"s": "hello", "t": "world"},
-                "expected_inference": {"s": "string", "t": "string"}
+                "expected_inference": {"s": "string", "t": "string"},
             },
             {
                 "name": "booleans",
                 "parameters": {"flag": True, "active": False},
-                "expected_inference": {"flag": "bool", "active": "bool"}
+                "expected_inference": {"flag": "bool", "active": "bool"},
             },
             {
                 "name": "lists",
                 "parameters": {"nums": [1, 2, 3], "words": ["a", "b"]},
-                "expected_inference": {"nums": "List[int]", "words": "List[string]"}
-            }
+                "expected_inference": {"nums": "List[int]", "words": "List[string]"},
+            },
         ]
-        
+
         for lang_name, executor in self.type_inference_executors.items():
             if not executor or not self._check_compiler_available(lang_name):
                 continue
-                
+
             for scenario in test_scenarios:
                 test_case = {
                     "function_name": "addNumbers",  # Function doesn't matter for this test
                     "parameters": scenario["parameters"],
                     "expected": 0,
-                    "inplace": "0"
+                    "inplace": "0",
                 }
-                
+
                 # Test that the executor can infer types
-                # The actual implementation varies by executor, but they should all handle 
+                # The actual implementation varies by executor, but they should all handle
                 # type inference without requiring explicit parameter_types
                 assert "parameter_types" not in test_case
                 assert "expected_type" not in test_case
-                
-                # The executor should be able to process this without throwing 
+
+                # The executor should be able to process this without throwing
                 # type validation errors
 
     def test_type_inference_optional_explicit_types(self):
@@ -173,34 +193,42 @@ class TestTypeSystemValidation:
         for lang_name, executor in self.type_inference_executors.items():
             if not executor or not self._check_compiler_available(lang_name):
                 continue
-                
+
             test_case_with_types = {
                 "function_name": "addNumbers",
                 "parameters": {"a": 5, "b": 3},
                 "parameter_types": {"a": "int", "b": "int"},
                 "expected": 8,
                 "expected_type": "int",
-                "inplace": "0"
+                "inplace": "0",
             }
-            
+
             test_case_without_types = {
                 "function_name": "addNumbers",
                 "parameters": {"a": 5, "b": 3},
                 "expected": 8,
-                "inplace": "0"
+                "inplace": "0",
             }
-            
+
             try:
                 code_sample = getattr(self.samples[lang_name], "ADD_NUMBERS")
-                
+
                 # Both should work
-                result_with_types = executor.execute_test(code_sample, test_case_with_types)
-                result_without_types = executor.execute_test(code_sample, test_case_without_types)
-                
-                assert result_with_types["passed"], f"{lang_name} failed with explicit types"
-                assert result_without_types["passed"], f"{lang_name} failed with type inference"
+                result_with_types = executor.execute_test(
+                    code_sample, test_case_with_types
+                )
+                result_without_types = executor.execute_test(
+                    code_sample, test_case_without_types
+                )
+
+                assert result_with_types[
+                    "passed"
+                ], f"{lang_name} failed with explicit types"
+                assert result_without_types[
+                    "passed"
+                ], f"{lang_name} failed with type inference"
                 assert result_with_types["actual"] == result_without_types["actual"]
-                
+
             except Exception as e:
                 pytest.fail(f"{lang_name} type inference test failed: {e}")
 
@@ -210,32 +238,40 @@ class TestTypeSystemValidation:
             {
                 "name": "nested_lists",
                 "parameters": {"nested": [[1, 2], [3, 4]]},
-                "function": "flattenNested" if "flattenNested" in dir(python_samples) else "sumEvenNumbers"
+                "function": (
+                    "flattenNested"
+                    if "flattenNested" in dir(python_samples)
+                    else "sumEvenNumbers"
+                ),
             },
             {
                 "name": "mixed_number_types",
                 "parameters": {"a": 10, "b": 20.5},  # int and float
-                "function": "calculateAverage" if hasattr(go_samples, "CALCULATE_AVERAGE") else "addNumbers"
+                "function": (
+                    "calculateAverage"
+                    if hasattr(go_samples, "CALCULATE_AVERAGE")
+                    else "addNumbers"
+                ),
             },
             {
                 "name": "empty_collections",
                 "parameters": {"numbers": []},
-                "function": "sumEvenNumbers"
-            }
+                "function": "sumEvenNumbers",
+            },
         ]
-        
+
         for lang_name, executor in self.type_inference_executors.items():
             if not executor or not self._check_compiler_available(lang_name):
                 continue
-                
+
             for scenario in complex_scenarios:
                 test_case = {
                     "function_name": scenario["function"],
                     "parameters": scenario["parameters"],
                     "expected": 0,  # Don't care about result, just type handling
-                    "inplace": "0"
+                    "inplace": "0",
                 }
-                
+
                 # Should not require explicit types
                 assert "parameter_types" not in test_case
 
@@ -246,60 +282,63 @@ class TestTypeSystemValidation:
         for lang_name, executor in self.static_type_executors.items():
             if not executor or not self._check_compiler_available(lang_name):
                 continue
-                
+
             # Test case without types - should fail validation
             test_case_no_types = {
                 "function_name": "addNumbers",
                 "parameters": {"a": 5, "b": 3},
                 "expected": 8,
-                "inplace": "0"
+                "inplace": "0",
             }
-            
+
             with pytest.raises(ValueError) as exc_info:
                 code_sample = getattr(self.samples[lang_name], "ADD_NUMBERS")
                 executor.execute_test(code_sample, test_case_no_types)
-            
+
             error_msg = str(exc_info.value)
             assert "Missing required type information" in error_msg
-            assert any(phrase in error_msg for phrase in [
-                "parameter_types not provided",
-                "expected_type not provided"
-            ])
+            assert any(
+                phrase in error_msg
+                for phrase in [
+                    "parameter_types not provided",
+                    "expected_type not provided",
+                ]
+            )
 
     def test_static_type_validation_partial_types(self):
         """Test validation when only some types are provided."""
         for lang_name, executor in self.static_type_executors.items():
             if not executor or not self._check_compiler_available(lang_name):
                 continue
-                
+
             # Missing parameter_types
             test_case_no_param_types = {
                 "function_name": "addNumbers",
                 "parameters": {"a": 5, "b": 3},
                 "expected": 8,
                 "expected_type": "int",
-                "inplace": "0"
+                "inplace": "0",
             }
-            
+
             with pytest.raises(ValueError) as exc_info:
                 code_sample = getattr(self.samples[lang_name], "ADD_NUMBERS")
                 executor.execute_test(code_sample, test_case_no_param_types)
             assert "parameter_types not provided" in str(exc_info.value)
-            
+
             # Missing expected_type
             test_case_no_expected_type = {
                 "function_name": "addNumbers",
                 "parameters": {"a": 5, "b": 3},
                 "parameter_types": {"a": "int", "b": "int"},
                 "expected": 8,
-                "inplace": "0"
+                "inplace": "0",
             }
-            
+
             with pytest.raises(ValueError) as exc_info:
                 code_sample = getattr(self.samples[lang_name], "ADD_NUMBERS")
                 executor.execute_test(code_sample, test_case_no_expected_type)
             assert "expected_type not provided" in str(exc_info.value)
-            
+
             # Missing individual parameter type
             test_case_missing_param = {
                 "function_name": "addNumbers",
@@ -307,9 +346,9 @@ class TestTypeSystemValidation:
                 "parameter_types": {"a": "int"},  # Missing 'b'
                 "expected": 8,
                 "expected_type": "int",
-                "inplace": "0"
+                "inplace": "0",
             }
-            
+
             with pytest.raises(ValueError) as exc_info:
                 code_sample = getattr(self.samples[lang_name], "ADD_NUMBERS")
                 executor.execute_test(code_sample, test_case_missing_param)
@@ -318,48 +357,48 @@ class TestTypeSystemValidation:
     def test_static_type_language_specific_types(self):
         """Test language-specific type systems."""
         type_systems = {
-            'java': {
-                'int': 'int',
-                'string': 'String',
-                'bool': 'boolean',
-                'int_array': 'int[]',
-                'string_array': 'String[]',
-                'double': 'double'
+            "java": {
+                "int": "int",
+                "string": "String",
+                "bool": "boolean",
+                "int_array": "int[]",
+                "string_array": "String[]",
+                "double": "double",
             },
-            'cpp': {
-                'int': 'int',
-                'string': 'std::string',
-                'bool': 'bool',
-                'int_vector': 'std::vector<int>',
-                'string_vector': 'std::vector<std::string>',
-                'double': 'double'
+            "cpp": {
+                "int": "int",
+                "string": "std::string",
+                "bool": "bool",
+                "int_vector": "std::vector<int>",
+                "string_vector": "std::vector<std::string>",
+                "double": "double",
             },
-            'c': {
-                'int': 'int',
-                'string': 'char*',
-                'bool': 'int',  # C uses int for boolean
-                'int_array': 'int*',
-                'double': 'double'
+            "c": {
+                "int": "int",
+                "string": "char*",
+                "bool": "int",  # C uses int for boolean
+                "int_array": "int*",
+                "double": "double",
             },
-            'haskell': {
-                'int': 'Int',
-                'string': 'String',
-                'bool': 'Bool',
-                'int_list': '[Int]',
-                'string_list': '[String]',
-                'double': 'Double'
-            }
+            "haskell": {
+                "int": "Int",
+                "string": "String",
+                "bool": "Bool",
+                "int_list": "[Int]",
+                "string_list": "[String]",
+                "double": "Double",
+            },
         }
-        
+
         for lang_name, executor in self.static_type_executors.items():
             if not executor or not self._check_compiler_available(lang_name):
                 continue
-                
+
             if lang_name not in type_systems:
                 continue
-                
+
             lang_types = type_systems[lang_name]
-            
+
             # Test that the language accepts its own type syntax
             for type_name, type_syntax in lang_types.items():
                 test_case = {
@@ -367,16 +406,18 @@ class TestTypeSystemValidation:
                     "parameters": {"param": 42},
                     "parameter_types": {"param": type_syntax},
                     "expected": 0,
-                    "expected_type": lang_types['int'],
-                    "inplace": "0"
+                    "expected_type": lang_types["int"],
+                    "inplace": "0",
                 }
-                
+
                 # This should not raise a validation error for the type format
                 try:
                     executor.validate_types_provided(test_case)
                 except ValueError as e:
                     if "Missing required type information" in str(e):
-                        pytest.fail(f"Type validation failed for {lang_name} type {type_name}: {e}")
+                        pytest.fail(
+                            f"Type validation failed for {lang_name} type {type_name}: {e}"
+                        )
 
     def test_complex_type_scenarios(self):
         """Test complex type scenarios across all languages."""
@@ -384,86 +425,113 @@ class TestTypeSystemValidation:
             {
                 "name": "multiple_parameters",
                 "function": "formatInfo",
-                "parameters": {"name": "Alice", "age": 30, "active": True, "salary": 50000.0},
+                "parameters": {
+                    "name": "Alice",
+                    "age": 30,
+                    "active": True,
+                    "salary": 50000.0,
+                },
                 "type_mappings": {
-                    'java': {"name": "String", "age": "int", "active": "boolean", "salary": "double"},
-                    'cpp': {"name": "std::string", "age": "int", "active": "bool", "salary": "double"},
-                    'c': {"name": "char*", "age": "int", "active": "int", "salary": "double"},
-                    'haskell': {"name": "String", "age": "Int", "active": "Bool", "salary": "Double"}
+                    "java": {
+                        "name": "String",
+                        "age": "int",
+                        "active": "boolean",
+                        "salary": "double",
+                    },
+                    "cpp": {
+                        "name": "std::string",
+                        "age": "int",
+                        "active": "bool",
+                        "salary": "double",
+                    },
+                    "c": {
+                        "name": "char*",
+                        "age": "int",
+                        "active": "int",
+                        "salary": "double",
+                    },
+                    "haskell": {
+                        "name": "String",
+                        "age": "Int",
+                        "active": "Bool",
+                        "salary": "Double",
+                    },
                 },
                 "expected_types": {
-                    'java': "String",
-                    'cpp': "std::string", 
-                    'c': "char*",
-                    'haskell': "String"
-                }
+                    "java": "String",
+                    "cpp": "std::string",
+                    "c": "char*",
+                    "haskell": "String",
+                },
             },
             {
-                "name": "array_operations", 
+                "name": "array_operations",
                 "function": "sumEvenNumbers",
                 "parameters": {"numbers": [1, 2, 3, 4]},
                 "type_mappings": {
-                    'java': {"numbers": "int[]"},
-                    'cpp': {"numbers": "std::vector<int>"},
-                    'c': {"numbers": "int*", "size": "int"},
-                    'haskell': {"numbers": "[Int]"}
+                    "java": {"numbers": "int[]"},
+                    "cpp": {"numbers": "std::vector<int>"},
+                    "c": {"numbers": "int*", "size": "int"},
+                    "haskell": {"numbers": "[Int]"},
                 },
                 "expected_types": {
-                    'java': "int",
-                    'cpp': "int",
-                    'c': "int", 
-                    'haskell': "Int"
-                }
-            }
+                    "java": "int",
+                    "cpp": "int",
+                    "c": "int",
+                    "haskell": "Int",
+                },
+            },
         ]
-        
+
         for scenario in scenarios:
             for lang_name, executor in self.static_type_executors.items():
                 if not executor or not self._check_compiler_available(lang_name):
                     continue
-                    
+
                 if lang_name not in scenario["type_mappings"]:
                     continue
-                
+
                 parameters = scenario["parameters"].copy()
-                if lang_name == 'c' and "numbers" in parameters:
+                if lang_name == "c" and "numbers" in parameters:
                     parameters["size"] = len(parameters["numbers"])
-                
+
                 test_case = {
                     "function_name": scenario["function"],
                     "parameters": parameters,
                     "parameter_types": scenario["type_mappings"][lang_name],
                     "expected": 0,
                     "expected_type": scenario["expected_types"][lang_name],
-                    "inplace": "0"
+                    "inplace": "0",
                 }
-                
+
                 # Should pass validation
                 try:
                     executor.validate_types_provided(test_case)
                 except ValueError as e:
                     if "Missing required type information" in str(e):
-                        pytest.fail(f"Complex type validation failed for {lang_name}: {e}")
+                        pytest.fail(
+                            f"Complex type validation failed for {lang_name}: {e}"
+                        )
 
     def test_type_error_message_quality(self):
         """Test that type validation error messages are clear and helpful."""
         for lang_name, executor in self.static_type_executors.items():
             if not executor or not self._check_compiler_available(lang_name):
                 continue
-                
+
             test_case = {
                 "function_name": "addNumbers",
                 "parameters": {"a": 5, "b": 3},
                 "expected": 8,
-                "inplace": "0"
+                "inplace": "0",
             }
-            
+
             with pytest.raises(ValueError) as exc_info:
                 code_sample = getattr(self.samples[lang_name], "ADD_NUMBERS")
                 executor.execute_test(code_sample, test_case)
-            
+
             error_msg = str(exc_info.value)
-            
+
             # Check for helpful error message components
             assert "Missing required type information" in error_msg
             assert "parameter_types" in error_msg
@@ -471,7 +539,7 @@ class TestTypeSystemValidation:
             assert '"parameters": {' in error_msg
             assert '"parameter_types": {' in error_msg
             assert '"expected_type": "type"' in error_msg
-            
+
             # Should show example format
             assert "param1" in error_msg and "type1" in error_msg
 
@@ -482,20 +550,20 @@ class TestTypeSystemValidation:
                 "name": "empty_parameters",
                 "parameters": {},
                 "parameter_types": {},
-                "valid": True
+                "valid": True,
             },
             {
                 "name": "null_like_values",
                 "parameters": {"value": None},
                 "parameter_types": {"value": "int"},
-                "valid": False  # Most static languages don't handle None well
-            }
+                "valid": False,  # Most static languages don't handle None well
+            },
         ]
-        
+
         for lang_name, executor in self.static_type_executors.items():
             if not executor or not self._check_compiler_available(lang_name):
                 continue
-                
+
             for test in boundary_tests:
                 test_case = {
                     "function_name": "testFunction",
@@ -503,16 +571,18 @@ class TestTypeSystemValidation:
                     "parameter_types": test["parameter_types"],
                     "expected": 0,
                     "expected_type": "int",
-                    "inplace": "0"
+                    "inplace": "0",
                 }
-                
+
                 if test["valid"]:
                     # Should pass validation
                     try:
                         executor.validate_types_provided(test_case)
                     except ValueError as e:
                         if "Missing required type information" in str(e):
-                            pytest.fail(f"Valid boundary test failed for {lang_name}: {e}")
+                            pytest.fail(
+                                f"Valid boundary test failed for {lang_name}: {e}"
+                            )
                 else:
                     # May or may not pass validation, but shouldn't crash
                     try:
@@ -523,42 +593,50 @@ class TestTypeSystemValidation:
     def test_cross_type_system_comparison(self):
         """Compare type systems across language categories."""
         # Ensure we have representatives from both categories
-        inference_langs = [lang for lang in self.type_inference_executors.keys() 
-                          if self.type_inference_executors[lang] and self._check_compiler_available(lang)]
-        static_langs = [lang for lang in self.static_type_executors.keys()
-                       if self.static_type_executors[lang] and self._check_compiler_available(lang)]
-        
+        inference_langs = [
+            lang
+            for lang, executor in self.type_inference_executors.items()
+            if executor and self._check_compiler_available(lang)
+        ]
+        static_langs = [
+            lang
+            for lang, executor in self.static_type_executors.items()
+            if executor and self._check_compiler_available(lang)
+        ]
+
         if not inference_langs:
             pytest.skip("No type inference languages available")
         if not static_langs:
             pytest.skip("No static type languages available")
-            
+
         print(f"\\nType inference languages tested: {inference_langs}")
         print(f"Static type languages tested: {static_langs}")
-        
+
         # Basic test that demonstrates the difference
         simple_test = {
             "function_name": "addNumbers",
             "parameters": {"a": 5, "b": 3},
             "expected": 8,
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         # Type inference languages should accept this
         for lang in inference_langs:
             executor = self.type_inference_executors[lang]
             try:
                 code_sample = getattr(self.samples[lang], "ADD_NUMBERS")
                 result = executor.execute_test(code_sample, simple_test)
-                assert result["passed"], f"{lang} should handle test without explicit types"
+                assert result[
+                    "passed"
+                ], f"{lang} should handle test without explicit types"
             except Exception as e:
                 pytest.fail(f"Type inference failed for {lang}: {e}")
-        
+
         # Static type languages should reject this
         for lang in static_langs:
             executor = self.static_type_executors[lang]
             with pytest.raises(ValueError):
-                code_sample = getattr(self.samples[lang], "ADD_NUMBERS") 
+                code_sample = getattr(self.samples[lang], "ADD_NUMBERS")
                 executor.execute_test(code_sample, simple_test)
 
     def test_type_system_documentation_compliance(self):
@@ -568,34 +646,34 @@ class TestTypeSystemValidation:
                 "languages": ["python", "javascript", "go"],
                 "requires_types": False,
                 "supports_inference": True,
-                "native_json": True
+                "native_json": True,
             },
             "static_types": {
                 "languages": ["java", "cpp", "c", "haskell"],
                 "requires_types": True,
                 "supports_inference": False,
-                "native_json": False
-            }
+                "native_json": False,
+            },
         }
-        
+
         for category, behavior in documented_behavior.items():
             for lang in behavior["languages"]:
                 if category == "type_inference":
                     executor = self.type_inference_executors.get(lang)
                 else:
                     executor = self.static_type_executors.get(lang)
-                
+
                 if not executor or not self._check_compiler_available(lang):
                     continue
-                
+
                 # Test the documented behavior
                 test_case = {
                     "function_name": "addNumbers",
                     "parameters": {"a": 1, "b": 2},
                     "expected": 3,
-                    "inplace": "0"
+                    "inplace": "0",
                 }
-                
+
                 if behavior["requires_types"]:
                     # Should fail without types
                     with pytest.raises(ValueError):
@@ -606,6 +684,10 @@ class TestTypeSystemValidation:
                     try:
                         code_sample = getattr(self.samples[lang], "ADD_NUMBERS")
                         result = executor.execute_test(code_sample, test_case)
-                        assert result["passed"], f"{lang} should work without explicit types"
+                        assert result[
+                            "passed"
+                        ], f"{lang} should work without explicit types"
                     except Exception as e:
-                        pytest.fail(f"Type inference documentation compliance failed for {lang}: {e}")
+                        pytest.fail(
+                            f"Type inference documentation compliance failed for {lang}: {e}"
+                        )

@@ -10,19 +10,23 @@ This module tests the CExecutor's ability to:
 6. Handle C-specific types like pointers and arrays
 """
 
-import pytest
-import sys
 import os
 import subprocess
+import sys
+import pytest
 
 # Add the project root to the path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../.."))
 
-from eiplgrader.languages.executors.c_executor import CExecutor
-from tests.fixtures.mock_code_samples import c_samples
+from eiplgrader.languages.executors.c_executor import (
+    CExecutor,
+)  # pylint: disable=wrong-import-position
+from tests.fixtures.mock_code_samples import (
+    c_samples,
+)  # pylint: disable=wrong-import-position
 
 
-class TestCExecutor:
+class TestCExecutor:  # pylint: disable=too-many-public-methods
     """Test suite for C executor with focus on explicit type validation."""
 
     def setup_method(self):
@@ -48,12 +52,12 @@ class TestCExecutor:
             "parameters": {"a": 5, "b": 3},
             "expected": 8,
             "expected_type": "int",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         with pytest.raises(ValueError) as exc_info:
             self.executor.execute_test(c_samples.ADD_NUMBERS, test_case)
-        
+
         assert "Missing required type information" in str(exc_info.value)
         assert "parameter_types not provided" in str(exc_info.value)
 
@@ -64,12 +68,12 @@ class TestCExecutor:
             "parameters": {"a": 5, "b": 3},
             "parameter_types": {"a": "int", "b": "int"},
             "expected": 8,
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         with pytest.raises(ValueError) as exc_info:
             self.executor.execute_test(c_samples.ADD_NUMBERS, test_case)
-        
+
         assert "Missing required type information" in str(exc_info.value)
         assert "expected_type not provided" in str(exc_info.value)
 
@@ -81,12 +85,12 @@ class TestCExecutor:
             "parameter_types": {"a": "int"},  # Missing "b"
             "expected": 8,
             "expected_type": "int",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         with pytest.raises(ValueError) as exc_info:
             self.executor.execute_test(c_samples.ADD_NUMBERS, test_case)
-        
+
         assert "parameter_types['b'] not provided" in str(exc_info.value)
 
     def test_integer_types_explicit(self):
@@ -97,11 +101,11 @@ class TestCExecutor:
             "parameter_types": {"a": "int", "b": "int"},
             "expected": 8,
             "expected_type": "int",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(c_samples.ADD_NUMBERS, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == 8
         assert result["expected"] == 8
@@ -114,11 +118,11 @@ class TestCExecutor:
             "parameter_types": {"str": "char*"},
             "expected": 3,
             "expected_type": "int",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(c_samples.COUNT_VOWELS, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == 3
 
@@ -130,11 +134,11 @@ class TestCExecutor:
             "parameter_types": {"s": "char*"},
             "expected": 1,  # C returns 1 for true
             "expected_type": "int",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(c_samples.IS_PALINDROME, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == 1
 
@@ -146,11 +150,11 @@ class TestCExecutor:
             "parameter_types": {"numbers": "int*", "size": "int"},
             "expected": 12,
             "expected_type": "int",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(c_samples.SUM_EVEN_NUMBERS, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == 12
 
@@ -162,11 +166,11 @@ class TestCExecutor:
             "parameter_types": {"numbers": "int*", "size": "int"},
             "expected": 9,
             "expected_type": "int",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(c_samples.FIND_MAX, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == 9
 
@@ -178,11 +182,11 @@ class TestCExecutor:
             "parameter_types": {"n": "int"},
             "expected": 120,
             "expected_type": "int",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(c_samples.FACTORIAL, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == 120
 
@@ -194,11 +198,11 @@ class TestCExecutor:
             "parameter_types": {"arr": "int*", "n": "int"},
             "expected": [1, 1, 3, 4, 5],
             "expected_type": "int*",
-            "inplace": "1"
+            "inplace": "1",
         }
-        
+
         result = self.executor.execute_test(c_samples.BUBBLE_SORT, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == [1, 1, 3, 4, 5]
 
@@ -210,11 +214,11 @@ class TestCExecutor:
             "parameter_types": {"s": "char*"},
             "expected": "olleh",
             "expected_type": "char*",
-            "inplace": "1"
+            "inplace": "1",
         }
-        
+
         result = self.executor.execute_test(c_samples.REVERSE_STRING, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == "olleh"
 
@@ -226,11 +230,11 @@ class TestCExecutor:
             "parameter_types": {"arr": "int*", "size": "int"},
             "expected": [2, 4, 6, 8],
             "expected_type": "int*",
-            "inplace": "1"
+            "inplace": "1",
         }
-        
+
         result = self.executor.execute_test(c_samples.DOUBLE_ARRAY, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == [2, 4, 6, 8]
 
@@ -242,11 +246,11 @@ class TestCExecutor:
             "parameter_types": {"arr": "int*", "size": "int", "target": "int"},
             "expected": 2,
             "expected_type": "int",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(c_samples.LINEAR_SEARCH, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == 2
 
@@ -258,11 +262,11 @@ class TestCExecutor:
             "parameter_types": {"arr": "int*", "size": "int", "target": "int"},
             "expected": -1,
             "expected_type": "int",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(c_samples.LINEAR_SEARCH, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == -1
 
@@ -279,11 +283,11 @@ int brokenFunction(int x) {
             "parameter_types": {"x": "int"},
             "expected": 2,
             "expected_type": "int",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(invalid_code, test_case)
-        
+
         assert result["passed"] is False
         assert "error" in result
         assert "Compilation failed" in result["error"]
@@ -301,11 +305,11 @@ int divideByZero(int x) {
             "parameter_types": {"x": "int"},
             "expected": None,
             "expected_type": "int",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(code, test_case)
-        
+
         assert result["passed"] is False
         # C division by zero behavior is undefined, might not always error
 
@@ -317,11 +321,11 @@ int divideByZero(int x) {
             "parameter_types": {"numbers": "int*", "size": "int"},
             "expected": 0,
             "expected_type": "int",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(c_samples.SUM_EVEN_NUMBERS, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == 0
 
@@ -338,11 +342,11 @@ int largeNumberOperation(int x) {
             "parameter_types": {"x": "int"},
             "expected": 999999000,
             "expected_type": "int",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(code, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == 999999000
 
@@ -354,11 +358,11 @@ int largeNumberOperation(int x) {
             "parameter_types": {"s": "char*"},
             "expected": 1,
             "expected_type": "int",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(c_samples.IS_PALINDROME, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == 1
 
@@ -368,12 +372,12 @@ int largeNumberOperation(int x) {
             "function_name": "addNumbers",
             "parameters": {"a": 5, "b": 3},
             "expected": 8,
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         with pytest.raises(ValueError) as exc_info:
             self.executor.execute_test(c_samples.ADD_NUMBERS, test_case)
-        
+
         error_message = str(exc_info.value)
         assert "Missing required type information" in error_message
         assert "parameter_types not provided" in error_message
@@ -389,17 +393,17 @@ int largeNumberOperation(int x) {
             "parameter_types": {"a": "int", "b": "int"},
             "expected": 55,
             "expected_type": "int",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         # Test the prepare_code method to check parameter embedding
         prepared_code = self.executor.prepare_code(c_samples.ADD_NUMBERS, test_case)
-        
+
         # Check that parameters are embedded
         assert "int a = 42;" in prepared_code
         assert "int b = 13;" in prepared_code
         assert "addNumbers(a, b)" in prepared_code
-        
+
         # Execute to ensure it works
         result = self.executor.execute_test(c_samples.ADD_NUMBERS, test_case)
         assert result["passed"] is True
@@ -412,15 +416,15 @@ int largeNumberOperation(int x) {
             {
                 "name": "int_pointer",
                 "param_type": "int*",
-                "expected_param": "int* numbers"
+                "expected_param": "int* numbers",
             },
             {
-                "name": "char_pointer", 
+                "name": "char_pointer",
                 "param_type": "char*",
-                "expected_param": "char* str"
-            }
+                "expected_param": "char* str",
+            },
         ]
-        
+
         for case in test_cases:
             test_case = {
                 "function_name": "testFunction",
@@ -428,9 +432,9 @@ int largeNumberOperation(int x) {
                 "parameter_types": {"param": case["param_type"]},
                 "expected": 0,
                 "expected_type": "int",
-                "inplace": "0"
+                "inplace": "0",
             }
-            
+
             # This should not raise a validation error for the type format
             try:
                 # We expect this to fail at compilation since testFunction doesn't exist
@@ -443,23 +447,22 @@ int largeNumberOperation(int x) {
     def test_cleanup_temp_files(self):
         """Test that temporary files are properly cleaned up."""
         import tempfile
-        import os
-        
+
         test_case = {
             "function_name": "addNumbers",
             "parameters": {"a": 1, "b": 2},
             "parameter_types": {"a": "int", "b": "int"},
             "expected": 3,
             "expected_type": "int",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         # Run test
         result = self.executor.execute_test(c_samples.ADD_NUMBERS, test_case)
-        
+
         # Clean up
         self.executor.cleanup()
-        
+
         # Verify the test passed
         assert result["passed"] is True
 
@@ -476,13 +479,18 @@ int multiTypeFunction(int num, char* str, int* arr, int size) {
         test_case = {
             "function_name": "multiTypeFunction",
             "parameters": {"num": 5, "str": "test", "arr": [10, 20, 30], "size": 3},
-            "parameter_types": {"num": "int", "str": "char*", "arr": "int*", "size": "int"},
+            "parameter_types": {
+                "num": "int",
+                "str": "char*",
+                "arr": "int*",
+                "size": "int",
+            },
             "expected": 22,  # 5 + 4 + 10 + 3
             "expected_type": "int",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(code, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == 22

@@ -10,19 +10,24 @@ This module tests the GoExecutor's ability to:
 6. Handle Go-specific types like slices, interfaces, etc.
 """
 
-import pytest
-import sys
 import os
 import subprocess
+import sys
+
+import pytest
 
 # Add the project root to the path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../.."))
 
-from eiplgrader.languages.executors.go_executor import GoExecutor
-from tests.fixtures.mock_code_samples import go_samples
+from eiplgrader.languages.executors.go_executor import (
+    GoExecutor,
+)  # pylint: disable=wrong-import-position
+from tests.fixtures.mock_code_samples import (
+    go_samples,
+)  # pylint: disable=wrong-import-position
 
 
-class TestGoExecutor:
+class TestGoExecutor:  # pylint: disable=too-many-public-methods
     """Test suite for Go executor with focus on type inference capabilities."""
 
     def setup_method(self):
@@ -47,11 +52,11 @@ class TestGoExecutor:
             "function_name": "addNumbers",
             "parameters": {"a": 5, "b": 3},
             "expected": 8,
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(go_samples.ADD_NUMBERS, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == 8
         assert result["expected"] == 8
@@ -63,11 +68,11 @@ class TestGoExecutor:
             "function_name": "calculateAverage",
             "parameters": {"a": 10.5, "b": 7.3},
             "expected": 8.9,
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(go_samples.CALCULATE_AVERAGE, test_case)
-        
+
         assert result["passed"] is True
         assert abs(result["actual"] - 8.9) < 0.001
 
@@ -77,11 +82,11 @@ class TestGoExecutor:
             "function_name": "countVowels",
             "parameters": {"s": "hello world"},
             "expected": 3,
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(go_samples.COUNT_VOWELS, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == 3
 
@@ -91,11 +96,11 @@ class TestGoExecutor:
             "function_name": "sumEvenNumbers",
             "parameters": {"numbers": [1, 2, 3, 4, 5, 6]},
             "expected": 12,
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(go_samples.SUM_EVEN_NUMBERS, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == 12
 
@@ -105,11 +110,11 @@ class TestGoExecutor:
             "function_name": "isPalindrome",
             "parameters": {"s": "racecar"},
             "expected": True,
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(go_samples.IS_PALINDROME, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] is True
 
@@ -117,13 +122,18 @@ class TestGoExecutor:
         """Test type inference with mixed parameter types."""
         test_case = {
             "function_name": "formatInfo",
-            "parameters": {"name": "Alice", "age": 25, "isActive": False, "salary": 75000.50},
+            "parameters": {
+                "name": "Alice",
+                "age": 25,
+                "isActive": False,
+                "salary": 75000.50,
+            },
             "expected": "Alice,25,false,75000.50",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(go_samples.FORMAT_INFO, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == "Alice,25,false,75000.50"
 
@@ -133,11 +143,11 @@ class TestGoExecutor:
             "function_name": "sumEvenNumbers",
             "parameters": {"numbers": []},
             "expected": 0,
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(go_samples.SUM_EVEN_NUMBERS, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == 0
 
@@ -147,11 +157,11 @@ class TestGoExecutor:
             "function_name": "joinWords",
             "parameters": {"words": ["hello", "world", "go"]},
             "expected": "hello world go",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(go_samples.JOIN_WORDS, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == "hello world go"
 
@@ -161,11 +171,11 @@ class TestGoExecutor:
             "function_name": "factorial",
             "parameters": {"n": 5},
             "expected": 120,
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(go_samples.FACTORIAL, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == 120
 
@@ -175,11 +185,11 @@ class TestGoExecutor:
             "function_name": "sortSlice",
             "parameters": {"arr": [3, 1, 4, 1, 5]},
             "expected": [1, 1, 3, 4, 5],
-            "inplace": "1"
+            "inplace": "1",
         }
-        
+
         result = self.executor.execute_test(go_samples.SORT_SLICE, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == [1, 1, 3, 4, 5]
 
@@ -199,11 +209,11 @@ func processAndReturn(arr []int) int {
             "function_name": "processAndReturn",
             "parameters": {"arr": [1, 2, 3]},
             "expected": 3,
-            "inplace": "2"
+            "inplace": "2",
         }
-        
+
         result = self.executor.execute_test(code, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == 3
 
@@ -213,11 +223,11 @@ func processAndReturn(arr []int) int {
             "function_name": "doubleSlice",
             "parameters": {"arr": [1, 2, 3, 4]},
             "expected": [2, 4, 6, 8],
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(go_samples.DOUBLE_SLICE, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == [2, 4, 6, 8]
 
@@ -227,11 +237,11 @@ func processAndReturn(arr []int) int {
             "function_name": "findMax",
             "parameters": {"numbers": [3, 7, 2, 9, 1]},
             "expected": 9,
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(go_samples.FIND_MAX, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == 9
 
@@ -241,11 +251,11 @@ func processAndReturn(arr []int) int {
             "function_name": "linearSearch",
             "parameters": {"arr": [10, 20, 30, 40], "target": 30},
             "expected": 2,
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(go_samples.LINEAR_SEARCH, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == 2
 
@@ -255,11 +265,11 @@ func processAndReturn(arr []int) int {
             "function_name": "linearSearch",
             "parameters": {"arr": [10, 20, 30, 40], "target": 99},
             "expected": -1,
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(go_samples.LINEAR_SEARCH, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == -1
 
@@ -269,11 +279,11 @@ func processAndReturn(arr []int) int {
             "function_name": "flattenNested",
             "parameters": {"nested": [[1, 2], [3, 4], [5]]},
             "expected": [1, 2, 3, 4, 5],
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(go_samples.FLATTEN_NESTED, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == [1, 2, 3, 4, 5]
 
@@ -283,11 +293,11 @@ func processAndReturn(arr []int) int {
             "function_name": "average",
             "parameters": {"numbers": [1.0, 2.0, 3.0, 4.0, 5.0]},
             "expected": 3.0,
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(go_samples.AVERAGE, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == 3.0
 
@@ -302,11 +312,11 @@ func brokenFunction(x int) int {
             "function_name": "brokenFunction",
             "parameters": {"x": 1},
             "expected": 2,
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(invalid_code, test_case)
-        
+
         assert result["passed"] is False
         assert "error" in result
         assert "Compilation failed" in result["error"]
@@ -322,11 +332,11 @@ func divideByZero(x int) int {
             "function_name": "divideByZero",
             "parameters": {"x": 10},
             "expected": None,
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(code, test_case)
-        
+
         assert result["passed"] is False
         assert "error" in result
 
@@ -341,11 +351,11 @@ func largeNumberOperation(x int) int {
             "function_name": "largeNumberOperation",
             "parameters": {"x": 999999999},
             "expected": 999999999000000,
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(code, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == 999999999000000
 
@@ -355,11 +365,11 @@ func largeNumberOperation(x int) int {
             "function_name": "countCharacters",
             "parameters": {"s": "héllo wörld 🌍"},
             "expected": 13,
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(go_samples.COUNT_CHARACTERS, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == 13
 
@@ -369,32 +379,32 @@ func largeNumberOperation(x int) int {
             "function_name": "addNumbers",
             "parameters": {"a": 5, "b": 3},
             "expected": 8,
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         # Before execution, no types should be present
         assert "parameter_types" not in test_case
         assert "expected_type" not in test_case
-        
+
         # Execute the test - Go executor should infer types automatically
         result = self.executor.execute_test(go_samples.ADD_NUMBERS, test_case)
-        
+
         # The executor should handle type inference internally
         assert result["passed"] is True
 
     def test_pre_existing_types_respected(self):
         """Test that pre-existing type annotations are respected."""
         test_case = {
-            "function_name": "addNumbers", 
+            "function_name": "addNumbers",
             "parameters": {"a": 5, "b": 3},
             "parameter_types": {"a": "int", "b": "int"},
             "expected": 8,
             "expected_type": "int",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(go_samples.ADD_NUMBERS, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == 8
 
@@ -410,11 +420,11 @@ func divMod(a, b int) (int, int) {
             "function_name": "divMod",
             "parameters": {"a": 17, "b": 5},
             "expected": [3, 2],  # Go returns multiple values as array in JSON
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(code, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == [3, 2]
 
@@ -432,11 +442,11 @@ func formatAny(value interface{}) string {
             "function_name": "formatAny",
             "parameters": {"value": 42},
             "expected": "42",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(code, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == "42"
 
@@ -446,11 +456,11 @@ func formatAny(value interface{}) string {
             "function_name": "addNumbers",
             "parameters": {"a": 5, "b": 3},
             "expected": 8,
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(go_samples.ADD_NUMBERS, test_case)
-        
+
         assert result["passed"] is True
         # Go should format function calls appropriately
         if "function_call" in result:
@@ -459,25 +469,24 @@ func formatAny(value interface{}) string {
     def test_cleanup_temp_files(self):
         """Test that temporary files are properly cleaned up."""
         import tempfile
-        import os
-        
+
         # Count existing temp files
         temp_dir = tempfile.gettempdir()
         initial_files = os.listdir(temp_dir)
-        
+
         test_case = {
             "function_name": "addNumbers",
             "parameters": {"a": 1, "b": 2},
             "expected": 3,
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         # Run test
         result = self.executor.execute_test(go_samples.ADD_NUMBERS, test_case)
-        
+
         # Clean up
         self.executor.cleanup()
-        
+
         # Check that no excessive new temp files remain
         final_files = os.listdir(temp_dir)
         # Allow some tolerance for system temp files
@@ -491,20 +500,22 @@ func formatAny(value interface{}) string {
             "function_name": "addNumbers",
             "parameters": {"a": 5, "b": 3},
             "expected": 8,
-            "inplace": "0"
+            "inplace": "0",
         }
-        
-        # Test with floats  
+
+        # Test with floats
         float_test = {
             "function_name": "calculateAverage",
             "parameters": {"a": 10.0, "b": 6.0},
             "expected": 8.0,
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         int_result = self.executor.execute_test(go_samples.ADD_NUMBERS, int_test)
-        float_result = self.executor.execute_test(go_samples.CALCULATE_AVERAGE, float_test)
-        
+        float_result = self.executor.execute_test(
+            go_samples.CALCULATE_AVERAGE, float_test
+        )
+
         assert int_result["passed"] is True
         assert float_result["passed"] is True
         assert isinstance(int_result["actual"], int)
@@ -517,11 +528,11 @@ func formatAny(value interface{}) string {
             "function_name": "doubleSlice",
             "parameters": {"arr": [1, 2, 3]},
             "expected": [2, 4, 6],
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(go_samples.DOUBLE_SLICE, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == [2, 4, 6]
         # Verify JSON round-trip worked correctly

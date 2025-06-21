@@ -8,18 +8,22 @@ This module tests the PythonExecutor's ability to:
 4. Properly handle errors and edge cases
 """
 
-import pytest
-import sys
 import os
+import sys
+import pytest
 
 # Add the project root to the path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../.."))
 
-from eiplgrader.languages.executors.python_executor import PythonExecutor
-from tests.fixtures.mock_code_samples import python_samples
+from eiplgrader.languages.executors.python_executor import (
+    PythonExecutor,
+)  # pylint: disable=wrong-import-position
+from tests.fixtures.mock_code_samples import (
+    python_samples,
+)  # pylint: disable=wrong-import-position
 
 
-class TestPythonExecutor:
+class TestPythonExecutor:  # pylint: disable=too-many-public-methods
     """Test suite for Python executor with focus on type inference."""
 
     def setup_method(self):
@@ -36,11 +40,11 @@ class TestPythonExecutor:
             "function_name": "add_numbers",
             "parameters": {"a": 5, "b": 3},
             "expected": 8,
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(python_samples.ADD_NUMBERS, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == 8
         assert result["expected"] == 8
@@ -56,11 +60,11 @@ def calculate_average(a, b):
             "function_name": "calculate_average",
             "parameters": {"a": 10.5, "b": 7.3},
             "expected": 8.9,
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(code, test_case)
-        
+
         assert result["passed"] is True
         assert abs(result["actual"] - 8.9) < 0.001
 
@@ -70,11 +74,11 @@ def calculate_average(a, b):
             "function_name": "count_vowels",
             "parameters": {"s": "hello world"},
             "expected": 3,
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(python_samples.COUNT_VOWELS, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == 3
 
@@ -84,11 +88,11 @@ def calculate_average(a, b):
             "function_name": "sum_even_numbers",
             "parameters": {"numbers": [1, 2, 3, 4, 5, 6]},
             "expected": 12,
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(python_samples.SUM_EVEN_NUMBERS, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == 12
 
@@ -98,11 +102,11 @@ def calculate_average(a, b):
             "function_name": "is_palindrome",
             "parameters": {"s": "racecar"},
             "expected": True,
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(python_samples.IS_PALINDROME, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] is True
 
@@ -116,11 +120,11 @@ def format_info(name, age, is_student):
             "function_name": "format_info",
             "parameters": {"name": "Alice", "age": 25, "is_student": False},
             "expected": "Alice is 25 years old and is not a student",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(code, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == "Alice is 25 years old and is not a student"
 
@@ -130,11 +134,11 @@ def format_info(name, age, is_student):
             "function_name": "sum_even_numbers",
             "parameters": {"numbers": []},
             "expected": 0,
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(python_samples.SUM_EVEN_NUMBERS, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == 0
 
@@ -144,11 +148,11 @@ def format_info(name, age, is_student):
             "function_name": "find_max",
             "parameters": {"numbers": []},
             "expected": None,
-            "inplace": "0"  
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(python_samples.FIND_MAX, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] is None
 
@@ -158,11 +162,11 @@ def format_info(name, age, is_student):
             "function_name": "factorial",
             "parameters": {"n": 5},
             "expected": 120,
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(python_samples.FACTORIAL, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == 120
 
@@ -172,11 +176,11 @@ def format_info(name, age, is_student):
             "function_name": "sort_list",
             "parameters": {"arr": [3, 1, 4, 1, 5]},
             "expected": [1, 1, 3, 4, 5],
-            "inplace": "1"
+            "inplace": "1",
         }
-        
+
         result = self.executor.execute_test(python_samples.SORT_LIST, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == [1, 1, 3, 4, 5]
 
@@ -191,11 +195,11 @@ def process_and_return(arr):
             "function_name": "process_and_return",
             "parameters": {"arr": [1, 2, 3]},
             "expected": 4,
-            "inplace": "2"
+            "inplace": "2",
         }
-        
+
         result = self.executor.execute_test(code, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == 4
 
@@ -205,11 +209,11 @@ def process_and_return(arr):
             "function_name": "divmod_operation",
             "parameters": {"a": 17, "b": 5},
             "expected": (3, 2),
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(python_samples.DIVMOD_OPERATION, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == (3, 2)
 
@@ -219,11 +223,13 @@ def process_and_return(arr):
             "function_name": "nonexistent_function",
             "parameters": {"x": 1},
             "expected": None,
-            "inplace": "0"
+            "inplace": "0",
         }
-        
-        result = self.executor.execute_test("def some_other_function(): pass", test_case)
-        
+
+        result = self.executor.execute_test(
+            "def some_other_function(): pass", test_case
+        )
+
         assert result["passed"] is False
         assert "error" in result
         assert "Function 'nonexistent_function' not found" in result["error"]
@@ -238,11 +244,11 @@ def broken_function(x)
             "function_name": "broken_function",
             "parameters": {"x": 1},
             "expected": 2,
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(invalid_code, test_case)
-        
+
         assert result["passed"] is False
         assert "error" in result
 
@@ -256,11 +262,11 @@ def divide_by_zero(x):
             "function_name": "divide_by_zero",
             "parameters": {"x": 10},
             "expected": None,
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(code, test_case)
-        
+
         assert result["passed"] is False
         assert "error" in result
 
@@ -274,11 +280,11 @@ def large_number_operation(x):
             "function_name": "large_number_operation",
             "parameters": {"x": 999999999},
             "expected": 999999999000000,
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(code, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == 999999999000000
 
@@ -292,11 +298,11 @@ def count_characters(s):
             "function_name": "count_characters",
             "parameters": {"s": "héllo wörld 🌍"},
             "expected": 13,
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(code, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == 13
 
@@ -306,32 +312,32 @@ def count_characters(s):
             "function_name": "add_numbers",
             "parameters": {"a": 5, "b": 3},
             "expected": 8,
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         # Before execution, no types should be present
         assert "parameter_types" not in test_case
         assert "expected_type" not in test_case
-        
+
         # Execute the test
         result = self.executor.execute_test(python_samples.ADD_NUMBERS, test_case)
-        
+
         # The executor should have inferred and added types
         assert result["passed"] is True
 
     def test_pre_existing_types_respected(self):
         """Test that pre-existing type annotations are respected."""
         test_case = {
-            "function_name": "add_numbers", 
+            "function_name": "add_numbers",
             "parameters": {"a": 5, "b": 3},
             "parameter_types": {"a": "int", "b": "int"},
             "expected": 8,
             "expected_type": "int",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(python_samples.ADD_NUMBERS, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == 8
 
@@ -348,11 +354,11 @@ def flatten_list(nested):
             "function_name": "flatten_list",
             "parameters": {"nested": [[1, 2], [3, 4], [5]]},
             "expected": [1, 2, 3, 4, 5],
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(code, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == [1, 2, 3, 4, 5]
 
@@ -362,11 +368,11 @@ def flatten_list(nested):
             "function_name": "add_numbers",
             "parameters": {"a": 5, "b": 3},
             "expected": 8,
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(python_samples.ADD_NUMBERS, test_case)
-        
+
         assert result["passed"] is True
         assert "function_call" in result
         assert "add_numbers(5, 3)" in result["function_call"]
@@ -374,25 +380,24 @@ def flatten_list(nested):
     def test_cleanup_temp_files(self):
         """Test that temporary files are properly cleaned up."""
         import tempfile
-        import os
-        
+
         # Count existing temp files
         temp_dir = tempfile.gettempdir()
         initial_files = os.listdir(temp_dir)
-        
+
         test_case = {
             "function_name": "add_numbers",
             "parameters": {"a": 1, "b": 2},
             "expected": 3,
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         # Run test
         result = self.executor.execute_test(python_samples.ADD_NUMBERS, test_case)
-        
+
         # Clean up
         self.executor.cleanup()
-        
+
         # Check that no new temp files remain
         final_files = os.listdir(temp_dir)
         assert len(final_files) == len(initial_files)

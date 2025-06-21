@@ -7,7 +7,7 @@ from eiplgrader.languages import language_registry
 
 class TestSecurityBoundaries:
     """Test security boundary scenarios and potentially malicious code."""
-    
+
     def test_file_system_access_python(self):
         """Test Python code that tries to access file system."""
         file_access_code = """
@@ -30,20 +30,20 @@ def add_numbers(a, b):
     return a + b
 """
         test_cases = [{"parameters": {"a": 1, "b": 2}, "expected": 3}]
-        
+
         tester = CodeTester(
             code=file_access_code,
             test_cases=test_cases,
             function_name="add_numbers",
-            language="python"
+            language="python",
         )
-        
+
         result = tester.run_tests()
         # Should succeed if file access is properly sandboxed
         # Or fail if file access causes errors
         if not result.was_successful():
             assert result.errors > 0 or result.failures > 0
-    
+
     def test_network_access_python(self):
         """Test Python code that tries to access network."""
         network_access_code = """
@@ -69,20 +69,20 @@ def add_numbers(a, b):
     return a + b
 """
         test_cases = [{"parameters": {"a": 1, "b": 2}, "expected": 3}]
-        
+
         tester = CodeTester(
             code=network_access_code,
             test_cases=test_cases,
             function_name="add_numbers",
-            language="python"
+            language="python",
         )
-        
+
         result = tester.run_tests()
         # Should succeed if network access is properly handled
         # Or fail if network access causes errors
         if not result.was_successful():
             assert result.errors > 0 or result.failures > 0
-    
+
     def test_subprocess_execution_python(self):
         """Test Python code that tries to execute system commands."""
         subprocess_code = """
@@ -109,20 +109,20 @@ def add_numbers(a, b):
     return a + b
 """
         test_cases = [{"parameters": {"a": 1, "b": 2}, "expected": 3}]
-        
+
         tester = CodeTester(
             code=subprocess_code,
             test_cases=test_cases,
             function_name="add_numbers",
-            language="python"
+            language="python",
         )
-        
+
         result = tester.run_tests()
         # Should succeed if subprocess execution is properly sandboxed
         # Or fail if subprocess execution causes errors
         if not result.was_successful():
             assert result.errors > 0 or result.failures > 0
-    
+
     def test_environment_variable_access_python(self):
         """Test Python code that tries to access environment variables."""
         env_access_code = """
@@ -143,18 +143,18 @@ def add_numbers(a, b):
     return a + b
 """
         test_cases = [{"parameters": {"a": 1, "b": 2}, "expected": 3}]
-        
+
         tester = CodeTester(
             code=env_access_code,
             test_cases=test_cases,
             function_name="add_numbers",
-            language="python"
+            language="python",
         )
-        
+
         result = tester.run_tests()
         # Should succeed - environment access is usually allowed
         assert result.was_successful()
-    
+
     def test_module_hijacking_python(self):
         """Test Python code that tries to hijack modules."""
         module_hijacking_code = """
@@ -189,20 +189,20 @@ def add_numbers(a, b):
     return a + b
 """
         test_cases = [{"parameters": {"a": 1, "b": 2}, "expected": 3}]
-        
+
         tester = CodeTester(
             code=module_hijacking_code,
             test_cases=test_cases,
             function_name="add_numbers",
-            language="python"
+            language="python",
         )
-        
+
         result = tester.run_tests()
         # Should succeed if module modification is allowed
         # Or fail if there are restrictions
         if not result.was_successful():
             assert result.errors > 0 or result.failures > 0
-    
+
     def test_code_injection_python(self):
         """Test Python code that tries to inject code."""
         code_injection_code = """
@@ -226,20 +226,20 @@ def add_numbers(a, b):
     return a + b
 """
         test_cases = [{"parameters": {"a": 1, "b": 2}, "expected": 3}]
-        
+
         tester = CodeTester(
             code=code_injection_code,
             test_cases=test_cases,
             function_name="add_numbers",
-            language="python"
+            language="python",
         )
-        
+
         result = tester.run_tests()
         # Should succeed if code injection is properly sandboxed
         # Or fail if code injection causes errors
         if not result.was_successful():
             assert result.errors > 0 or result.failures > 0
-    
+
     def test_memory_dump_python(self):
         """Test Python code that tries to dump memory."""
         memory_dump_code = """
@@ -269,18 +269,18 @@ def add_numbers(a, b):
     return a + b
 """
         test_cases = [{"parameters": {"a": 1, "b": 2}, "expected": 3}]
-        
+
         tester = CodeTester(
             code=memory_dump_code,
             test_cases=test_cases,
             function_name="add_numbers",
-            language="python"
+            language="python",
         )
-        
+
         result = tester.run_tests()
         # Should succeed - memory inspection is usually allowed
         assert result.was_successful()
-    
+
     def test_resource_exhaustion_attack_python(self):
         """Test Python code that tries to exhaust system resources."""
         resource_exhaustion_code = """
@@ -307,20 +307,20 @@ def add_numbers(a, b):
     return a + b
 """
         test_cases = [{"parameters": {"a": 1, "b": 2}, "expected": 3}]
-        
+
         tester = CodeTester(
             code=resource_exhaustion_code,
             test_cases=test_cases,
             function_name="add_numbers",
-            language="python"
+            language="python",
         )
-        
+
         result = tester.run_tests()
         # Should succeed if resource limits are properly enforced
         # Or fail if resource exhaustion causes errors
         if not result.was_successful():
             assert result.errors > 0 or result.failures > 0
-    
+
     def test_pickle_deserialization_python(self):
         """Test Python code that uses unsafe pickle deserialization."""
         pickle_code = """
@@ -340,22 +340,23 @@ def add_numbers(a, b):
     return a + b
 """
         test_cases = [{"parameters": {"a": 1, "b": 2}, "expected": 3}]
-        
+
         tester = CodeTester(
             code=pickle_code,
             test_cases=test_cases,
             function_name="add_numbers",
-            language="python"
+            language="python",
         )
-        
+
         result = tester.run_tests()
         # Should succeed if pickle is properly sandboxed
         # Or fail if pickle deserialization causes errors
         if not result.was_successful():
             assert result.errors > 0 or result.failures > 0
-    
-    @pytest.mark.skipif(not language_registry.is_supported("java"), 
-                       reason="Java not available")
+
+    @pytest.mark.skipif(
+        not language_registry.is_supported("java"), reason="Java not available"
+    )
     def test_reflection_abuse_java(self):
         """Test Java code that tries to abuse reflection."""
         reflection_abuse_java = """
@@ -380,26 +381,28 @@ public class Solution {
     }
 }
 """
-        test_cases = [{
-            "parameters": {"a": 1, "b": 2},
-            "parameter_types": {"a": "int", "b": "int"},
-            "expected": 3,
-            "expected_type": "int"
-        }]
-        
+        test_cases = [
+            {
+                "parameters": {"a": 1, "b": 2},
+                "parameter_types": {"a": "int", "b": "int"},
+                "expected": 3,
+                "expected_type": "int",
+            }
+        ]
+
         tester = CodeTester(
             code=reflection_abuse_java,
             test_cases=test_cases,
             function_name="add_numbers",
-            language="java"
+            language="java",
         )
-        
+
         result = tester.run_tests()
         # Should succeed if reflection is properly restricted
         # Or fail if reflection abuse causes errors
         if not result.was_successful():
             assert result.errors > 0 or result.failures > 0
-    
+
     def test_buffer_overflow_simulation_python(self):
         """Test Python code that simulates buffer overflow."""
         buffer_overflow_code = """
@@ -421,19 +424,19 @@ def add_numbers(a, b):
     return a + b
 """
         test_cases = [{"parameters": {"a": 1, "b": 2}, "expected": 3}]
-        
+
         tester = CodeTester(
             code=buffer_overflow_code,
             test_cases=test_cases,
             function_name="add_numbers",
-            language="python"
+            language="python",
         )
-        
+
         result = tester.run_tests()
         # Should succeed - Python protects against buffer overflows
         if not result.was_successful():
             assert result.errors > 0 or result.failures > 0
-    
+
     def test_format_string_attack_python(self):
         """Test Python code that tries format string attacks."""
         format_string_code = """
@@ -456,14 +459,14 @@ def add_numbers(a, b):
     return a + b
 """
         test_cases = [{"parameters": {"a": 1, "b": 2}, "expected": 3}]
-        
+
         tester = CodeTester(
             code=format_string_code,
             test_cases=test_cases,
             function_name="add_numbers",
-            language="python"
+            language="python",
         )
-        
+
         result = tester.run_tests()
         # Should succeed - format string attacks are limited in Python
         if not result.was_successful():

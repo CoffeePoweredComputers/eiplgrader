@@ -9,19 +9,24 @@ This module tests the JavaExecutor's ability to:
 5. Generate proper Java test harness code
 """
 
-import pytest
-import sys
 import os
 import subprocess
+import sys
+
+import pytest
 
 # Add the project root to the path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../.."))
 
-from eiplgrader.languages.executors.java_executor import JavaExecutor
-from tests.fixtures.mock_code_samples import java_samples
+from eiplgrader.languages.executors.java_executor import (
+    JavaExecutor,
+)  # pylint: disable=wrong-import-position
+from tests.fixtures.mock_code_samples import (
+    java_samples,
+)  # pylint: disable=wrong-import-position
 
 
-class TestJavaExecutor:
+class TestJavaExecutor:  # pylint: disable=too-many-public-methods
     """Test suite for Java executor with focus on explicit type validation."""
 
     def setup_method(self):
@@ -48,12 +53,12 @@ class TestJavaExecutor:
             "parameters": {"a": 5, "b": 3},
             "expected": 8,
             "expected_type": "int",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         with pytest.raises(ValueError) as exc_info:
             self.executor.execute_test(java_samples.ADD_NUMBERS, test_case)
-        
+
         assert "Missing required type information" in str(exc_info.value)
         assert "parameter_types not provided" in str(exc_info.value)
 
@@ -64,12 +69,12 @@ class TestJavaExecutor:
             "parameters": {"a": 5, "b": 3},
             "parameter_types": {"a": "int", "b": "int"},
             "expected": 8,
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         with pytest.raises(ValueError) as exc_info:
             self.executor.execute_test(java_samples.ADD_NUMBERS, test_case)
-        
+
         assert "Missing required type information" in str(exc_info.value)
         assert "expected_type not provided" in str(exc_info.value)
 
@@ -81,12 +86,12 @@ class TestJavaExecutor:
             "parameter_types": {"a": "int"},  # Missing "b"
             "expected": 8,
             "expected_type": "int",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         with pytest.raises(ValueError) as exc_info:
             self.executor.execute_test(java_samples.ADD_NUMBERS, test_case)
-        
+
         assert "parameter_types['b'] not provided" in str(exc_info.value)
 
     def test_integer_types_explicit(self):
@@ -97,11 +102,11 @@ class TestJavaExecutor:
             "parameter_types": {"a": "int", "b": "int"},
             "expected": 8,
             "expected_type": "int",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(java_samples.ADD_NUMBERS, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == 8
         assert result["expected"] == 8
@@ -114,11 +119,11 @@ class TestJavaExecutor:
             "parameter_types": {"str": "String"},
             "expected": 3,
             "expected_type": "int",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(java_samples.COUNT_VOWELS, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == 3
 
@@ -130,11 +135,11 @@ class TestJavaExecutor:
             "parameter_types": {"s": "String"},
             "expected": True,
             "expected_type": "boolean",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(java_samples.IS_PALINDROME, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] is True
 
@@ -146,11 +151,11 @@ class TestJavaExecutor:
             "parameter_types": {"numbers": "int[]"},
             "expected": 12,
             "expected_type": "int",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(java_samples.SUM_EVEN_NUMBERS, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == 12
 
@@ -167,11 +172,11 @@ public static double calculateAverage(double a, double b) {
             "parameter_types": {"a": "double", "b": "double"},
             "expected": 8.9,
             "expected_type": "double",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(code, test_case)
-        
+
         assert result["passed"] is True
         assert abs(result["actual"] - 8.9) < 0.001
 
@@ -195,11 +200,11 @@ public static String joinStrings(String[] words) {
             "parameter_types": {"words": "String[]"},
             "expected": "hello world java",
             "expected_type": "String",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(code, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == "hello world java"
 
@@ -220,11 +225,11 @@ public static double[] multiplyDoubles(double[] numbers, double multiplier) {
             "parameter_types": {"numbers": "double[]", "multiplier": "double"},
             "expected": [3.0, 5.0, 7.0],
             "expected_type": "double[]",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(code, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == [3.0, 5.0, 7.0]
 
@@ -236,11 +241,11 @@ public static double[] multiplyDoubles(double[] numbers, double multiplier) {
             "parameter_types": {"n": "int"},
             "expected": 120,
             "expected_type": "int",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(java_samples.FACTORIAL, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == 120
 
@@ -252,11 +257,11 @@ public static double[] multiplyDoubles(double[] numbers, double multiplier) {
             "parameter_types": {"arr": "int[]"},
             "expected": [1, 1, 3, 4, 5],
             "expected_type": "int[]",
-            "inplace": "1"
+            "inplace": "1",
         }
-        
+
         result = self.executor.execute_test(java_samples.SORT_ARRAY, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == [1, 1, 3, 4, 5]
 
@@ -278,11 +283,11 @@ public static int processAndReturn(int[] arr) {
             "parameter_types": {"arr": "int[]"},
             "expected": 3,
             "expected_type": "int",
-            "inplace": "2"
+            "inplace": "2",
         }
-        
+
         result = self.executor.execute_test(code, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == 3
 
@@ -294,11 +299,11 @@ public static int processAndReturn(int[] arr) {
             "parameter_types": {"arr": "int[]"},
             "expected": [2, 4, 6, 8],
             "expected_type": "int[]",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(java_samples.DOUBLE_ARRAY, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == [2, 4, 6, 8]
 
@@ -310,11 +315,11 @@ public static int processAndReturn(int[] arr) {
             "parameter_types": {"numbers": "int[]"},
             "expected": 9,
             "expected_type": "int",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(java_samples.FIND_MAX, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == 9
 
@@ -326,11 +331,11 @@ public static int processAndReturn(int[] arr) {
             "parameter_types": {"arr": "int[]"},
             "expected": 5,
             "expected_type": "int",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(java_samples.FIND_SECOND_LARGEST, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == 5
 
@@ -347,11 +352,11 @@ public static int brokenFunction(int x) {
             "parameter_types": {"x": "int"},
             "expected": 2,
             "expected_type": "int",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(invalid_code, test_case)
-        
+
         assert result["passed"] is False
         assert "error" in result
         assert "Compilation failed" in result["error"]
@@ -369,11 +374,11 @@ public static int divideByZero(int x) {
             "parameter_types": {"x": "int"},
             "expected": None,
             "expected_type": "int",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(code, test_case)
-        
+
         assert result["passed"] is False
         assert "error" in result
 
@@ -385,11 +390,11 @@ public static int divideByZero(int x) {
             "parameter_types": {"numbers": "int[]"},
             "expected": 0,
             "expected_type": "int",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(java_samples.SUM_EVEN_NUMBERS, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == 0
 
@@ -406,11 +411,11 @@ public static int largeNumberOperation(int x) {
             "parameter_types": {"x": "int"},
             "expected": 999999000,
             "expected_type": "int",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(code, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == 999999000
 
@@ -427,11 +432,11 @@ public static int countCharacters(String s) {
             "parameter_types": {"s": "String"},
             "expected": 11,
             "expected_type": "int",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(code, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == 11
 
@@ -441,12 +446,12 @@ public static int countCharacters(String s) {
             "function_name": "addNumbers",
             "parameters": {"a": 5, "b": 3},
             "expected": 8,
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         with pytest.raises(ValueError) as exc_info:
             self.executor.execute_test(java_samples.ADD_NUMBERS, test_case)
-        
+
         error_message = str(exc_info.value)
         assert "Missing required type information" in error_message
         assert "parameter_types not provided" in error_message
@@ -469,11 +474,11 @@ public class Solution {
             "parameter_types": {"a": "int", "b": "int"},
             "expected": 8,
             "expected_type": "int",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(code_with_solution, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == 8
 
@@ -485,17 +490,17 @@ public class Solution {
             "parameter_types": {"a": "int", "b": "int"},
             "expected": 55,
             "expected_type": "int",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         # Test the prepare_code method to check parameter embedding
         prepared_code = self.executor.prepare_code(java_samples.ADD_NUMBERS, test_case)
-        
+
         # Check that parameters are embedded
         assert "int a = 42;" in prepared_code
         assert "int b = 13;" in prepared_code
         assert "Solution.addNumbers(a, b)" in prepared_code
-        
+
         # Execute to ensure it works
         result = self.executor.execute_test(java_samples.ADD_NUMBERS, test_case)
         assert result["passed"] is True
@@ -510,37 +515,44 @@ public static String formatData(String name, int age, boolean isActive, double s
 """
         test_case = {
             "function_name": "formatData",
-            "parameters": {"name": "Alice", "age": 30, "isActive": True, "salary": 75000.50},
-            "parameter_types": {"name": "String", "age": "int", "isActive": "boolean", "salary": "double"},
+            "parameters": {
+                "name": "Alice",
+                "age": 30,
+                "isActive": True,
+                "salary": 75000.50,
+            },
+            "parameter_types": {
+                "name": "String",
+                "age": "int",
+                "isActive": "boolean",
+                "salary": "double",
+            },
             "expected": "Alice,30,true,75000.50",
             "expected_type": "String",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(code, test_case)
-        
+
         assert result["passed"] is True
         assert result["actual"] == "Alice,30,true,75000.50"
 
     def test_cleanup_temp_files(self):
         """Test that temporary files are properly cleaned up."""
-        import tempfile
-        import os
-        
         test_case = {
             "function_name": "addNumbers",
             "parameters": {"a": 1, "b": 2},
             "parameter_types": {"a": "int", "b": "int"},
             "expected": 3,
             "expected_type": "int",
-            "inplace": "0"
+            "inplace": "0",
         }
-        
+
         # Run test
         result = self.executor.execute_test(java_samples.ADD_NUMBERS, test_case)
-        
+
         # Clean up
         self.executor.cleanup()
-        
+
         # Verify the test passed
         assert result["passed"] is True

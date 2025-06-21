@@ -7,7 +7,7 @@ from eiplgrader.languages import language_registry
 
 class TestMemoryScenarios:
     """Test memory usage and resource exhaustion scenarios."""
-    
+
     def test_memory_exhaustion_python(self):
         """Test Python code that tries to allocate excessive memory."""
         memory_exhaustion_code = """
@@ -17,19 +17,19 @@ def add_numbers(a, b):
     return a + b
 """
         test_cases = [{"parameters": {"a": 1, "b": 2}, "expected": 3}]
-        
+
         tester = CodeTester(
             code=memory_exhaustion_code,
             test_cases=test_cases,
             function_name="add_numbers",
-            language="python"
+            language="python",
         )
-        
+
         result = tester.run_tests()
         # This might fail with memory error or succeed on systems with enough RAM
         if not result.was_successful():
             assert result.errors > 0 or result.failures > 0
-    
+
     def test_memory_leak_simulation_python(self):
         """Test Python code that simulates memory leak."""
         memory_leak_code = """
@@ -41,19 +41,19 @@ def add_numbers(a, b):
     return a + b
 """
         test_cases = [{"parameters": {"a": 1, "b": 2}, "expected": 3}]
-        
+
         tester = CodeTester(
             code=memory_leak_code,
             test_cases=test_cases,
             function_name="add_numbers",
-            language="python"
+            language="python",
         )
-        
+
         result = tester.run_tests()
         # This might fail with memory error or timeout
         if not result.was_successful():
             assert result.errors > 0 or result.failures > 0
-    
+
     def test_string_memory_explosion_python(self):
         """Test Python code that creates huge strings."""
         string_explosion_code = """
@@ -63,19 +63,19 @@ def add_numbers(a, b):
     return a + b
 """
         test_cases = [{"parameters": {"a": 1, "b": 2}, "expected": 3}]
-        
+
         tester = CodeTester(
             code=string_explosion_code,
             test_cases=test_cases,
             function_name="add_numbers",
-            language="python"
+            language="python",
         )
-        
+
         result = tester.run_tests()
         # This might fail with memory error
         if not result.was_successful():
             assert result.errors > 0 or result.failures > 0
-    
+
     def test_recursive_data_structure_python(self):
         """Test Python code that creates deeply recursive data structures."""
         recursive_structure_code = """
@@ -88,19 +88,19 @@ def add_numbers(a, b):
     return a + b
 """
         test_cases = [{"parameters": {"a": 1, "b": 2}, "expected": 3}]
-        
+
         tester = CodeTester(
             code=recursive_structure_code,
             test_cases=test_cases,
             function_name="add_numbers",
-            language="python"
+            language="python",
         )
-        
+
         result = tester.run_tests()
         # This might fail with memory or recursion error
         if not result.was_successful():
             assert result.errors > 0 or result.failures > 0
-    
+
     def test_dictionary_explosion_python(self):
         """Test Python code that creates huge dictionaries."""
         dict_explosion_code = """
@@ -112,19 +112,19 @@ def add_numbers(a, b):
     return a + b
 """
         test_cases = [{"parameters": {"a": 1, "b": 2}, "expected": 3}]
-        
+
         tester = CodeTester(
             code=dict_explosion_code,
             test_cases=test_cases,
             function_name="add_numbers",
-            language="python"
+            language="python",
         )
-        
+
         result = tester.run_tests()
         # This might fail with memory error or timeout
         if not result.was_successful():
             assert result.errors > 0 or result.failures > 0
-    
+
     def test_file_handle_exhaustion_python(self):
         """Test Python code that opens many files."""
         file_exhaustion_code = """
@@ -159,19 +159,19 @@ def add_numbers(a, b):
     return a + b
 """
         test_cases = [{"parameters": {"a": 1, "b": 2}, "expected": 3}]
-        
+
         tester = CodeTester(
             code=file_exhaustion_code,
             test_cases=test_cases,
             function_name="add_numbers",
-            language="python"
+            language="python",
         )
-        
+
         result = tester.run_tests()
         # This might fail with OS error (too many open files)
         if not result.was_successful():
             assert result.errors > 0 or result.failures > 0
-    
+
     def test_thread_exhaustion_python(self):
         """Test Python code that creates many threads."""
         thread_exhaustion_code = """
@@ -204,21 +204,22 @@ def add_numbers(a, b):
     return a + b
 """
         test_cases = [{"parameters": {"a": 1, "b": 2}, "expected": 3}]
-        
+
         tester = CodeTester(
             code=thread_exhaustion_code,
             test_cases=test_cases,
             function_name="add_numbers",
-            language="python"
+            language="python",
         )
-        
+
         result = tester.run_tests()
         # This might fail with OS error or timeout
         if not result.was_successful():
             assert result.errors > 0 or result.failures > 0
-    
-    @pytest.mark.skipif(not language_registry.is_supported("java"), 
-                       reason="Java not available")
+
+    @pytest.mark.skipif(
+        not language_registry.is_supported("java"), reason="Java not available"
+    )
     def test_memory_exhaustion_java(self):
         """Test Java code that tries to allocate excessive memory."""
         memory_exhaustion_java = """
@@ -236,27 +237,30 @@ public class Solution {
     }
 }
 """
-        test_cases = [{
-            "parameters": {"a": 1, "b": 2},
-            "parameter_types": {"a": "int", "b": "int"},
-            "expected": 3,
-            "expected_type": "int"
-        }]
-        
+        test_cases = [
+            {
+                "parameters": {"a": 1, "b": 2},
+                "parameter_types": {"a": "int", "b": "int"},
+                "expected": 3,
+                "expected_type": "int",
+            }
+        ]
+
         tester = CodeTester(
             code=memory_exhaustion_java,
             test_cases=test_cases,
             function_name="add_numbers",
-            language="java"
+            language="java",
         )
-        
+
         result = tester.run_tests()
         # This might fail with memory error
         if not result.was_successful():
             assert result.errors > 0 or result.failures > 0
-    
-    @pytest.mark.skipif(not language_registry.is_supported("cpp"), 
-                       reason="C++ not available")
+
+    @pytest.mark.skipif(
+        not language_registry.is_supported("cpp"), reason="C++ not available"
+    )
     def test_memory_exhaustion_cpp(self):
         """Test C++ code that tries to allocate excessive memory."""
         memory_exhaustion_cpp = """
@@ -274,25 +278,27 @@ int add_numbers(int a, int b) {
     return a + b;
 }
 """
-        test_cases = [{
-            "parameters": {"a": 1, "b": 2},
-            "parameter_types": {"a": "int", "b": "int"},
-            "expected": 3,
-            "expected_type": "int"
-        }]
-        
+        test_cases = [
+            {
+                "parameters": {"a": 1, "b": 2},
+                "parameter_types": {"a": "int", "b": "int"},
+                "expected": 3,
+                "expected_type": "int",
+            }
+        ]
+
         tester = CodeTester(
             code=memory_exhaustion_cpp,
             test_cases=test_cases,
             function_name="add_numbers",
-            language="cpp"
+            language="cpp",
         )
-        
+
         result = tester.run_tests()
         # This might fail with memory error
         if not result.was_successful():
             assert result.errors > 0 or result.failures > 0
-    
+
     def test_memory_fragmentation_python(self):
         """Test Python code that causes memory fragmentation."""
         fragmentation_code = """
@@ -316,19 +322,19 @@ def add_numbers(a, b):
     return a + b
 """
         test_cases = [{"parameters": {"a": 1, "b": 2}, "expected": 3}]
-        
+
         tester = CodeTester(
             code=fragmentation_code,
             test_cases=test_cases,
             function_name="add_numbers",
-            language="python"
+            language="python",
         )
-        
+
         result = tester.run_tests()
         # This might succeed or fail depending on memory management
         if not result.was_successful():
             assert result.errors > 0 or result.failures > 0
-    
+
     def test_circular_reference_python(self):
         """Test Python code that creates circular references."""
         circular_reference_code = """
@@ -348,19 +354,19 @@ def add_numbers(a, b):
     return a + b
 """
         test_cases = [{"parameters": {"a": 1, "b": 2}, "expected": 3}]
-        
+
         tester = CodeTester(
             code=circular_reference_code,
             test_cases=test_cases,
             function_name="add_numbers",
-            language="python"
+            language="python",
         )
-        
+
         result = tester.run_tests()
         # This might succeed or fail depending on garbage collection
         if not result.was_successful():
             assert result.errors > 0 or result.failures > 0
-    
+
     def test_stack_overflow_python(self):
         """Test Python code that causes stack overflow."""
         stack_overflow_code = """
@@ -379,14 +385,14 @@ def add_numbers(a, b):
     return a + b
 """
         test_cases = [{"parameters": {"a": 1, "b": 2}, "expected": 3}]
-        
+
         tester = CodeTester(
             code=stack_overflow_code,
             test_cases=test_cases,
             function_name="add_numbers",
-            language="python"
+            language="python",
         )
-        
+
         result = tester.run_tests()
         # Should succeed if recursion error is handled
         if not result.was_successful():
