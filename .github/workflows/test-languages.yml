@@ -21,9 +21,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: /var/cache/apt
-          key: ${{ runner.os }}-apt-${{ matrix.language.name }}-${{ hashFiles('.github/workflows/test-languages.yml') }}
+          key: ${{ runner.os }}-apt-base-${{ hashFiles('.github/workflows/test-languages.yml') }}
           restore-keys: |
-            ${{ runner.os }}-apt-${{ matrix.language.name }}-
+            ${{ runner.os }}-apt-base-
             ${{ runner.os }}-apt-
       
       - name: Install base dependencies
@@ -32,7 +32,7 @@ jobs:
           pip install pytest pytest-cov
       - name: Test base system
         run: |
-          pytest tests/test_tester.py tests/languages/test_base_language.py -v
+          pytest tests/test_comprehensive_suite.py::TestComprehensiveSuite::test_suite_integration -v
 
   test-language:
     needs: test-base
@@ -71,12 +71,8 @@ jobs:
       
       - name: Test language implementation
         run: |
-          pytest tests/languages/test_${{ matrix.language.name }}.py -v || echo "Tests not yet implemented for ${{ matrix.language.name }}"
+          pytest tests/unit/test_executors/test_${{ matrix.language.name }}_executor.py -v || echo "Tests not yet implemented for ${{ matrix.language.name }}"
           
       - name: Test language integration
         run: |
-          if [ -f "tests/languages/test_${{ matrix.language.name }}_integration.py" ]; then
-            pytest tests/languages/test_${{ matrix.language.name }}_integration.py -v
-          else
-            echo "Integration tests not yet implemented for ${{ matrix.language.name }}"
-          fi
+          pytest tests/integration/ -v -k "${{ matrix.language.name }}"
