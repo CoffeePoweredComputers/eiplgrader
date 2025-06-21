@@ -344,6 +344,8 @@ int processAndReturn(std::vector<int>& arr) {
 
         result = self.executor.execute_test(cpp_samples.FLATTEN_NESTED, test_case)
 
+        if not result["passed"]:
+            print(f"Test failed: {result}")
         assert result["passed"] is True
         assert result["actual"] == [1, 2, 3, 4, 5]
 

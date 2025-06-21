@@ -119,17 +119,38 @@ class CppExecutor(CompiledLanguageExecutor):
         elif param_type in ["std::string", "string"]:
             return f'    std::string {name} = "{value}";\n'
         elif "vector" in param_type and isinstance(value, list):
-            # Extract element type
-            if "int" in param_type:
-                values_str = ", ".join(str(v) for v in value)
-            elif "double" in param_type or "float" in param_type:
-                values_str = ", ".join(str(v) for v in value)
-            elif "string" in param_type:
-                values_str = ", ".join(f'"{v}"' for v in value)
-            elif "bool" in param_type:
-                values_str = ", ".join("true" if v else "false" for v in value)
+            # Check if it's a nested vector
+            if "vector<vector" in param_type or "std::vector<std::vector" in param_type:
+                # Handle nested vectors
+                inner_vectors = []
+                for inner_list in value:
+                    if isinstance(inner_list, list):
+                        if "int" in param_type:
+                            inner_str = ", ".join(str(v) for v in inner_list)
+                        elif "double" in param_type or "float" in param_type:
+                            inner_str = ", ".join(str(v) for v in inner_list)
+                        elif "string" in param_type:
+                            inner_str = ", ".join(f'"{v}"' for v in inner_list)
+                        elif "bool" in param_type:
+                            inner_str = ", ".join("true" if v else "false" for v in inner_list)
+                        else:
+                            inner_str = ", ".join(str(v) for v in inner_list)
+                        inner_vectors.append(f"{{{inner_str}}}")
+                    else:
+                        inner_vectors.append(str(inner_list))
+                values_str = ", ".join(inner_vectors)
             else:
-                values_str = ", ".join(str(v) for v in value)
+                # Handle regular vectors
+                if "int" in param_type:
+                    values_str = ", ".join(str(v) for v in value)
+                elif "double" in param_type or "float" in param_type:
+                    values_str = ", ".join(str(v) for v in value)
+                elif "string" in param_type:
+                    values_str = ", ".join(f'"{v}"' for v in value)
+                elif "bool" in param_type:
+                    values_str = ", ".join("true" if v else "false" for v in value)
+                else:
+                    values_str = ", ".join(str(v) for v in value)
             return f"    {param_type} {name} = {{{values_str}}};\n"
         else:
             # For complex types, generate a comment
