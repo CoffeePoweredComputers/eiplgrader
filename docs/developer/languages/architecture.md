@@ -490,9 +490,9 @@ class NewLanguageExecutor(CompiledLanguageExecutor):
         # Build test harness
         harness = f"""
 // Generated test harness
-{code}
+<code>
 
-func main() {{
+func main() {
     // Initialize parameters
 """
         
@@ -509,7 +509,7 @@ func main() {{
     
     // Output result
     print(result)
-}}
+}
 """
         return harness
     

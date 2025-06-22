@@ -171,7 +171,7 @@ class NewLangExecutor(InterpretedLanguageExecutor):
         harness = f"""
 import json
 
-{code}
+<code>
 
 # Test harness
 test_input = json.parse('{json.dumps(params)}')
