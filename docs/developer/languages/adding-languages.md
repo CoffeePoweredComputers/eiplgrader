@@ -280,23 +280,7 @@ class NewLangExecutor(CompiledLanguageExecutor):
         param_names = ", ".join(test_case["parameters"].keys())
         
         harness = f"""
-package main
-
-import (
-    "fmt"
-    "encoding/json"
-)
-
-{code}
-
-func main() {{
-{chr(10).join(param_setup)}
-    
-    result := {func_name}({param_names})
-    
-    output, _ := json.Marshal(map[string]interface{}{{"result": result}})
-    fmt.Println(string(output))
-}}
+        <Define your test harness here>
 """
         return harness
 ```
