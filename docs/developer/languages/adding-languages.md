@@ -176,7 +176,7 @@ import json
 # Test harness
 test_input = json.parse('{json.dumps(params)}')
 result = {test_case.get('function_name', 'solution')}(**test_input)
-print(json.stringify({{"result": result}}))
+print(json.stringify({% raw %}{{"result": result}}{% endraw %}))
 """
         return harness
     
@@ -259,7 +259,7 @@ class NewLangExecutor(CompiledLanguageExecutor):
             # Handle list formatting based on type
             elem_type = type_str[2:] if type_str.startswith("[]") else "interface{}"
             elements = [self.format_value(v, elem_type) for v in value]
-            return f'{type_str}{{{", ".join(elements)}}}'
+            return f'{type_str}{% raw %}{{{", ".join(elements)}}}{% endraw %}'
         else:
             return str(value)
     

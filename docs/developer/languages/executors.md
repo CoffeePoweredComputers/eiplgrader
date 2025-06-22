@@ -189,15 +189,15 @@ import json
 import sys
 
 # Generated function
-{{ "{{" }}code{{ "}}" }}
+{% raw %}{{{code}}}{% endraw %}
 
 # Test execution
 try:
     params = {json.dumps(params)}
     result = {test_case.get('function_name', 'solution')}(**params)
-    print(json.dumps({{"result": result, "success": True}}))
+    print(json.dumps({% raw %}{{"result": result, "success": True}}{% endraw %}))
 except Exception as e:
-    print(json.dumps({{"error": str(e), "success": False}}))
+    print(json.dumps({% raw %}{{"error": str(e), "success": False}}{% endraw %}))
     sys.exit(1)
 """
         return harness
@@ -273,7 +273,7 @@ class JavaExecutor(CompiledLanguageExecutor):
         elif type_str == "boolean":
             return "true" if value else "false"
         elif type_str.startswith("int[]"):
-            return f"new int[]{{{', '.join(map(str, value))}}}"
+            return f"new int[]{% raw %}{{{', '.join(map(str, value))}}}{% endraw %}"
         elif type_str.startswith("List"):
             return f"Arrays.asList({', '.join(self.format_value(v, 'Object') for v in value)})"
         else:
@@ -297,28 +297,28 @@ class JavaExecutor(CompiledLanguageExecutor):
         harness = f"""
 import java.util.*;
 
-public class TestHarness {{
-    {{ "{{" }}code{{ "}}" }}
+public class TestHarness {
+    {% raw %}{{{code}}}{% endraw %}
     
-    public static void main(String[] args) {{
-{{ "{{" }}{chr(10).join(param_decls)}{{ "}}" }}
+    public static void main(String[] args) {
+{% raw %}{{{chr(10).join(param_decls)}}}{% endraw %}
         
         Solution sol = new Solution();
         Object result = sol.{func_name}({param_names});
         
-        System.out.println("{{ "{" }}\"result\": " + formatResult(result) + "{{ "}" }}");
-    }}
+        System.out.println({% raw %}"{\"result\": " + formatResult(result) + "}"{% endraw %});
+    }
     
-    private static String formatResult(Object obj) {{
-        if (obj instanceof String) {{
+    private static String formatResult(Object obj) {
+        if (obj instanceof String) {
             return "\"" + obj + "\"";
-        }} else if (obj instanceof int[]) {{
+        } else if (obj instanceof int[]) {
             return Arrays.toString((int[])obj);
-        }} else {{
+        } else {
             return String.valueOf(obj);
-        }}
-    }}
-}}
+        }
+    }
+}
 """
         return harness
     
