@@ -99,10 +99,6 @@ Extend and contribute to EiplGrader:
 - [Testing](developer/testing.md) - Test suite and quality assurance
 - [Contributing](developer/contributing.md) - How to contribute
 
-### [Research & Theory](research/)
-Understand the educational research behind EiplGrader:
-- [EIPL Background](research/eipl.md) - Explain in Plain Language methodology
-- [Publications](research/publications.md) - Academic papers and citations
 
 ## 🔧 Installation Options
 

@@ -147,7 +147,3 @@ If you would like to contribute to the `eiplgrader` tool, please check out the [
 
 This project is licensed under the [GNU General Public License v3.0](https://www.gnu.org/licenses/gpl-3.0.en.html). You are free to use, modify, and distribute this software under the terms of the license.
 
-## Learn More
-
-To understand the research and educational theory behind eiplgrader, visit our [Research](/docs/research) section.
-
