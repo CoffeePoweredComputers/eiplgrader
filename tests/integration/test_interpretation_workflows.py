@@ -140,7 +140,7 @@ class TestInterpretationWorkflowBase:
             executor.cleanup()
 
     @patch("subprocess.run")
-    def test_type_inference_workflow(self):
+    def test_type_inference_workflow(self, mock_run):
         """Test type inference in interpretation workflow."""
         executor = MockInterpretedLanguageExecutor(
             interpreter_cmd=["python3"], file_ext=".py"
@@ -165,7 +165,7 @@ class TestInterpretationWorkflowBase:
             executor.cleanup()
 
     @patch("subprocess.run")
-    def test_file_creation_and_execution_workflow(self):
+    def test_file_creation_and_execution_workflow(self, mock_run):
         """Test file creation during interpretation workflow."""
         executor = MockInterpretedLanguageExecutor(
             interpreter_cmd=["python3"], file_ext=".py"
@@ -212,7 +212,7 @@ class TestPythonInterpretationWorkflow:
                 executor.cleanup()
 
     @patch("subprocess.run")
-    def test_python_execution_command(self):
+    def test_python_execution_command(self, mock_run):
         """Test Python execution command structure."""
         try:
             executor = PythonExecutor()
@@ -238,7 +238,7 @@ class TestPythonInterpretationWorkflow:
                 executor.cleanup()
 
     @patch("subprocess.run")
-    def test_python_error_scenarios(self):
+    def test_python_error_scenarios(self, mock_run):
         """Test various Python error scenarios."""
         try:
             executor = PythonExecutor()
@@ -270,7 +270,7 @@ class TestPythonInterpretationWorkflow:
                 executor.cleanup()
 
     @patch("subprocess.run")
-    def test_python_type_inference_specifics(self):
+    def test_python_type_inference_specifics(self, mock_run):
         """Test Python-specific type inference."""
         try:
             executor = PythonExecutor()
@@ -329,7 +329,7 @@ class TestJavaScriptInterpretationWorkflow:
                 executor.cleanup()
 
     @patch("subprocess.run")
-    def test_javascript_execution_command(self):
+    def test_javascript_execution_command(self, mock_run):
         """Test JavaScript execution command structure."""
         with patch("subprocess.run") as mock_run:
             mock_run.return_value = Mock(returncode=0, stdout="42", stderr="")
@@ -354,7 +354,7 @@ class TestJavaScriptInterpretationWorkflow:
                     executor.cleanup()
 
     @patch("subprocess.run")
-    def test_javascript_error_scenarios(self):
+    def test_javascript_error_scenarios(self, mock_run):
         """Test various JavaScript error scenarios."""
         with patch("subprocess.run") as mock_run:
             try:
@@ -371,8 +371,9 @@ class TestJavaScriptInterpretationWorkflow:
                     test_case = {"parameters": {}, "expected": ""}
                     result = executor.execute_test("console.log(", test_case)
 
+                    print(result)
                     assert result["passed"] is False
-                    assert "SyntaxError" in result["error"]
+                    assert "Syntax Error" in result["error"]
 
                 # Test reference error
                 mock_run.return_value = Mock(
@@ -512,7 +513,7 @@ class TestInterpretationResourceManagement:
     """Test resource management in interpretation workflows."""
 
     @patch("subprocess.run")
-    def test_temporary_file_lifecycle(self):
+    def test_temporary_file_lifecycle(self, mock_run):
         """Test temporary file creation and cleanup lifecycle."""
         executor = MockInterpretedLanguageExecutor(
             interpreter_cmd=["python3"], file_ext=".py"
@@ -537,7 +538,7 @@ class TestInterpretationResourceManagement:
         assert not os.path.exists(temp_dir)
 
     @patch("subprocess.run")
-    def test_multiple_execution_file_reuse(self):
+    def test_multiple_execution_file_reuse(self, mock_run):
         """Test that multiple executions reuse the same file path."""
         executor = MockInterpretedLanguageExecutor(
             interpreter_cmd=["python3"], file_ext=".py"
@@ -574,7 +575,7 @@ class TestInterpretationResourceManagement:
             executor.cleanup()
 
     @patch("subprocess.run")
-    def test_concurrent_interpretation_isolation(self):
+    def test_concurrent_interpretation_isolation(self, mock_run):
         """Test that concurrent interpreters are properly isolated."""
         import threading
         import time

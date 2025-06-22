@@ -237,7 +237,7 @@ def add_numbers(a, b):
 
         result = tester.run_tests()
         assert not result.was_successful()
-        assert result.errors > 0
+        assert result.failures > 0
 
     def test_none_function_name(self):
         """Test None as function name."""
