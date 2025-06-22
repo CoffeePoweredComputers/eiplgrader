@@ -116,7 +116,6 @@ class TestInterpretationWorkflowBase:
         finally:
             executor.cleanup()
 
-
     @patch("subprocess.run")
     def test_interpretation_custom_timeout(self, mock_run):
         """Test interpretation with custom timeout."""
@@ -337,7 +336,9 @@ class TestJavaScriptInterpretationWorkflow:
             try:
                 executor = JavaScriptExecutor()
 
-                with patch.object(executor, "prepare_code", return_value="console.log(42)"):
+                with patch.object(
+                    executor, "prepare_code", return_value="console.log(42)"
+                ):
                     test_case = {"parameters": {"x": 5}, "expected": 42}
                     result = executor.execute_test("test_code", test_case)
 
@@ -367,7 +368,9 @@ class TestJavaScriptInterpretationWorkflow:
                     stderr="/tmp/test.js:1\nconsole.log(\n           ^\nSyntaxError: missing ) after argument list",
                 )
 
-                with patch.object(executor, "prepare_code", return_value="console.log("):
+                with patch.object(
+                    executor, "prepare_code", return_value="console.log("
+                ):
                     test_case = {"parameters": {}, "expected": ""}
                     result = executor.execute_test("console.log(", test_case)
 
@@ -386,7 +389,9 @@ class TestJavaScriptInterpretationWorkflow:
                     executor, "prepare_code", return_value="console.log(undefinedVar)"
                 ):
                     test_case = {"parameters": {}, "expected": ""}
-                    result = executor.execute_test("console.log(undefinedVar)", test_case)
+                    result = executor.execute_test(
+                        "console.log(undefinedVar)", test_case
+                    )
 
                     assert result["passed"] is False
                     assert "ReferenceError" in result["error"]

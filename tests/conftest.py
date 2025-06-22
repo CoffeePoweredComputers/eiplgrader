@@ -15,7 +15,6 @@ import pytest
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 
-
 @pytest.fixture
 def temp_test_dir():
     """Create a temporary directory for tests."""

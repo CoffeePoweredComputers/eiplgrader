@@ -53,7 +53,7 @@ print(x + y)
         result = tester.run_tests()
         print(result.test_results)
         assert not result.was_successful()
-        assert "not found in the code" in result.test_results[0]['error']
+        assert "not found in the code" in result.test_results[0]["error"]
 
     def test_class_instead_of_function(self):
         """Test generated code contains class instead of function."""
@@ -73,7 +73,7 @@ class Calculator:
 
         result = tester.run_tests()
         assert not result.was_successful()
-        assert "not found in the code" in result.test_results[0]['error']
+        assert "not found in the code" in result.test_results[0]["error"]
 
     def test_function_with_wrong_return_type(self):
         """Test function that returns wrong type."""
@@ -163,7 +163,7 @@ def add_numbers(a, b):
 
         result = tester.run_tests()
         assert not result.was_successful()
-        assert "No module named" in result.test_results[0]['error']
+        assert "No module named" in result.test_results[0]["error"]
 
     def test_recursive_function_without_base_case(self):
         """Test recursive function without proper base case."""
@@ -356,7 +356,7 @@ public static void main(String[] args) {  // Java syntax
 
         result = tester.run_tests()
         assert not result.was_successful()
-        assert "Error loading module: invalid syntax" in result.test_results[0]['error']
+        assert "Error loading module: invalid syntax" in result.test_results[0]["error"]
 
     def test_code_with_natural_language_comments(self):
         """Test code that contains natural language that looks like instructions."""

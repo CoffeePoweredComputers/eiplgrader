@@ -20,7 +20,7 @@ class TestLanguageAdapterBase:
     def test_abstract_methods_required(self):
         """Test that abstract methods are required."""
         with pytest.raises(TypeError):
-            LanguageAdapter()  
+            LanguageAdapter()  # pylint: disable=E0110
 
     def test_language_config_creation(self):
         """Test LanguageConfig dataclass creation."""
@@ -117,7 +117,7 @@ class TestPythonAdapter:
             self.adapter.generate_prompt(
                 student_response="unused", function_name="test_func", gen_type="unknown"
             )
-        
+
         assert "Unsupported generation type: unknown" in str(exc_info.value)
 
     def test_extract_code_python_block(self):
@@ -200,8 +200,11 @@ def func2():
     return a + b"""
 
         normalized = self.adapter.normalize_code(code)
-        assert normalized == """def add(a, b):
+        assert (
+            normalized
+            == """def add(a, b):
     return a + b"""
+        )
 
     def test_normalize_code_complex(self):
         """Test complex code normalization."""

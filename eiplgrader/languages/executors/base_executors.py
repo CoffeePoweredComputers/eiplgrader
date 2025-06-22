@@ -335,7 +335,7 @@ class InterpretedLanguageExecutor(LanguageExecutor):
         ):
             try:
                 shutil.rmtree(self.temp_dir)
-            except (OSError, PermissionError):
+            except (OSError, PermissionError) as e:
                 raise RuntimeError(
                     f"Failed to remove temporary directory: {self.temp_dir}"
-                )
+                ) from e

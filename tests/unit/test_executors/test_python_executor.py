@@ -241,7 +241,7 @@ def broken_function(x)
             "expected": 2,
             "inplace": "0",
         }
-        
+
         result = self.executor.execute_test(invalid_code, test_case)
 
         assert result["passed"] is False
@@ -371,4 +371,3 @@ def flatten_list(nested):
         assert result["passed"] is True
         assert "function_call" in result
         assert "add_numbers(5, 3)" in result["function_call"]
-
