@@ -298,7 +298,7 @@ class JavaExecutor(CompiledLanguageExecutor):
 import java.util.*;
 
 public class TestHarness {{
-    {code}
+    {{{code}}}
     
     public static void main(String[] args) {{
 {chr(10).join(param_decls)}
