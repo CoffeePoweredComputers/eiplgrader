@@ -28,8 +28,9 @@ EiplGrader automatically grades programming assignments where students explain a
 pip install eiplgrader
 ```
 
-Set your OpenAI API key:
+Set your LLM API key:
 ```bash
+export META_API_KEY="your-api-key-here" #LLAMA SUPPORT COMING SOON
 export OPENAI_API_KEY="your-api-key-here"
 ```
 
