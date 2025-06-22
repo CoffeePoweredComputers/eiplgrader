@@ -189,7 +189,7 @@ import json
 import sys
 
 # Generated function
-{{{code}}}
+{{ "{{" }}code{{ "}}" }}
 
 # Test execution
 try:
@@ -298,15 +298,15 @@ class JavaExecutor(CompiledLanguageExecutor):
 import java.util.*;
 
 public class TestHarness {{
-    {{{code}}}
+    {{ "{{" }}code{{ "}}" }}
     
     public static void main(String[] args) {{
-{chr(10).join(param_decls)}
+{{ "{{" }}{chr(10).join(param_decls)}{{ "}}" }}
         
         Solution sol = new Solution();
         Object result = sol.{func_name}({param_names});
         
-        System.out.println("{{\"result\": " + formatResult(result) + "}}");
+        System.out.println("{{ "{" }}\"result\": " + formatResult(result) + "{{ "}" }}");
     }}
     
     private static String formatResult(Object obj) {{
