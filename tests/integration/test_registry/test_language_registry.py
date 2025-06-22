@@ -178,7 +178,6 @@ class TestRegistryExecutorLoading:
     def test_get_executor_import_error(self, mock_import):
         """Test executor loading when import fails."""
         mock_import.side_effect = ImportError("Module not found")
-
         executor = self.registry.get_executor("python")
         assert executor is None
 
