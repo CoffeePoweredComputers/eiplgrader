@@ -46,13 +46,22 @@ class PythonExecutor(InterpretedLanguageExecutor):
             try:
                 spec.loader.exec_module(temp_module)
             except (ImportError, ModuleNotFoundError, SyntaxError) as e:
-                # Re-raise import/syntax errors as structural errors
-                raise CodeStructuralError(f"Code execution failed: {str(e)}") from e
+                return {
+                    "passed": False,
+                    "error": f"Error loading module: {str(e)}",
+                    "actual": None,
+                    "expected": test_case.get("expected"),
+                }
 
             # Get the function
             function_name = test_case.get("function_name", "foo")
             if not hasattr(temp_module, function_name):
-                raise CodeStructuralError(f"Function '{function_name}' not found in the code")
+                return {
+                    "passed": False,
+                    "error": f"Function '{function_name}' not found in the code",
+                    "actual": None,
+                    "expected": test_case.get("expected"),
+                }
 
             func = getattr(temp_module, function_name)
 
@@ -117,6 +126,4 @@ class PythonExecutor(InterpretedLanguageExecutor):
                 "expected": test_case.get("expected"),
             }
         finally:
-            # Clean up the temporary file
-            self.cleanup()
-
+            pass

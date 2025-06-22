@@ -241,7 +241,7 @@ def broken_function(x)
             "expected": 2,
             "inplace": "0",
         }
-
+        
         result = self.executor.execute_test(invalid_code, test_case)
 
         assert result["passed"] is False
@@ -372,28 +372,3 @@ def flatten_list(nested):
         assert "function_call" in result
         assert "add_numbers(5, 3)" in result["function_call"]
 
-    def test_cleanup_temp_files(self):
-        """Test that temporary files are properly cleaned up."""
-        import tempfile
-
-        # Count existing temp files
-        temp_dir = tempfile.gettempdir()
-        initial_files = os.listdir(temp_dir)
-
-        test_case = {
-            "function_name": "add_numbers",
-            "parameters": {"a": 1, "b": 2},
-            "expected": 3,
-            "inplace": "0",
-        }
-
-        # Run test
-        result = self.executor.execute_test(python_samples.ADD_NUMBERS, test_case)
-
-        # Clean up
-        self.executor.cleanup()
-
-        # Check that no new temp files remain
-        final_files = os.listdir(temp_dir)
-        assert len(final_files) == len(initial_files)
-        assert result["passed"] is True

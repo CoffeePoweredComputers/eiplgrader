@@ -15,11 +15,8 @@ def process_string(s):
     return len(s)
 """
         test_cases = [
-            # Empty string
             {"parameters": {"s": ""}, "expected": 0},
-            # Single character
             {"parameters": {"s": "a"}, "expected": 1},
-            # Very long string
             {"parameters": {"s": "a" * 10000}, "expected": 10000},
         ]
 
@@ -31,6 +28,7 @@ def process_string(s):
         )
 
         result = tester.run_tests()
+        print(result.test_results)
         assert result.was_successful()
         assert result.successes == 3
 
@@ -214,7 +212,6 @@ def logical_and(a, b):
             {"parameters": {"a": True, "b": False}, "expected": False},
             {"parameters": {"a": False, "b": True}, "expected": False},
             {"parameters": {"a": False, "b": False}, "expected": False},
-            # Truthy/falsy values
             {"parameters": {"a": 1, "b": 2}, "expected": 2},
             {"parameters": {"a": 0, "b": 5}, "expected": 0},
             {"parameters": {"a": "", "b": "hello"}, "expected": ""},
