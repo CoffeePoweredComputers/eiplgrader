@@ -51,10 +51,7 @@ class LanguageRegistry:
             executor_class = getattr(module, class_name)
             return executor_class()
         except (ImportError, AttributeError) as e:
-            import logging
-            logger = logging.getLogger(__name__)
-            logger.exception(f"Failed to import executor for language '{name}': {e}")
-            return None
+            raise ImportError(f"Failed to import executor for {name}: {e}") from e
 
     def list_languages(self) -> List[str]:
         """List all registered languages."""
