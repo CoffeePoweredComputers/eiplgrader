@@ -1,2 +1,19 @@
 __pycache__/
 poetry.lock
+
+# Build artifacts
+dist/
+_site/
+coverage.xml
+lint_report.txt
+.coverage
+benchmark_results.json
+
+# API keys and environment files
+.env
+examples/.env
+
+# Temporary files
+sample_*.py
+test.py
+*_temp.py

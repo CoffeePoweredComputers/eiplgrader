@@ -40,6 +40,8 @@ This class uses language models to generate Python functions based on prompts, w
 Generate a function that implements the given description.
 
 ```python
+from eiplgrader.codegen import CodeGenerator
+
 code_generator = CodeGenerator("YOUR_API_KEY")
 result = code_generator.generate_code(
     "that adds two numbers.",
@@ -52,6 +54,8 @@ result = code_generator.generate_code(
 Generate a function from a signature with optional parameter assumptions.
 
 ```python
+from eiplgrader.codegen import CodeGenerator
+
 code_generator = CodeGenerator("YOUR_API_KEY")
 result = code_generator.generate_code(
     "sum_two_numbers",     # Function name to redefine
@@ -66,6 +70,8 @@ result = code_generator.generate_code(
 Generate multiple variations of a function:
 
 ```python
+from eiplgrader.codegen import CodeGenerator
+
 code_generator = CodeGenerator("YOUR_API_KEY")
 result = code_generator.generate_code(
     "that adds two numbers.",
@@ -78,6 +84,8 @@ result = code_generator.generate_code(
 Segment code to map explanation phrases to code segments using few-shot examples:
 
 ```python
+from eiplgrader.codegen import CodeGenerator
+
 code_generator = CodeGenerator("YOUR_API_KEY")
 result = code_generator.generate_code(
     "iterates through a list of numbers and sums them up.",

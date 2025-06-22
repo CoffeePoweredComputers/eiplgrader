@@ -1,5 +1,20 @@
 [
-    [[1, 2], 3],
-    [[-1, 1], 0],
-    [[-1, -1], -2]
+    {
+        "parameters": {"a": 1, "b": 2},
+        "parameter_types": {"a": "int", "b": "int"},
+        "expected": 3,
+        "expected_type": "int"
+    },
+    {
+        "parameters": {"a": -1, "b": 1},
+        "parameter_types": {"a": "int", "b": "int"},
+        "expected": 0,
+        "expected_type": "int"
+    },
+    {
+        "parameters": {"a": -1, "b": -1},
+        "parameter_types": {"a": "int", "b": "int"},
+        "expected": -2,
+        "expected_type": "int"
+    }
 ]

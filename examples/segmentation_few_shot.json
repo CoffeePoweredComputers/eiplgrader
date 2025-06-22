@@ -1,0 +1,42 @@
+{
+  "multistructural": {
+
+    "description": "Create a function that takes an array as input initializes a sum variable to zero iterates through each element in the array adds each element to the sum and returns the final sum.",
+    "segmentation": [
+      {
+        "code": "def sum_array(arr):",
+        "explanation_portion": "Create a function that takes an array as input"
+      },
+      {
+        "code": "    total = 0",
+        "explanation_portion": "initializes a sum variable to zero"
+      },
+      {
+        "code": "    for i in range(len(arr)):",
+        "explanation_portion": "iterates through each element in the array"
+      },
+      {
+        "code": "        total += arr[i]",
+        "explanation_portion": "adds each element to the sum"
+      },
+      {
+        "code": "    return total",
+        "explanation_portion": "returns the final sum"
+      }
+    ]
+  },
+  "relational": {
+    "description": "takes an array of integers returns the sum of all values in the array",
+    "segmentation":[
+      {
+        "code": "def sum_array(arr):",
+        "explanation_portion": "Takes an array of integers"
+      },
+      {
+        "code": "    total = 0\n    for i in range(len(arr)):\n        total += arr[i]\n    return total",
+        "explanation_portion": "returns the sum of all values in the array"
+      }
+    ]
+  }
+
+}
