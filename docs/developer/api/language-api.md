@@ -462,7 +462,7 @@ def prepare_code(self, code: str, test_case: dict) -> str:
     harness = f"""
 import json
 
-{code}
+{{{code}}}
 
 # Execute test
 params = {json.dumps(params)}

@@ -189,7 +189,7 @@ import json
 import sys
 
 # Generated function
-{code}
+{{{code}}}
 
 # Test execution
 try:
