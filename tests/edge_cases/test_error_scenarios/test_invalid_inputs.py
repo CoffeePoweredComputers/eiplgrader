@@ -139,7 +139,7 @@ public class Solution {
         # Missing parameter_types and expected_type
         invalid_test_case = [{"parameters": {"a": 1, "b": 2}, "expected": 3}]
 
-        with pytest.raises(ValueError, match="parameter_types.*for java"):
+        with pytest.raises(ValueError, match="parameter_types not provided"):
             tester = CodeTester(
                 code=valid_java_code,
                 test_cases=invalid_test_case,
@@ -167,7 +167,7 @@ public class Solution {
             }
         ]
 
-        with pytest.raises(ValueError, match="expected_type.*for java"):
+        with pytest.raises(ValueError, match="expected_type not provided"):
             tester = CodeTester(
                 code=valid_java_code,
                 test_cases=invalid_test_case,
@@ -196,7 +196,7 @@ public class Solution {
             }
         ]
 
-        with pytest.raises(ValueError, match="Missing type for parameter 'b'"):
+        with pytest.raises(ValueError, match=r"parameter_types\['b'\] not provided"):
             tester = CodeTester(
                 code=valid_java_code,
                 test_cases=invalid_test_case,

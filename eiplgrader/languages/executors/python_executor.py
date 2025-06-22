@@ -1,6 +1,5 @@
 """Python language executor for code testing."""
 
-import tempfile
 import importlib
 import importlib.util
 import os
@@ -16,8 +15,6 @@ class PythonExecutor(InterpretedLanguageExecutor):
 
     def __init__(self):
         super().__init__(interpreter_cmd=["python3"], file_ext=".py")
-        self.temp_module = None
-        self.temp_files = []
 
     def prepare_code(self, code: str, test_case: Dict[str, Any]) -> str:
         """Prepare Python code for execution with test harness."""
@@ -35,43 +32,27 @@ class PythonExecutor(InterpretedLanguageExecutor):
             test_case["parameters"] = process_test_parameters(test_case["parameters"])
 
         try:
-            # Write code to temporary file
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".py") as temp_file:
-                temp_file.write(code.encode("utf-8"))
-                temp_file_path = temp_file.name
-                self.temp_files.append(temp_file_path)
+            # Write code to temporary file in temp directory
+            temp_file_path = os.path.join(self.temp_dir, "test_module.py")
+            with open(temp_file_path, "w") as f:
+                f.write(code)
 
             # Import the module
             spec = importlib.util.spec_from_file_location("temp_module", temp_file_path)
             if spec is None or spec.loader is None:
-                return {
-                    "passed": False,
-                    "error": "Could not load the temporary module",
-                    "actual": None,
-                    "expected": test_case.get("expected"),
-                }
+                raise CodeStructuralError("Could not load the temporary module")
 
             temp_module = importlib.util.module_from_spec(spec)
             try:
                 spec.loader.exec_module(temp_module)
             except (ImportError, ModuleNotFoundError, SyntaxError) as e:
-                # Return import/syntax errors as test failures
-                return {
-                    "passed": False,
-                    "error": f"Code execution failed: {str(e)}",
-                    "actual": None,
-                    "expected": test_case.get("expected"),
-                }
+                # Re-raise import/syntax errors as structural errors
+                raise CodeStructuralError(f"Code execution failed: {str(e)}") from e
 
             # Get the function
             function_name = test_case.get("function_name", "foo")
             if not hasattr(temp_module, function_name):
-                return {
-                    "passed": False,
-                    "error": f"Function '{function_name}' not found in the code",
-                    "actual": None,
-                    "expected": test_case.get("expected"),
-                }
+                raise CodeStructuralError(f"Function '{function_name}' not found in the code")
 
             func = getattr(temp_module, function_name)
 
@@ -139,12 +120,3 @@ class PythonExecutor(InterpretedLanguageExecutor):
             # Clean up the temporary file
             self.cleanup()
 
-    def cleanup(self) -> None:
-        """Clean up temporary files."""
-        for temp_file in self.temp_files:
-            try:
-                if os.path.exists(temp_file):
-                    os.remove(temp_file)
-            except OSError:
-                pass
-        self.temp_files = []

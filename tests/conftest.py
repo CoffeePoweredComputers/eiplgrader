@@ -14,40 +14,6 @@ import pytest
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-# pylint: disable=wrong-import-position
-from eiplgrader.languages.registry import language_registry
-from eiplgrader.languages.adapters.python_adapter import PythonAdapter
-from eiplgrader.languages.adapters.javascript_adapter import JavaScriptAdapter
-from eiplgrader.languages.adapters.java_adapter import JavaAdapter
-from eiplgrader.languages.adapters.c_adapter import CAdapter
-from eiplgrader.languages.adapters.cpp_adapter import CppAdapter
-from eiplgrader.languages.adapters.go_adapter import GoAdapter
-from eiplgrader.languages.adapters.haskell_adapter import HaskellAdapter
-
-
-@pytest.fixture(scope="function")
-def setup_language_registry():
-    """Set up the language registry with all adapters for each test function."""
-    # Clear registry before setup to ensure clean state
-    language_registry.clear()
-
-    adapters = [
-        ("python", PythonAdapter),
-        ("javascript", JavaScriptAdapter),
-        ("java", JavaAdapter),
-        ("c", CAdapter),
-        ("cpp", CppAdapter),
-        ("go", GoAdapter),
-        ("haskell", HaskellAdapter),
-    ]
-
-    for name, adapter_class in adapters:
-        language_registry.register(name, adapter_class)
-
-    yield language_registry
-
-    # Clear registry after test to ensure cleanup
-    language_registry.clear()
 
 
 @pytest.fixture

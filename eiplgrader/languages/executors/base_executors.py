@@ -220,23 +220,26 @@ class CompiledLanguageExecutor(LanguageExecutor):
             }
 
     def cleanup(self) -> None:
-        """Clean up temporary files in directory (keep directory for reuse)"""
+        """Clean up temporary directory and all its contents"""
         if (
             hasattr(self, "temp_dir")
             and self.temp_dir
             and os.path.exists(self.temp_dir)
         ):
             try:
-                # Remove files inside the directory but keep the directory itself
-                for filename in os.listdir(self.temp_dir):
-                    file_path = os.path.join(self.temp_dir, filename)
-                    if os.path.isfile(file_path):
-                        try:
-                            os.remove(file_path)
-                        except (OSError, PermissionError):
-                            pass  # File in use or inaccessible
+                shutil.rmtree(self.temp_dir)
             except (OSError, PermissionError):
-                pass  # Directory inaccessible
+                # If removal fails, try to at least clean up the files
+                try:
+                    for filename in os.listdir(self.temp_dir):
+                        file_path = os.path.join(self.temp_dir, filename)
+                        if os.path.isfile(file_path):
+                            try:
+                                os.remove(file_path)
+                            except (OSError, PermissionError):
+                                pass
+                except (OSError, PermissionError):
+                    pass
 
 
 class InterpretedLanguageExecutor(LanguageExecutor):
@@ -324,20 +327,15 @@ class InterpretedLanguageExecutor(LanguageExecutor):
             }
 
     def cleanup(self) -> None:
-        """Clean up temporary files in directory (keep directory for reuse)"""
+        """Clean up temporary directory and all its contents"""
         if (
             hasattr(self, "temp_dir")
             and self.temp_dir
             and os.path.exists(self.temp_dir)
         ):
             try:
-                # Remove files inside the directory but keep the directory itself
-                for filename in os.listdir(self.temp_dir):
-                    file_path = os.path.join(self.temp_dir, filename)
-                    if os.path.isfile(file_path):
-                        try:
-                            os.remove(file_path)
-                        except (OSError, PermissionError):
-                            pass  # File in use or inaccessible
+                shutil.rmtree(self.temp_dir)
             except (OSError, PermissionError):
-                pass  # Directory inaccessible
+                raise RuntimeError(
+                    f"Failed to remove temporary directory: {self.temp_dir}"
+                )

@@ -116,6 +116,7 @@ class TestInterpretationWorkflowBase:
         finally:
             executor.cleanup()
 
+
     @patch("subprocess.run")
     def test_interpretation_custom_timeout(self, mock_run):
         """Test interpretation with custom timeout."""
@@ -138,6 +139,7 @@ class TestInterpretationWorkflowBase:
         finally:
             executor.cleanup()
 
+    @patch("subprocess.run")
     def test_type_inference_workflow(self):
         """Test type inference in interpretation workflow."""
         executor = MockInterpretedLanguageExecutor(
@@ -162,6 +164,7 @@ class TestInterpretationWorkflowBase:
         finally:
             executor.cleanup()
 
+    @patch("subprocess.run")
     def test_file_creation_and_execution_workflow(self):
         """Test file creation during interpretation workflow."""
         executor = MockInterpretedLanguageExecutor(
@@ -208,6 +211,7 @@ class TestPythonInterpretationWorkflow:
             if "executor" in locals():
                 executor.cleanup()
 
+    @patch("subprocess.run")
     def test_python_execution_command(self):
         """Test Python execution command structure."""
         try:
@@ -233,6 +237,7 @@ class TestPythonInterpretationWorkflow:
             if "executor" in locals():
                 executor.cleanup()
 
+    @patch("subprocess.run")
     def test_python_error_scenarios(self):
         """Test various Python error scenarios."""
         try:
@@ -264,6 +269,7 @@ class TestPythonInterpretationWorkflow:
             if "executor" in locals():
                 executor.cleanup()
 
+    @patch("subprocess.run")
     def test_python_type_inference_specifics(self):
         """Test Python-specific type inference."""
         try:
@@ -323,70 +329,72 @@ class TestJavaScriptInterpretationWorkflow:
                 executor.cleanup()
 
     @patch("subprocess.run")
-    def test_javascript_execution_command(self, mock_run):
+    def test_javascript_execution_command(self):
         """Test JavaScript execution command structure."""
-        mock_run.return_value = Mock(returncode=0, stdout="42", stderr="")
+        with patch("subprocess.run") as mock_run:
+            mock_run.return_value = Mock(returncode=0, stdout="42", stderr="")
 
-        try:
-            executor = JavaScriptExecutor()
+            try:
+                executor = JavaScriptExecutor()
 
-            with patch.object(executor, "prepare_code", return_value="console.log(42)"):
-                test_case = {"parameters": {"x": 5}, "expected": 42}
-                result = executor.execute_test("test_code", test_case)
+                with patch.object(executor, "prepare_code", return_value="console.log(42)"):
+                    test_case = {"parameters": {"x": 5}, "expected": 42}
+                    result = executor.execute_test("test_code", test_case)
 
-                # Verify node was called
-                mock_run.assert_called_once()
-                args, kwargs = mock_run.call_args
-                assert args[0][0] == "node"
-                assert args[0][1].endswith(".js")
+                    # Verify node was called
+                    mock_run.assert_called_once()
+                    args, kwargs = mock_run.call_args
+                    assert args[0][0] == "node"
+                    assert args[0][1].endswith(".js")
 
-        except ImportError:
-            pytest.skip("JavaScriptExecutor not available")
-        finally:
-            if "executor" in locals():
-                executor.cleanup()
+            except ImportError:
+                pytest.skip("JavaScriptExecutor not available")
+            finally:
+                if "executor" in locals():
+                    executor.cleanup()
 
     @patch("subprocess.run")
-    def test_javascript_error_scenarios(self, mock_run):
+    def test_javascript_error_scenarios(self):
         """Test various JavaScript error scenarios."""
-        try:
-            executor = JavaScriptExecutor()
+        with patch("subprocess.run") as mock_run:
+            try:
+                executor = JavaScriptExecutor()
 
-            # Test syntax error
-            mock_run.return_value = Mock(
-                returncode=1,
-                stdout="",
-                stderr="/tmp/test.js:1\nconsole.log(\n           ^\nSyntaxError: missing ) after argument list",
-            )
+                # Test syntax error
+                mock_run.return_value = Mock(
+                    returncode=1,
+                    stdout="",
+                    stderr="/tmp/test.js:1\nconsole.log(\n           ^\nSyntaxError: missing ) after argument list",
+                )
 
-            with patch.object(executor, "prepare_code", return_value="console.log("):
-                test_case = {"parameters": {}, "expected": ""}
-                result = executor.execute_test("console.log(", test_case)
+                with patch.object(executor, "prepare_code", return_value="console.log("):
+                    test_case = {"parameters": {}, "expected": ""}
+                    result = executor.execute_test("console.log(", test_case)
 
-                assert result["passed"] is False
-                assert "SyntaxError" in result["error"]
+                    assert result["passed"] is False
+                    assert "SyntaxError" in result["error"]
 
-            # Test reference error
-            mock_run.return_value = Mock(
-                returncode=1,
-                stdout="",
-                stderr="/tmp/test.js:1\nconsole.log(undefinedVar);\n            ^\nReferenceError: undefinedVar is not defined",
-            )
+                # Test reference error
+                mock_run.return_value = Mock(
+                    returncode=1,
+                    stdout="",
+                    stderr="/tmp/test.js:1\nconsole.log(undefinedVar);\n            ^\nReferenceError: undefinedVar is not defined",
+                )
 
-            with patch.object(
-                executor, "prepare_code", return_value="console.log(undefinedVar)"
-            ):
-                test_case = {"parameters": {}, "expected": ""}
-                result = executor.execute_test("console.log(undefinedVar)", test_case)
+                with patch.object(
+                    executor, "prepare_code", return_value="console.log(undefinedVar)"
+                ):
+                    test_case = {"parameters": {}, "expected": ""}
+                    result = executor.execute_test("console.log(undefinedVar)", test_case)
 
-                assert result["passed"] is False
-                assert "ReferenceError" in result["error"]
+                    assert result["passed"] is False
+                    assert "ReferenceError" in result["error"]
 
-        except ImportError:
-            pytest.skip("JavaScriptExecutor not available")
-        finally:
-            if "executor" in locals():
-                executor.cleanup()
+            except ImportError:
+                pytest.skip("JavaScriptExecutor not available")
+            finally:
+                if "executor" in locals():
+                    executor.cleanup()
 
 
 class TestInterpretationOutputParsing:
@@ -503,6 +511,7 @@ class TestInterpretationOutputParsing:
 class TestInterpretationResourceManagement:
     """Test resource management in interpretation workflows."""
 
+    @patch("subprocess.run")
     def test_temporary_file_lifecycle(self):
         """Test temporary file creation and cleanup lifecycle."""
         executor = MockInterpretedLanguageExecutor(
@@ -527,6 +536,7 @@ class TestInterpretationResourceManagement:
         executor.cleanup()
         assert not os.path.exists(temp_dir)
 
+    @patch("subprocess.run")
     def test_multiple_execution_file_reuse(self):
         """Test that multiple executions reuse the same file path."""
         executor = MockInterpretedLanguageExecutor(
@@ -563,6 +573,7 @@ class TestInterpretationResourceManagement:
         finally:
             executor.cleanup()
 
+    @patch("subprocess.run")
     def test_concurrent_interpretation_isolation(self):
         """Test that concurrent interpreters are properly isolated."""
         import threading
