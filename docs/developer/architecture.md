@@ -185,7 +185,7 @@ class LanguageExecutor(ABC):
 
 ```python
 class LanguageRegistry:
-    def register_language(self, name: str, adapter: Type[LanguageAdapter], 
+    def register(self, name: str, adapter: Type[LanguageAdapter]) -> None
                          executor: Type[LanguageExecutor]) -> None
     def get_adapter(self, language: str) -> LanguageAdapter
     def get_executor(self, language: str) -> LanguageExecutor
@@ -415,7 +415,7 @@ graph TB
 2. **Timeout Enforcement**: Configurable execution timeouts
 3. **Temporary Files**: Cleaned up after execution
 4. **No Network Access**: Generated code has no network capabilities
-5. **Docker Support**: Full containerization available
+
 
 ## Performance Considerations
 

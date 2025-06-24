@@ -19,166 +19,104 @@ Central registry for language support.
 from eiplgrader.languages.registry import LanguageRegistry
 ```
 
-### Class Methods
+### Instance Methods
 
-#### register_language
+#### register
 
 ```python
-@classmethod
-def register_language(
-    cls,
+def register(
+    self,
     name: str,
-    adapter_class: Type[LanguageAdapter],
-    executor_class: Type[LanguageExecutor],
-    aliases: Optional[List[str]] = None
+    adapter_class: Type[LanguageAdapter]
 ) -> None
 ```
 
-Register a new language with the system.
+Register a language adapter.
 
-##### Parameters
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `name` | `str` | Canonical language name |
-| `adapter_class` | `Type[LanguageAdapter]` | Adapter class |
-| `executor_class` | `Type[LanguageExecutor]` | Executor class |
-| `aliases` | `List[str]` | Alternative names |
-
-##### Example
-
-```python
-LanguageRegistry.register_language(
-    "python",
-    PythonAdapter,
-    PythonExecutor,
-    aliases=["py", "python3"]
-)
+python
+registry = LanguageRegistry()
+registry.register("python", PythonAdapter)
 ```
 
 #### get_adapter
 
 ```python
-@classmethod
 def get_adapter(
-    cls,
-    language: str
-) -> LanguageAdapter
+    self,
+    name: str
+) -> Optional[LanguageAdapter]
 ```
 
 Get adapter instance for a language.
 
-##### Parameters
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `language` | `str` | Language name or alias |
-
-##### Returns
-
-Instantiated `LanguageAdapter`.
-
-##### Raises
-
-- `LanguageNotSupportedError`: If language not registered
-
-##### Example
-
-```python
-adapter = LanguageRegistry.get_adapter("python")
-config = adapter.get_config()
+python
+registry = LanguageRegistry()
+adapter = registry.get_adapter("python")
+if adapter:
+    config = adapter.get_config()
 ```
 
 #### get_executor
 
 ```python
-@classmethod
 def get_executor(
-    cls,
-    language: str
-) -> Type[LanguageExecutor]
+    self,
+    name: str
+) -> Optional[Any]
 ```
 
 Get executor class for a language.
 
-##### Parameters
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `language` | `str` | Language name or alias |
-
-##### Returns
-
-`LanguageExecutor` class (not instance).
-
-##### Example
-
-```python
+python
 ExecutorClass = LanguageRegistry.get_executor("java")
 executor = ExecutorClass()
 ```
 
-#### get_supported_languages
+#### list_languages
 
 ```python
-@classmethod
-def get_supported_languages(
-    cls,
-    include_aliases: bool = False
-) -> List[str]
+def list_languages(self) -> List[str]
 ```
 
 Get list of supported languages.
 
-##### Parameters
-
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `include_aliases` | `bool` | `False` | Include language aliases |
-
-##### Returns
-
-List of language names.
-
-##### Example
-
-```python
-# Canonical names only
-languages = LanguageRegistry.get_supported_languages()
-# ['python', 'javascript', 'java', 'cpp', 'c', 'go', 'haskell']
-
-# With aliases
-all_names = LanguageRegistry.get_supported_languages(include_aliases=True)
-# ['python', 'py', 'python3', 'javascript', 'js', 'node', ...]
+python
+registry = LanguageRegistry()
+languages = registry.list_languages()
+# Returns sorted list of registered language names
+# e.g., ['c', 'cpp', 'go', 'haskell', 'java', 'javascript', 'python']
 ```
 
 #### is_supported
 
 ```python
-@classmethod
 def is_supported(
-    cls,
-    language: str
+    self,
+    name: str
 ) -> bool
 ```
 
 Check if a language is supported.
 
-##### Parameters
+python
+registry = LanguageRegistry()
+if registry.is_supported("rust"):
+    print("Rust is supported!")
+else:
+    print("Rust is not yet supported")
+```
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `language` | `str` | Language name to check |
-
-##### Returns
-
-`True` if supported, `False` otherwise.
-
-##### Example
+#### clear
 
 ```python
-if LanguageRegistry.is_supported("rust"):
-    print("Rust is supported!")
+def clear(self) -> None
+```
+
+Clear all registered adapters.
+
+python
+registry = LanguageRegistry()
+registry.clear()  # Remove all registered languages
 ```
 
 ## LanguageAdapter
@@ -212,7 +150,7 @@ class LanguageConfig:
     file_extension: str          # File extension (e.g., ".py")
     compile_command: Optional[str]  # Compilation command template
     run_command: str             # Execution command template
-    docker_image: Optional[str]  # Docker image name
+
     supports_types: List[str]    # Supported type names
     requires_types: bool         # Whether explicit types required
     timeout_multiplier: float    # Timeout adjustment factor
@@ -228,7 +166,7 @@ def get_config(self) -> LanguageConfig:
         file_extension=".py",
         compile_command=None,
         run_command="python {source}",
-        docker_image="python:3.9-slim",
+
         supports_types=["int", "float", "str", "bool", "list", "dict"],
         requires_types=False,
         timeout_multiplier=1.0
@@ -251,32 +189,7 @@ def generate_prompt(
 
 Generate language-specific prompt for LLM.
 
-##### Parameters
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `student_response` | `str` | Natural language description |
-| `function_name` | `str` | Target function name |
-| `gen_type` | `str` | Generation type ("cgbg" or "redef") |
-| `num_to_gen` | `int` | Number of variants to generate |
-| `**kwargs` | `dict` | Additional parameters |
-
-##### Common kwargs
-
-- `example_inputs`: List of example inputs
-- `example_outputs`: List of example outputs
-- `assumptions`: Additional assumptions (redef)
-- `function_signature`: Function signature (redef)
-- `language_version`: Language version requirement
-- `use_type_hints`: Whether to include type hints
-
-##### Returns
-
-Formatted prompt string for LLM.
-
-##### Example Implementation
-
-```python
+python
 def generate_prompt(self, student_response: str, function_name: str,
                    gen_type: str, num_to_gen: int, **kwargs) -> str:
     if gen_type == "cgbg":
@@ -310,19 +223,7 @@ def extract_code(
 
 Extract code blocks from LLM response.
 
-##### Parameters
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `llm_response` | `str` | Raw LLM response |
-
-##### Returns
-
-List of extracted code strings.
-
-##### Example Implementation
-
-```python
+python
 def extract_code(self, llm_response: str) -> List[str]:
     import re
     
@@ -350,19 +251,7 @@ def normalize_code(
 
 Normalize code format (remove comments, fix indentation).
 
-##### Parameters
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `code` | `str` | Raw code string |
-
-##### Returns
-
-Normalized code string.
-
-##### Example Implementation
-
-```python
+python
 def normalize_code(self, code: str) -> str:
     # Remove comments for Python
     lines = []
@@ -391,20 +280,7 @@ def format_examples(
 
 Format input/output examples for prompt.
 
-##### Parameters
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `inputs` | `List[Any]` | Example input values |
-| `outputs` | `List[Any]` | Example output values |
-
-##### Returns
-
-Formatted example string.
-
-##### Example
-
-```python
+python
 examples = adapter.format_examples(
     inputs=[[5], [0], [3]],
     outputs=[120, 1, 6]
@@ -439,20 +315,7 @@ def prepare_code(
 
 Prepare code with test harness.
 
-##### Parameters
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `code` | `str` | Function code to test |
-| `test_case` | `dict` | Test case dictionary |
-
-##### Returns
-
-Complete code with test harness.
-
-##### Example Implementation
-
-```python
+python
 def prepare_code(self, code: str, test_case: dict) -> str:
     import json
     
@@ -486,19 +349,7 @@ def execute_test(
 
 Execute code and return results.
 
-##### Parameters
-
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `code` | `str` | required | Code to execute |
-| `test_case` | `dict` | required | Test case |
-| `timeout` | `int` | `5` | Timeout in seconds |
-
-##### Returns
-
-Result dictionary:
-
-```python
+python
 {
     "passed": bool,           # Test pass/fail
     "expected": Any,          # Expected value
@@ -551,23 +402,7 @@ def validate_or_infer_types(
 
 Validate provided types or infer from values.
 
-##### Parameters
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `test_case` | `dict` | Test case dictionary |
-
-##### Returns
-
-Tuple of (parameters, expected_value).
-
-##### Side Effects
-
-Updates test_case with inferred types if not provided.
-
-##### Example
-
-```python
+python
 # Input without types
 test_case = {
     "parameters": {"x": 5, "y": "hello"},
@@ -596,34 +431,7 @@ def infer_type(
 
 Infer type name from Python value.
 
-##### Parameters
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `value` | `Any` | Value to analyze |
-
-##### Returns
-
-Generic type name string.
-
-##### Type Mapping
-
-| Python Type | Inferred Type |
-|-------------|---------------|
-| `bool` | `"boolean"` |
-| `int` | `"integer"` |
-| `float` | `"float"` |
-| `str` | `"string"` |
-| `list` | `"list"` |
-| `dict` | `"dict"` |
-| `None` | `"null"` |
-| others | `"any"` |
-
-## CompiledLanguageExecutor
-
-Base class for compiled languages requiring explicit types.
-
-```python
+python
 from eiplgrader.languages.executors.base_executors import CompiledLanguageExecutor
 ```
 
@@ -669,20 +477,7 @@ def format_value(
 
 Format Python value as language-specific literal.
 
-##### Parameters
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `value` | `Any` | Python value |
-| `type_str` | `str` | Language-specific type |
-
-##### Returns
-
-Formatted literal string.
-
-##### Example
-
-```python
+python
 def format_value(self, value: Any, type_str: str) -> str:
     if type_str == "String":
         return f'"{value}"'
@@ -708,19 +503,7 @@ def validate_types_provided(
 
 Ensure all required type information is provided.
 
-##### Parameters
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `test_case` | `dict` | Test case to validate |
-
-##### Raises
-
-- `ValueError`: If required types are missing
-
-##### Example
-
-```python
+python
 # This will raise ValueError
 test_case = {
     "parameters": {"x": 5},
@@ -740,37 +523,6 @@ executor.validate_types_provided(test_case)
 
 ## Utility Functions
 
-### create_language_config
-
-```python
-def create_language_config(
-    name: str,
-    **kwargs
-) -> LanguageConfig
-```
-
-Helper to create language configuration.
-
-##### Parameters
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `name` | `str` | Language name |
-| `**kwargs` | `dict` | Configuration options |
-
-##### Example
-
-```python
-config = create_language_config(
-    "rust",
-    display_name="Rust",
-    file_extension=".rs",
-    compile_command="rustc {source} -o {output}",
-    run_command="./{output}",
-    requires_types=True
-)
-```
-
 ### validate_language_name
 
 ```python
@@ -781,23 +533,7 @@ def validate_language_name(
 
 Validate and normalize language name.
 
-##### Parameters
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `name` | `str` | Language name to validate |
-
-##### Returns
-
-Canonical language name.
-
-##### Raises
-
-- `LanguageNotSupportedError`: If invalid
-
-##### Example
-
-```python
+python
 # All return "python"
 validate_language_name("python")
 validate_language_name("Python")
@@ -814,16 +550,14 @@ validate_language_name("python3")
 def register_all_languages():
     """Register all supported languages."""
     languages = [
-        ("python", PythonAdapter, PythonExecutor, ["py", "python3"]),
-        ("javascript", JSAdapter, JSExecutor, ["js", "node"]),
+        ("python", PythonAdapter),
+        ("javascript", JSAdapter),
         # ... more languages
     ]
     
-    for name, adapter, executor, aliases in languages:
+    for name, adapter in languages:
         try:
-            LanguageRegistry.register_language(
-                name, adapter, executor, aliases
-            )
+            registry.register(name, adapter)
         except Exception as e:
             logging.error(f"Failed to register {name}: {e}")
 ```

@@ -153,7 +153,7 @@ class LanguageExecutor(ABC):
 
 ### Performance
 - Cache where appropriate
-- Support parallel execution
+
 - Minimize redundant operations
 
 ## Component Testing

@@ -485,10 +485,9 @@ def generate_stream(
 ```python
 # Default configuration from environment
 DEFAULT_CONFIG = {
-    "api_key": os.getenv("OPENAI_API_KEY"),
-    "model": os.getenv("EIPLGRADER_MODEL", "gpt-4o"),
-    "temperature": float(os.getenv("EIPLGRADER_TEMPERATURE", "1.0")),
-    "max_retries": int(os.getenv("EIPLGRADER_MAX_RETRIES", "3"))
+    "api_key": "your-api-key",
+    "model": "gpt-4o",
+    "temperature": 1.0
 }
 ```
 

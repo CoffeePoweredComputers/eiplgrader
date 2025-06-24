@@ -59,7 +59,7 @@ class NewLangAdapter(LanguageAdapter):
             file_extension=".nl",
             compile_command="newlangc {source} -o {output}",  # If compiled
             run_command="newlang {source}",  # If interpreted
-            docker_image="newlang:latest",
+
             supports_types=["int", "float", "string", "bool", "list", "dict"]
         )
 ```
@@ -294,10 +294,10 @@ from .adapters.newlang_adapter import NewLangAdapter
 from .executors.newlang_executor import NewLangExecutor
 
 # Register during module initialization
-LanguageRegistry.register_language(
+registry = LanguageRegistry()
+registry.register(
     "newlang",
-    NewLangAdapter,
-    NewLangExecutor
+    NewLangAdapter
 )
 ```
 
@@ -461,7 +461,7 @@ Get started with EiplGrader for NewLang...
 ### Execution Environment
 - Ensure language runtime is available
 - Handle version differences
-- Test in Docker environment
+
 
 ## Debugging Tips
 

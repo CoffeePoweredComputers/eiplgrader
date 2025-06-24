@@ -62,7 +62,7 @@ python -m pytest -k "python"
 # Run with verbose output
 python -m pytest -v
 
-# Run in parallel
+# Run with concurrent processing
 python -m pytest -n auto
 ```
 
@@ -295,7 +295,7 @@ def large_output():
             code=code,
             test_cases=[{"parameters": {}, "expected": "x"}],
             function_name="large_output",
-            max_output_size=1024 * 1024  # 1MB limit
+
         )
         
         results = tester.run_tests()
@@ -479,14 +479,15 @@ def test_execution_performance(benchmark):
         function_name="add"
     )
     
-    result = benchmark(tester.run_single_test, test_case)
+    # Individual test benchmarking not available - use run_tests() instead
+    result = benchmark(lambda: tester.run_tests(), None)
     assert result.passed
 ```
 
 ### Load Testing
 
 ```python
-def test_parallel_execution_load():
+def test_concurrent_execution_load():
     """Test system under load."""
     import concurrent.futures
     
@@ -505,7 +506,7 @@ def test_parallel_execution_load():
     # Run with different worker counts
     for workers in [1, 4, 8, 16]:
         start = time.time()
-        results = tester.run_tests(parallel=True, max_workers=workers)
+        results = tester.run_tests()
         duration = time.time() - start
         
         print(f"Workers: {workers}, Time: {duration:.2f}s")

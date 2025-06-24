@@ -424,41 +424,7 @@ def analyze_failure_patterns(results: TestResults) -> List[str]:
 
 ## Performance Optimization
 
-### Parallel Test Execution
 
-```python
-class ParallelCodeTester(CodeTester):
-    """Execute tests in parallel for performance."""
-    
-    def run_tests(self) -> TestResults:
-        """Run tests in parallel."""
-        import concurrent.futures
-        
-        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
-            # Submit all tests
-            futures = []
-            for test_case in self.test_cases:
-                future = executor.submit(self._run_single_test, test_case)
-                futures.append((future, test_case))
-            
-            # Collect results
-            results = []
-            for future, test_case in futures:
-                try:
-                    result = future.result(timeout=test_case.get('timeout', 30))
-                    results.append(result)
-                except concurrent.futures.TimeoutError:
-                    result = TestResult(
-                        test_case=test_case,
-                        passed=False,
-                        actual=None,
-                        expected=test_case.get("expected"),
-                        error="Test execution timed out"
-                    )
-                    results.append(result)
-        
-        return TestResults(results)
-```
 
 ### Caching Compiled Code
 
@@ -534,8 +500,6 @@ class SecureTester(CodeTester):
     def _create_sandbox(self) -> Sandbox:
         """Create isolated execution environment."""
         return Sandbox(
-            memory_limit="256MB",
-            cpu_limit=1.0,
             network_access=False,
             filesystem_access="readonly"
         )
@@ -652,7 +616,7 @@ class TesterConfig:
     """Configuration for CodeTester."""
     default_timeout: int = 30
     max_output_length: int = 10000
-    parallel_execution: bool = False
+
     sandbox_mode: bool = True
     collect_metrics: bool = False
     
@@ -664,16 +628,7 @@ class TesterConfig:
         return cls(**data)
 ```
 
-### Environment Variables
 
-```python
-# Load configuration from environment
-TESTER_CONFIG = {
-    "timeout": int(os.getenv("EIPLGRADER_TIMEOUT", "30")),
-    "parallel": os.getenv("EIPLGRADER_PARALLEL", "false").lower() == "true",
-    "sandbox": os.getenv("EIPLGRADER_SANDBOX", "true").lower() == "true"
-}
-```
 
 ## Next Steps
 

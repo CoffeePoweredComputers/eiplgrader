@@ -371,4 +371,3 @@ for i, code_variant in enumerate(result["code"]):
 - Explore [Advanced Features](advanced-features.md) for more sophisticated usage
 - Learn about [Test Case Format](test-cases.md) in detail
 - See [Language Support](languages.md) for language-specific features
-- Try [Docker Usage](docker.md) for secure execution

@@ -367,7 +367,7 @@ def process_student_response(
             "error": str(e)
         }
 
-# Process multiple responses in parallel
+# Process multiple responses concurrently
 student_responses = [
     "that calculates the mean of a list",
     "that finds the median of a list",
@@ -384,7 +384,7 @@ test_cases_map = {
 }
 
 # Parallel processing
-with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+with concurrent.futures.ThreadPoolExecutor() as executor:
     futures = []
     for response in student_responses:
         # Determine which test cases to use
@@ -534,5 +534,5 @@ print(f"Total Score: {grade_report['total_score']}/100")
 
 - Review [Test Case Format](test-cases.md) for complex test scenarios
 - Explore [Language Support](languages.md) for language-specific advanced features
-- Learn about [Docker Usage](docker.md) for secure execution at scale
+
 - See [Developer Documentation](../developer/) for extending EiplGrader

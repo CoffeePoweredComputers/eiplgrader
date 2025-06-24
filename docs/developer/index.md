@@ -150,7 +150,7 @@ python -m pytest tests/ -k "python"
 - Never execute in main process
 - Always validate inputs
 - Clean up temporary files
-- Use Docker for production
+
 
 ## Getting Started
 

@@ -87,7 +87,7 @@ Learn how to use all features effectively:
 - [Advanced Features](guide/advanced-features.md) - Multiple variants, segmentation, in-place operations
 - [Test Case Format](guide/test-cases.md) - Comprehensive test case documentation
 - [Language Support](guide/languages.md) - Detailed language capabilities and requirements
-- [Docker Usage](guide/docker.md) - Secure containerized execution
+
 - [Error Handling](guide/errors.md) - Understanding and resolving errors
 
 ### [Developer Documentation](developer/)
@@ -114,10 +114,7 @@ cd eiplgrader
 pip install -e ".[dev]"
 ```
 
-### Docker Installation (Recommended for Production)
-```bash
-docker pull coffeepwrdcomputers/eiplgrader
-```
+
 
 ## 🌟 Language Support at a Glance
 
@@ -165,7 +162,7 @@ This is a research tool. Breaking changes between versions are expected. Always 
 
 - [GitHub Repository](https://github.com/hamiltonfour/eiplgrader)
 - [PyPI Package](https://pypi.org/project/eiplgrader/)
-- [Docker Hub](https://hub.docker.com/r/coffeepwrdcomputers/eiplgrader)
+
 - [Issue Tracker](https://github.com/hamiltonfour/eiplgrader/issues)
 
 ---

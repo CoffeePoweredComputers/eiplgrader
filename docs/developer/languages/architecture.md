@@ -337,21 +337,21 @@ class LanguageRegistry:
         # Python
         from .adapters.python_adapter import PythonAdapter
         from .executors.python_executor import PythonExecutor
-        self.register_language("python", PythonAdapter, PythonExecutor)
+        self.register("python", PythonAdapter)
         
         # JavaScript
         from .adapters.javascript_adapter import JavaScriptAdapter
         from .executors.javascript_executor import JavaScriptExecutor
-        self.register_language("javascript", JavaScriptAdapter, JavaScriptExecutor)
+        self.register("javascript", JavaScriptAdapter)
         
         # Java
         from .adapters.java_adapter import JavaAdapter
         from .executors.java_executor import JavaExecutor
-        self.register_language("java", JavaAdapter, JavaExecutor)
+        self.register("java", JavaAdapter)
         
         # Add more languages...
     
-    def register_language(
+    def register(
         self,
         name: str,
         adapter_class: Type[LanguageAdapter],
