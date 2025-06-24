@@ -213,7 +213,7 @@ sequenceDiagram
     LanguageAdapter-->>CodeGenerator: code_blocks
     CodeGenerator->>LanguageAdapter: normalize_code(code)
     LanguageAdapter-->>CodeGenerator: normalized_code
-    CodeGenerator-->>User: {code: [...], segmentation: ...}
+    CodeGenerator-->>User: code: [...], segmentation: ..
 ```
 
 ### Code Testing Flow
