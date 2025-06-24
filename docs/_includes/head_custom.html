@@ -1,64 +1,271 @@
-<!-- Custom head content for mermaid diagrams -->
-<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
-<script>
-  document.addEventListener('DOMContentLoaded', function() {
-    // Initialize mermaid with dark theme configuration
-    mermaid.initialize({
-      startOnLoad: true,
-      theme: 'dark',
-      themeVariables: {
-        darkMode: true,
-        primaryColor: '#7c3aed',
-        primaryTextColor: '#f8fafc',
-        primaryBorderColor: '#6d28d9',
-        lineColor: '#64748b',
-        sectionBkgColor: '#1e293b',
-        altSectionBkgColor: '#334155',
-        gridColor: '#475569',
-        secondaryColor: '#64748b',
-        tertiaryColor: '#475569'
-      }
-    });
+<!-- Mermaid diagrams support with improved accessibility -->
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+  
+  // Check for reduced motion preference
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  
+  // Check for high contrast preference
+  const prefersHighContrast = window.matchMedia('(prefers-contrast: high)').matches;
+  
+  // Improved color theme with better accessibility
+  const themeConfig = {
+    theme: 'base',
+    themeVariables: {
+      // High contrast colors for better accessibility
+      primaryColor: prefersHighContrast ? '#000000' : '#2563eb',
+      primaryTextColor: prefersHighContrast ? '#ffffff' : '#1e293b',
+      primaryBorderColor: prefersHighContrast ? '#ffffff' : '#3b82f6',
+      lineColor: prefersHighContrast ? '#ffffff' : '#64748b',
+      sectionBkgColor: prefersHighContrast ? '#000000' : '#f8fafc',
+      altSectionBkgColor: prefersHighContrast ? '#333333' : '#e2e8f0',
+      gridColor: prefersHighContrast ? '#ffffff' : '#cbd5e1',
+      secondaryColor: prefersHighContrast ? '#666666' : '#64748b',
+      tertiaryColor: prefersHighContrast ? '#888888' : '#94a3b8',
+      // Text contrast improvements
+      mainBkg: prefersHighContrast ? '#000000' : '#ffffff',
+      secondBkg: prefersHighContrast ? '#333333' : '#f1f5f9',
+      // Node colors with better contrast
+      nodeBorder: prefersHighContrast ? '#ffffff' : '#1e293b',
+      clusterBkg: prefersHighContrast ? '#000000' : '#f8fafc',
+      clusterBorder: prefersHighContrast ? '#ffffff' : '#64748b'
+    }
+  };
 
-    // Find all code blocks with language-mermaid and convert them to mermaid diagrams
-    const mermaidBlocks = document.querySelectorAll('code.language-mermaid');
-    mermaidBlocks.forEach(function(block, index) {
-      // Create a new div for the mermaid diagram
-      const mermaidDiv = document.createElement('div');
-      mermaidDiv.className = 'mermaid';
-      mermaidDiv.id = 'mermaid-diagram-' + index;
-      mermaidDiv.textContent = block.textContent;
+  // Initialize mermaid with accessibility improvements
+  mermaid.initialize({
+    startOnLoad: false, // We'll handle rendering manually
+    securityLevel: 'strict',
+    ...themeConfig
+  });
+
+  document.addEventListener('DOMContentLoaded', async function() {
+    // Find code blocks that should be mermaid diagrams
+    const codeBlocks = document.querySelectorAll('pre code.language-mermaid, code.language-mermaid');
+    
+    for (let i = 0; i < codeBlocks.length; i++) {
+      const block = codeBlocks[i];
+      const diagramText = block.textContent.trim();
       
-      // Replace the code block with the mermaid div
-      const preElement = block.parentElement;
-      preElement.parentNode.replaceChild(mermaidDiv, preElement);
-    });
-
-    // Re-initialize mermaid to render the new diagrams
-    mermaid.init();
+      if (diagramText) {
+        try {
+          // Validate diagram syntax first
+          const isValid = await mermaid.parse(diagramText);
+          
+          if (isValid) {
+            // Create container for the diagram
+            const container = document.createElement('div');
+            container.className = 'mermaid-container';
+            container.setAttribute('role', 'img');
+            
+            // Generate accessible title and description
+            const diagramType = diagramText.split('\n')[0].trim();
+            const title = `${diagramType} diagram`;
+            container.setAttribute('aria-label', title);
+            
+            // Create mermaid element
+            const mermaidElement = document.createElement('div');
+            mermaidElement.className = 'mermaid';
+            mermaidElement.id = `mermaid-diagram-${i}`;
+            
+            // Add text alternative for screen readers
+            const textDescription = document.createElement('div');
+            textDescription.className = 'sr-only';
+            textDescription.textContent = `Diagram content: ${diagramText}`;
+            container.appendChild(textDescription);
+            
+            // Render the diagram
+            const { svg } = await mermaid.render(mermaidElement.id, diagramText);
+            
+            // Add accessibility attributes to SVG
+            const parser = new DOMParser();
+            const svgDoc = parser.parseFromString(svg, 'image/svg+xml');
+            const svgElement = svgDoc.documentElement;
+            
+            svgElement.setAttribute('role', 'img');
+            svgElement.setAttribute('aria-labelledby', `title-${i}`);
+            svgElement.setAttribute('aria-describedby', `desc-${i}`);
+            
+            // Add title and description elements
+            const titleElement = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+            titleElement.id = `title-${i}`;
+            titleElement.textContent = title;
+            svgElement.insertBefore(titleElement, svgElement.firstChild);
+            
+            const descElement = document.createElementNS('http://www.w3.org/2000/svg', 'desc');
+            descElement.id = `desc-${i}`;
+            descElement.textContent = `This diagram shows: ${diagramText.substring(0, 200)}...`;
+            svgElement.insertBefore(descElement, titleElement.nextSibling);
+            
+            mermaidElement.innerHTML = svgElement.outerHTML;
+            container.appendChild(mermaidElement);
+            
+            // Replace the code block with the rendered diagram
+            const preElement = block.closest('pre') || block;
+            preElement.parentNode.replaceChild(container, preElement);
+            
+          } else {
+            console.warn('Invalid mermaid diagram syntax:', diagramText);
+          }
+        } catch (error) {
+          console.error('Error rendering mermaid diagram:', error);
+          // Leave the code block as-is if rendering fails
+        }
+      }
+    }
   });
 </script>
 
 <style>
-  /* Custom styles for mermaid diagrams to match dark theme */
-  .mermaid {
+  /* Improved mermaid diagram styles with accessibility focus */
+  .mermaid-container {
+    margin: 1.5rem 0;
     text-align: center;
-    margin: 1.5em 0;
-    background: #1a1a1a;
-    border: 1px solid #333;
-    border-radius: 6px;
-    padding: 1em;
+    border-radius: 8px;
+    overflow: hidden;
+    /* Respect reduced motion preferences */
+    transition: none;
   }
   
-  /* Ensure diagrams are responsive */
+  @media (prefers-reduced-motion: no-preference) {
+    .mermaid-container {
+      transition: box-shadow 0.2s ease-in-out;
+    }
+    
+    .mermaid-container:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+  }
+  
+  .mermaid {
+    background: transparent;
+    padding: 1rem;
+    border-radius: 6px;
+  }
+  
+  /* High contrast mode support */
+  @media (prefers-contrast: high) {
+    .mermaid-container {
+      border: 2px solid;
+      background: #000000;
+    }
+    
+    .mermaid svg {
+      filter: contrast(2) brightness(1.2);
+    }
+  }
+  
+  /* Ensure diagrams are responsive and accessible */
   .mermaid svg {
     max-width: 100%;
     height: auto;
+    display: block;
+    margin: 0 auto;
   }
   
-  /* Style mermaid text elements for better visibility */
-  .mermaid .node text,
-  .mermaid .edge text {
-    fill: #f8fafc !important;
+  /* Screen reader only content */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+  
+  /* Focus management for keyboard users */
+  .mermaid-container:focus-within {
+    outline: 2px solid #2563eb;
+    outline-offset: 2px;
+  }
+  
+  /* Improve text readability in diagrams */
+  .mermaid text {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 14px;
+  }
+  
+  /* Dark mode support that respects user preferences */
+  @media (prefers-color-scheme: dark) and (prefers-contrast: no-preference) {
+    .mermaid-container {
+      background: rgba(30, 41, 59, 0.1);
+      border: 1px solid rgba(71, 85, 105, 0.3);
+    }
+  }
+  
+  /* Print styles */
+  @media print {
+    .mermaid-container {
+      border: 1px solid #000;
+      background: white;
+      break-inside: avoid;
+    }
+    
+    .mermaid svg {
+      max-width: 100% !important;
+      height: auto !important;
+    }
+  }
+</style>
+
+<!-- Color scheme toggle for better accessibility -->
+<style>
+  /* Light theme override for better accessibility by default */
+  :root {
+    --main-content-bg: #ffffff;
+    --main-text-color: #1e293b;
+    --link-color: #2563eb;
+    --border-color: #e2e8f0;
+  }
+  
+  /* Better focus indicators */
+  *:focus {
+    outline: 2px solid #2563eb;
+    outline-offset: 2px;
+  }
+  
+  /* Improve heading contrast */
+  h1, h2, h3, h4, h5, h6 {
+    color: #0f172a;
+  }
+  
+  /* Better link contrast */
+  a {
+    color: #1d4ed8;
+    text-decoration: underline;
+  }
+  
+  a:hover {
+    color: #1e40af;
+  }
+  
+  /* Code block improvements */
+  pre, code {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+  }
+  
+  /* High contrast mode overrides */
+  @media (prefers-contrast: high) {
+    :root {
+      --main-content-bg: #ffffff;
+      --main-text-color: #000000;
+      --link-color: #0000ee;
+      --border-color: #000000;
+    }
+    
+    a {
+      color: #0000ee;
+      text-decoration: underline;
+      font-weight: bold;
+    }
+    
+    h1, h2, h3, h4, h5, h6 {
+      color: #000000;
+      font-weight: bold;
+    }
   }
 </style>
