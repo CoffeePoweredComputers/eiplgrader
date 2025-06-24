@@ -1,0 +1,58 @@
+<!-- Mermaid diagram rendering support -->
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Initialize mermaid with configuration
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'dark',
+      themeVariables: {
+        darkMode: true,
+        primaryColor: '#7c3aed',
+        primaryTextColor: '#f8fafc',
+        primaryBorderColor: '#6d28d9',
+        lineColor: '#64748b',
+        sectionBkgColor: '#1e293b',
+        altSectionBkgColor: '#334155',
+        gridColor: '#475569',
+        secondaryColor: '#64748b',
+        tertiaryColor: '#475569'
+      }
+    });
+
+    // Find all code blocks with language-mermaid and convert them
+    const mermaidBlocks = document.querySelectorAll('code.language-mermaid');
+    mermaidBlocks.forEach(function(block, index) {
+      // Create a new div for the mermaid diagram
+      const mermaidDiv = document.createElement('div');
+      mermaidDiv.className = 'mermaid';
+      mermaidDiv.id = 'mermaid-diagram-' + index;
+      mermaidDiv.textContent = block.textContent;
+      
+      // Replace the code block with the mermaid div
+      const preElement = block.parentElement;
+      preElement.parentNode.replaceChild(mermaidDiv, preElement);
+    });
+
+    // Re-initialize mermaid to render the new diagrams
+    mermaid.init();
+  });
+</script>
+
+<style>
+  /* Custom styles for mermaid diagrams */
+  .mermaid {
+    text-align: center;
+    margin: 1.5em 0;
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 6px;
+    padding: 1em;
+  }
+  
+  /* Ensure diagrams are responsive */
+  .mermaid svg {
+    max-width: 100%;
+    height: auto;
+  }
+</style>
