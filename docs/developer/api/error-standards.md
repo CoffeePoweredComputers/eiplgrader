@@ -1,7 +1,10 @@
 ---
 layout: default
-title: Standardized Error Messages
-nav_order: 6
+title: Error Standards
+parent: API Reference
+grand_parent: Developer Documentation
+nav_order: 5
+permalink: /developer/api/error-standards
 ---
 
 # Standardized Error Messages

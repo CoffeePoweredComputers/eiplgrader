@@ -17,7 +17,7 @@ EiplGrader follows a simple two-step process:
 
 ```python
 # Step 1: Generate
-generator = CodeGenerator(api_key, language="python")
+generator = CodeGenerator(api_key, client_type="openai", language="python")
 result = generator.generate_code(student_response, function_name)
 
 # Step 2: Test
@@ -37,7 +37,8 @@ from eiplgrader.codegen import CodeGenerator
 # Initialize with your API key
 generator = CodeGenerator(
     api_key="your-api-key",
-    client_type="openai"  # Currently supported: "openai"
+    client_type="openai"  # Currently supported: "openai", "ollama"
+    # Planned for future releases: "anthropic", "meta"
 )
 ```
 
@@ -146,17 +147,18 @@ if "segmentation" in result:
 results = tester.run_tests()
 
 # Check overall success
-if results.allPassed:
+if results.was_successful():
     print("All tests passed!")
 else:
     print(f"Passed: {results.successes}/{results.testsRun}")
 
 # Access detailed results
-for failure in results.failures:
-    print(f"Failed: {failure.test}")
-    print(f"Expected: {failure.expected}, Got: {failure.actual}")
-    if failure.error:
-        print(f"Error: {failure.error}")
+for result in results.test_results:
+    if not result["pass"]:
+        print(f"Failed: {result['function_call']}")
+        print(f"Expected: {result['expected_output']}, Got: {result['actual_output']}")
+        if result["error"]:
+            print(f"Error: {result['error']}")
 ```
 
 ## Common Workflows
@@ -212,7 +214,7 @@ for response in student_responses:
     
     results.append({
         "response": response,
-        "passed": test_result.allPassed,
+        "passed": test_result.was_successful(),
         "score": test_result.successes / test_result.testsRun
     })
 ```
@@ -276,13 +278,14 @@ except Exception as e:
     # Handle compilation errors, runtime errors, etc.
 
 # Check individual test failures
-for failure in results.failures:
-    if "Compilation failed" in str(failure.error):
-        print("Code has syntax errors")
-    elif "timeout" in str(failure.error).lower():
-        print("Code execution timed out")
-    else:
-        print(f"Runtime error: {failure.error}")
+for result in results.test_results:
+    if not result["pass"]:
+        if "Compilation failed" in str(result["error"]):
+            print("Code has syntax errors")
+        elif "timeout" in str(result["error"]).lower():
+            print("Code execution timed out")
+        else:
+            print(f"Runtime error: {result['error']}")
 ```
 
 ## Configuration Options
@@ -357,7 +360,7 @@ for i, code_variant in enumerate(result["code"]):
     try:
         tester = CodeTester(code=code_variant, ...)
         results = tester.run_tests()
-        if results.allPassed:
+        if results.was_successful():
             break
     except Exception:
         continue  # Try next variant
@@ -368,4 +371,3 @@ for i, code_variant in enumerate(result["code"]):
 - Explore [Advanced Features](advanced-features.md) for more sophisticated usage
 - Learn about [Test Case Format](test-cases.md) in detail
 - See [Language Support](languages.md) for language-specific features
-- Try [Docker Usage](docker.md) for secure execution

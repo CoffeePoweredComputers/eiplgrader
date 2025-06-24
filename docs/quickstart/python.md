@@ -29,7 +29,7 @@ from eiplgrader.codegen import CodeGenerator
 
 # Initialize the code generator
 api_key = "your-openai-api-key"
-generator = CodeGenerator(api_key, language="python")
+generator = CodeGenerator(api_key, client_type="openai", language="python")
 
 # Generate code from a student's explanation
 result = generator.generate_code(
@@ -212,13 +212,14 @@ Python provides detailed error information:
 ```python
 try:
     results = tester.run_tests()
-    if not results.allPassed:
-        for failure in results.failures:
-            print(f"Test failed: {failure.test}")
-            print(f"Expected: {failure.expected}")
-            print(f"Actual: {failure.actual}")
-            if failure.error:
-                print(f"Error: {failure.error}")
+    if not results.was_successful():
+        for result in results.test_results:
+            if not result["pass"]:
+                print(f"Test failed: {result['function_call']}")
+                print(f"Expected: {result['expected_output']}")
+                print(f"Actual: {result['actual_output']}")
+                if result["error"]:
+                    print(f"Error: {result['error']}")
 except Exception as e:
     print(f"Error during testing: {e}")
 ```

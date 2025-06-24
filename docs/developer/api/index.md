@@ -39,12 +39,12 @@ Reference for language adapters and executors.
 ### CodeGenerator
 
 ```python
-from eiplgrader import CodeGenerator
+from eiplgrader.codegen import CodeGenerator
 
 # Initialize
 generator = CodeGenerator(
     api_key="your-api-key",
-    model="openai",
+    client_type="openai",
     language="python"
 )
 
@@ -58,14 +58,14 @@ result = generator.generate_code(
 )
 
 # Access results
-for i, code in enumerate(result.codes):
+for i, code in enumerate(result["code"]):
     print(f"Implementation {i+1}:\n{code}")
 ```
 
 ### CodeTester
 
 ```python
-from eiplgrader import CodeTester
+from eiplgrader.tester import CodeTester
 
 # Initialize
 tester = CodeTester(
@@ -76,37 +76,34 @@ tester = CodeTester(
 )
 
 # Run tests
-results = tester.run_tests(
-    timeout=5,
-    parallel=True
-)
+results = tester.run_tests()
 
 # Check results
-if results.all_passed:
+if results.was_successful():
     print("All tests passed!")
 else:
-    for failure in results.failures:
-        print(f"Failed: {failure.error}")
+    for result in results.test_results:
+        if not result["pass"]:
+            print(f"Failed: {result['error']}")
 ```
 
 ### Language Registry
 
 ```python
-from eiplgrader.languages import LanguageRegistry
+from eiplgrader.languages.registry import LanguageRegistry
+
+# Create registry instance
+registry = LanguageRegistry()
 
 # Get available languages
-languages = LanguageRegistry.get_supported_languages()
+languages = registry.list_languages()
 
 # Get language components
-adapter = LanguageRegistry.get_adapter("python")
-executor = LanguageRegistry.get_executor("python")
+adapter = registry.get_adapter("python")
+executor_class = registry.get_executor("python")
 
 # Register new language
-LanguageRegistry.register_language(
-    "newlang",
-    adapter_class=NewLangAdapter,
-    executor_class=NewLangExecutor
-)
+registry.register("newlang", NewLangAdapter)
 ```
 
 ## Response Formats
@@ -127,20 +124,31 @@ class GenerationResult:
 ### Test Results
 
 ```python
-class TestResults:
-    all_passed: bool         # Whether all tests passed
-    passed_count: int        # Number of passed tests
-    failed_count: int        # Number of failed tests
-    results: List[TestResult] # Individual test results
+class CodeTestResult:
+    """Simple, language-agnostic test result container."""
     
-class TestResult:
-    passed: bool             # Test pass/fail status
-    test_case: dict         # Original test case
-    expected: Any           # Expected value
-    actual: Any             # Actual value
-    error: Optional[str]    # Error message if failed
-    error_type: Optional[str] # Error category
-    execution_time: float   # Time taken in seconds
+    test_results: List[dict]  # List of individual test result dictionaries
+    successes: int           # Number of successful tests
+    failures: int           # Number of failed tests
+    errors: int             # Number of error tests
+    
+    def add_success(self, function_call, expected_output, actual_output): ...
+    def add_failure(self, function_call, expected_output, actual_output, error_msg): ...
+    def add_error(self, function_call, error_msg): ...
+    def was_successful(self) -> bool: ...
+    
+    @property
+    def testsRun(self) -> int: ...
+
+# Individual test result dictionary format:
+test_result = {
+    "function_call": str,     # Function call string
+    "expected": Any,          # Expected value
+    "actual": Any,            # Actual value  
+    "pass": bool,             # Test pass/fail status
+    "error": Optional[str],   # Error message if failed
+    "execution_time": Optional[float]  # Time taken in seconds
+}
 ```
 
 ## Error Handling
@@ -185,155 +193,7 @@ class InvalidTestCaseError(EiplGraderError):
 
 ### Environment Variables
 
-```bash
-# API Keys
-OPENAI_API_KEY=sk-...
-ANTHROPIC_API_KEY=sk-ant-...
-
-# Model Selection
-EIPLGRADER_MODEL=openai  # or anthropic, ollama
-
-# Execution Settings
-EIPLGRADER_TIMEOUT=10
-EIPLGRADER_MAX_PARALLEL=5
-
-# Language Settings
-EIPLGRADER_DEFAULT_LANGUAGE=python
-```
-
-### Configuration File
-
-```yaml
-# .eiplgrader.yml
-models:
-  openai:
-    api_key: ${OPENAI_API_KEY}
-    default_model: gpt-4
-    temperature: 0.7
-    
-execution:
-  timeout: 10
-  max_parallel: 5
-  temp_dir: /tmp/eiplgrader
-  
-languages:
-  python:
-    version: "3.9"
-    docker_image: "python:3.9-slim"
-    
-logging:
-  level: INFO
-  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-```
-
-## Rate Limiting
-
-### Built-in Rate Limiter
-
-```python
-from eiplgrader.utils import RateLimiter
-
-# Configure rate limits
-rate_limiter = RateLimiter(
-    max_requests_per_minute=60,
-    max_tokens_per_minute=90000
-)
-
-# Use with generator
-generator = CodeGenerator(
-    api_key=api_key,
-    rate_limiter=rate_limiter
-)
-```
-
-### Custom Rate Limiting
-
-```python
-class CustomRateLimiter:
-    def check_request(self, tokens: int) -> bool:
-        """Return True if request should proceed."""
-        pass
-    
-    def record_usage(self, tokens: int):
-        """Record token usage."""
-        pass
-```
-
-## Async Support
-
-### Async Code Generation
-
-```python
-import asyncio
-from eiplgrader import AsyncCodeGenerator
-
-async def generate_async():
-    generator = AsyncCodeGenerator(api_key)
-    
-    # Generate multiple variants concurrently
-    tasks = []
-    for i in range(5):
-        task = generator.generate_code_async(
-            student_response=f"variant {i}",
-            function_name="solution"
-        )
-        tasks.append(task)
-    
-    results = await asyncio.gather(*tasks)
-    return results
-```
-
-### Async Test Execution
-
-```python
-from eiplgrader import AsyncCodeTester
-
-async def test_async():
-    tester = AsyncCodeTester(code, test_cases)
-    
-    # Run tests concurrently
-    results = await tester.run_tests_async(
-        max_concurrent=10
-    )
-    
-    return results
-```
-
-## Utilities
-
-### Test Case Builders
-
-```python
-from eiplgrader.utils import TestCaseBuilder
-
-# Build test case with type inference
-test = TestCaseBuilder() \
-    .with_parameters(x=5, y=10) \
-    .expects(15) \
-    .build()
-
-# Build with explicit types
-test = TestCaseBuilder() \
-    .with_parameters(x=5, y=10) \
-    .with_parameter_types(x="int", y="int") \
-    .expects(15) \
-    .with_expected_type("int") \
-    .build()
-```
-
-### Code Validators
-
-```python
-from eiplgrader.utils import CodeValidator
-
-# Validate Python code
-validator = CodeValidator("python")
-is_valid, errors = validator.validate(code)
-
-if not is_valid:
-    for error in errors:
-        print(f"Line {error.line}: {error.message}")
-```
+Currently, environment variables are only used in the example scripts for API keys (e.g., `OPENAI_API_KEY`). The library itself does not use environment variables for configuration.
 
 ## Next Steps
 

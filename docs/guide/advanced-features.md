@@ -18,7 +18,7 @@ Generate multiple implementations of the same function to find the best one.
 ```python
 from eiplgrader.codegen import CodeGenerator
 
-generator = CodeGenerator(api_key, language="python")
+generator = CodeGenerator(api_key, client_type="openai", language="python")
 
 # Generate 5 different implementations
 result = generator.generate_code(
@@ -141,18 +141,19 @@ def provide_detailed_feedback(code, test_results, segmentation):
     feedback = []
     
     # Analyze which segments might be problematic
-    if not test_results.allPassed:
+    if not test_results.was_successful():
         # Map errors to code segments
-        for failure in test_results.failures:
-            if "empty" in str(failure.test).lower():
-                # Find segment related to empty list handling
-                for seg in segmentation:
-                    if "empty" in seg["segment"].lower():
-                        feedback.append({
-                            "issue": "Empty list handling failed",
-                            "segment": seg["segment"],
-                            "lines": seg["lines"]
-                        })
+        for result in test_results.test_results:
+            if not result["pass"]:
+                if "empty" in str(result["function_call"]).lower():
+                    # Find segment related to empty list handling
+                    for seg in segmentation:
+                        if "empty" in seg["segment"].lower():
+                            feedback.append({
+                                "issue": "Empty list handling failed",
+                                "segment": seg["segment"],
+                                "lines": seg["lines"]
+                            })
     
     return feedback
 
@@ -366,7 +367,7 @@ def process_student_response(
             "error": str(e)
         }
 
-# Process multiple responses in parallel
+# Process multiple responses concurrently
 student_responses = [
     "that calculates the mean of a list",
     "that finds the median of a list",
@@ -383,7 +384,7 @@ test_cases_map = {
 }
 
 # Parallel processing
-with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+with concurrent.futures.ThreadPoolExecutor() as executor:
     futures = []
     for response in student_responses:
         # Determine which test cases to use
@@ -533,5 +534,5 @@ print(f"Total Score: {grade_report['total_score']}/100")
 
 - Review [Test Case Format](test-cases.md) for complex test scenarios
 - Explore [Language Support](languages.md) for language-specific advanced features
-- Learn about [Docker Usage](docker.md) for secure execution at scale
+
 - See [Developer Documentation](../developer/) for extending EiplGrader

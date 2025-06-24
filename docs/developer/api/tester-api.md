@@ -22,13 +22,11 @@ from eiplgrader.tester import CodeTester
 ```python
 def __init__(
     self,
-    code: str,
+    code: Union[str, List[str]],
     test_cases: List[Dict[str, Any]],
-    function_name: str,
-    language: str = "python",
-    timeout: int = 5,
-    executor: Optional[LanguageExecutor] = None,
-    **kwargs
+    inplace: str = "0",
+    function_name: str = "foo",
+    language: str = "python"
 )
 ```
 
@@ -36,13 +34,11 @@ def __init__(
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `code` | `str` | required | Code to test |
+| `code` | `Union[str, List[str]]` | required | Code to test (can be single string or list of strings) |
 | `test_cases` | `List[Dict]` | required | List of test case dictionaries |
-| `function_name` | `str` | required | Name of function to test |
+| `inplace` | `str` | `"0"` | Test mode for in-place modifications |
+| `function_name` | `str` | `"foo"` | Name of function to test |
 | `language` | `str` | `"python"` | Programming language |
-| `timeout` | `int` | `5` | Execution timeout in seconds |
-| `executor` | `LanguageExecutor` | `None` | Optional custom executor |
-| `**kwargs` | `dict` | `{}` | Additional executor options |
 
 #### Example
 
@@ -58,15 +54,12 @@ tester = CodeTester(
     language="python"
 )
 
-# With custom executor
-from eiplgrader.languages.executors import PythonExecutor
-executor = PythonExecutor(sandbox_mode=True)
-
+# With multiple code variants
 tester = CodeTester(
-    code=code,
+    code=[code_variant1, code_variant2, code_variant3],
     test_cases=tests,
     function_name="solve",
-    executor=executor
+    language="python"
 )
 ```
 
@@ -75,13 +68,7 @@ tester = CodeTester(
 #### run_tests
 
 ```python
-def run_tests(
-    self,
-    parallel: bool = False,
-    max_workers: int = 4,
-    stop_on_failure: bool = False,
-    verbose: bool = False
-) -> TestResults
+def run_tests(self) -> Union[CodeTestResult, List[CodeTestResult]]
 ```
 
 Execute all test cases against the code.
@@ -90,199 +77,46 @@ Execute all test cases against the code.
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `parallel` | `bool` | `False` | Run tests in parallel |
-| `max_workers` | `int` | `4` | Maximum parallel workers |
-| `stop_on_failure` | `bool` | `False` | Stop after first failure |
-| `verbose` | `bool` | `False` | Print detailed output |
+
+
+
+
 
 ##### Returns
 
-`TestResults` object containing:
+`CodeTestResult` object (or list of them if code is a list) containing:
 
 ```python
-class TestResults:
-    all_passed: bool              # True if all tests passed
-    passed_count: int             # Number of passed tests
-    failed_count: int             # Number of failed tests
-    total_count: int              # Total number of tests
-    results: List[TestResult]     # Individual test results
-    execution_time: float         # Total execution time
+class CodeTestResult:
+    test_results: List[Dict[str, Any]]  # List of test result dictionaries
+    successes: int                      # Number of successful tests
+    failures: int                       # Number of failed tests  
+    errors: int                         # Number of tests with errors
+    
+    def was_successful(self) -> bool:
+        """Check if all tests passed."""
+        return self.failures == 0 and self.errors == 0
     
     @property
-    def pass_rate(self) -> float:
-        """Percentage of tests passed."""
-        return (self.passed_count / self.total_count) * 100
-    
-    @property
-    def failures(self) -> List[TestResult]:
-        """List of failed test results."""
-        return [r for r in self.results if not r.passed]
+    def testsRun(self) -> int:
+        """Total number of tests run."""
+        return len(self.test_results)
 ```
 
 ##### Example
 
 ```python
-# Sequential execution
+# Run tests
 results = tester.run_tests()
 
-# Parallel execution
-results = tester.run_tests(parallel=True, max_workers=8)
-
-# Stop on first failure
-results = tester.run_tests(stop_on_failure=True)
-
-# Verbose output
-results = tester.run_tests(verbose=True)
-```
-
-#### run_single_test
-
-```python
-def run_single_test(
-    self,
-    test_case: Dict[str, Any],
-    timeout: Optional[int] = None
-) -> TestResult
-```
-
-Run a single test case.
-
-##### Parameters
-
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `test_case` | `Dict` | required | Single test case dictionary |
-| `timeout` | `int` | `None` | Override default timeout |
-
-##### Returns
-
-`TestResult` object:
-
-```python
-class TestResult:
-    passed: bool                  # Whether test passed
-    test_case: Dict[str, Any]     # Original test case
-    expected: Any                 # Expected value
-    actual: Any                   # Actual value (if available)
-    error: Optional[str]          # Error message if failed
-    error_type: Optional[str]     # Error category
-    execution_time: float         # Execution time in seconds
-    stdout: Optional[str]         # Captured stdout
-    stderr: Optional[str]         # Captured stderr
-```
-
-##### Example
-
-```python
-test = {"parameters": {"x": 10}, "expected": 100}
-result = tester.run_single_test(test)
-
-if result.passed:
-    print(f"Test passed in {result.execution_time:.3f}s")
+# Check results
+if results.was_successful():
+    print("All tests passed!")
 else:
-    print(f"Test failed: {result.error}")
-```
-
-#### validate_test_cases
-
-```python
-def validate_test_cases(
-    self,
-    test_cases: Optional[List[Dict]] = None
-) -> Tuple[bool, List[str]]
-```
-
-Validate test case format and types.
-
-##### Parameters
-
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `test_cases` | `List[Dict]` | `None` | Test cases to validate (uses instance test_cases if None) |
-
-##### Returns
-
-Tuple of (is_valid, error_messages).
-
-##### Example
-
-```python
-is_valid, errors = tester.validate_test_cases()
-
-if not is_valid:
-    for error in errors:
-        print(f"Validation error: {error}")
-```
-
-#### get_test_summary
-
-```python
-def get_test_summary(
-    self,
-    results: Optional[TestResults] = None
-) -> Dict[str, Any]
-```
-
-Get summary statistics for test results.
-
-##### Parameters
-
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `results` | `TestResults` | `None` | Results to summarize (runs tests if None) |
-
-##### Returns
-
-Dictionary containing:
-
-```python
-{
-    "total_tests": int,
-    "passed": int,
-    "failed": int,
-    "pass_rate": float,
-    "average_execution_time": float,
-    "error_breakdown": {
-        "compilation": int,
-        "runtime": int,
-        "timeout": int,
-        "assertion": int
-    }
-}
-```
-
-##### Example
-
-```python
-summary = tester.get_test_summary()
-print(f"Pass rate: {summary['pass_rate']:.1f}%")
-print(f"Average time: {summary['average_execution_time']:.3f}s")
-```
-
-### Properties
-
-#### test_count
-
-```python
-@property
-def test_count(self) -> int
-```
-
-Number of test cases.
-
-#### language_config
-
-```python
-@property  
-def language_config(self) -> LanguageConfig
-```
-
-Language configuration details.
-
-```python
-config = tester.language_config
-print(f"Language: {config.display_name}")
-print(f"Extension: {config.file_extension}")
+    print(f"Tests run: {results.testsRun}")
+    print(f"Successes: {results.successes}")
+    print(f"Failures: {results.failures}")
+    print(f"Errors: {results.errors}")
 ```
 
 ### Test Case Format
@@ -353,13 +187,13 @@ test_case = {
 
 ```python
 class CustomTester(CodeTester):
-    def run_tests(self, **kwargs) -> TestResults:
+    def run_tests(self) -> Union[CodeTestResult, List[CodeTestResult]]:
         """Add custom test logic."""
         # Pre-test setup
         self.setup_environment()
         
         # Run tests with monitoring
-        results = super().run_tests(**kwargs)
+        results = super().run_tests()
         
         # Post-test analysis
         self.analyze_performance(results)
@@ -370,11 +204,11 @@ class CustomTester(CodeTester):
         """Custom setup logic."""
         pass
     
-    def analyze_performance(self, results: TestResults):
+    def analyze_performance(self, results: CodeTestResult):
         """Analyze test performance."""
         slow_tests = [
-            r for r in results.results 
-            if r.execution_time > 1.0
+            r for r in results.test_results 
+            if r.get("execution_time", 0) > 1.0
         ]
         if slow_tests:
             print(f"Warning: {len(slow_tests)} slow tests detected")
@@ -404,47 +238,19 @@ tester = CodeTester(
 )
 ```
 
-#### Parallel Testing with Progress
 
-```python
-from concurrent.futures import as_completed
-from tqdm import tqdm
-
-def run_tests_with_progress(tester: CodeTester) -> TestResults:
-    """Run tests in parallel with progress bar."""
-    results = []
-    
-    with tqdm(total=tester.test_count) as pbar:
-        # Submit all tests
-        futures = []
-        with ThreadPoolExecutor(max_workers=8) as executor:
-            for test_case in tester.test_cases:
-                future = executor.submit(
-                    tester.run_single_test, 
-                    test_case
-                )
-                futures.append(future)
-            
-            # Collect results
-            for future in as_completed(futures):
-                result = future.result()
-                results.append(result)
-                pbar.update(1)
-    
-    return TestResults(results)
-```
 
 #### Test Result Analysis
 
 ```python
-def analyze_failures(results: TestResults):
+def analyze_failures(results: CodeTestResult):
     """Analyze test failures for patterns."""
-    failures = results.failures
+    failures = [r for r in results.test_results if not r["pass"]]
     
     # Group by error type
     error_groups = {}
     for failure in failures:
-        error_type = failure.error_type or "unknown"
+        error_type = failure.get("error_type", "unknown")
         if error_type not in error_groups:
             error_groups[error_type] = []
         error_groups[error_type].append(failure)
@@ -453,95 +259,15 @@ def analyze_failures(results: TestResults):
     for error_type, group in error_groups.items():
         print(f"\n{error_type.upper()} errors ({len(group)}):")
         for failure in group[:3]:  # Show first 3
-            print(f"  - Test: {failure.test_case}")
-            print(f"    Error: {failure.error}")
+            print(f"  - Test: {failure['function_call']}")
+            print(f"    Error: {failure.get('error', 'No error message')}")
 ```
 
-### Performance Optimization
 
-#### Executor Pooling
-
-```python
-from eiplgrader.utils import ExecutorPool
-
-# Create executor pool
-pool = ExecutorPool(max_size=10)
-
-# Run multiple tests with pooled executors
-for code_variant in code_variants:
-    executor = pool.acquire("python")
-    try:
-        tester = CodeTester(
-            code=code_variant,
-            test_cases=test_cases,
-            function_name="solve",
-            executor=executor
-        )
-        results = tester.run_tests()
-    finally:
-        pool.release("python", executor)
-```
-
-#### Result Caching
-
-```python
-class CachedTester(CodeTester):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._cache = {}
-    
-    def run_single_test(self, test_case: Dict) -> TestResult:
-        # Create cache key
-        cache_key = f"{self.code_hash}:{hash(str(test_case))}"
-        
-        # Check cache
-        if cache_key in self._cache:
-            return self._cache[cache_key]
-        
-        # Run test
-        result = super().run_single_test(test_case)
-        
-        # Cache result
-        self._cache[cache_key] = result
-        return result
-    
-    @property
-    def code_hash(self) -> str:
-        import hashlib
-        return hashlib.md5(self.code.encode()).hexdigest()
-```
 
 ### Security Considerations
 
-#### Sandboxed Execution
-
-```python
-# Use Docker executor for untrusted code
-tester = CodeTester(
-    code=untrusted_code,
-    test_cases=test_cases,
-    function_name="solve",
-    language="python",
-    use_docker=True,
-    docker_image="python:3.9-slim",
-    memory_limit="256m",
-    cpu_limit="0.5"
-)
-```
-
-#### Resource Limits
-
-```python
-# Set strict resource limits
-tester = CodeTester(
-    code=code,
-    test_cases=test_cases,
-    function_name="solve",
-    timeout=2,  # 2 second timeout
-    max_memory_mb=128,  # 128MB memory limit
-    max_output_size=1024 * 1024  # 1MB output limit
-)
-```
+The CodeTester provides built-in security through language-specific executors that run code in temporary directories with appropriate timeouts. Each language executor handles resource management and cleanup automatically.
 
 ### Debugging
 
@@ -554,33 +280,49 @@ import logging
 logging.basicConfig(level=logging.DEBUG)
 
 # Run with verbose output
-results = tester.run_tests(verbose=True)
+results = tester.run_tests()
 
 # Access detailed execution info
-for result in results.results:
-    if not result.passed:
-        print(f"Failed test: {result.test_case}")
-        print(f"Stdout: {result.stdout}")
-        print(f"Stderr: {result.stderr}")
-        print(f"Error: {result.error}")
+for result in results.test_results:
+    if not result["pass"]:
+        print(f"Failed test: {result['function_call']}")
+        print(f"Stdout: {result.get('stdout', '')}")
+        print(f"Stderr: {result.get('stderr', '')}")
+        print(f"Error: {result.get('error', 'No error message')}")
 ```
 
 #### Test Isolation
 
 ```python
-def debug_single_test(tester: CodeTester, test_index: int):
-    """Debug a specific test case."""
+def debug_specific_test(tester: CodeTester, test_index: int):
+    """Debug a specific test case by creating a new tester with just that test."""
+    if test_index >= len(tester.test_cases):
+        print(f"Invalid test index: {test_index}")
+        return
+    
     test_case = tester.test_cases[test_index]
     
     print(f"Running test: {test_case}")
-    print(f"Code:\n{tester.code}")
+    print(f"Code:
+{tester.code}")
     
-    result = tester.run_single_test(test_case)
+    # Create a new tester with just this test case
+    debug_tester = CodeTester(
+        code=tester.code,
+        test_cases=[test_case],
+        function_name=tester.function_name,
+        language=tester.language
+    )
     
-    print(f"Result: {'PASS' if result.passed else 'FAIL'}")
-    print(f"Expected: {result.expected}")
-    print(f"Actual: {result.actual}")
-    print(f"Execution time: {result.execution_time:.3f}s")
+    result = debug_tester.run_tests()
+    
+    if result.test_results:
+        test_result = result.test_results[0]
+        print(f"Result: {'PASS' if test_result['pass'] else 'FAIL'}")
+        print(f"Expected: {test_result.get('expected', 'N/A')}")
+        print(f"Actual: {test_result.get('actual', 'N/A')}")
+        if 'error' in test_result:
+            print(f"Error: {test_result['error']}")
     
     return result
 ```

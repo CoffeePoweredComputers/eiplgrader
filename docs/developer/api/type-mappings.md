@@ -1,7 +1,10 @@
 ---
 layout: default
 title: Type Mappings Reference
+parent: API Reference
+grand_parent: Developer Documentation
 nav_order: 4
+permalink: /developer/api/type-mappings
 ---
 
 # Type Mappings Reference
@@ -123,22 +126,6 @@ test_case = {
     "expected_type": "int"
 }
 ```
-
-### Legacy Format (Type Inference)
-
-For backward compatibility, types can be inferred from values:
-
-```python
-test_case = {
-    "parameters": {
-        "nums": [1, 2, 3],  # Inferred as int[]
-        "target": 5         # Inferred as int
-    },
-    "expected": 4          # Inferred as int
-}
-```
-
-**Note**: Type inference is less reliable and slower. Explicit types are strongly recommended for compiled languages (C, C++, Java, Haskell).
 
 ## Special Considerations
 

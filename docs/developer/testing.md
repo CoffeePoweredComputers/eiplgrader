@@ -62,7 +62,7 @@ python -m pytest -k "python"
 # Run with verbose output
 python -m pytest -v
 
-# Run in parallel
+# Run with concurrent processing
 python -m pytest -n auto
 ```
 
@@ -97,13 +97,13 @@ class TestCodeGenerator:
     def setup_method(self):
         """Set up test fixtures."""
         self.api_key = "test-key"
-        self.generator = CodeGenerator(self.api_key)
+        self.generator = CodeGenerator(self.api_key, client_type="openai")
     
     def test_initialization(self):
         """Test proper initialization."""
         assert self.generator.api_key == self.api_key
         assert self.generator.language == "python"
-        assert self.generator.temperature == 0.7
+        assert self.generator.client_type == "openai"
     
     @patch('eiplgrader.codegen.OpenAIRequest')
     def test_generate_code(self, mock_openai):
@@ -124,14 +124,14 @@ class TestCodeGenerator:
         )
         
         # Assertions
-        assert len(result.codes) == 1
-        assert "factorial" in result.codes[0]
+        assert len(result["code"]) == 1
+        assert "factorial" in result["code"][0]
         mock_openai.return_value.request_function_generation.assert_called_once()
     
-    def test_invalid_language(self):
-        """Test error handling for invalid language."""
-        with pytest.raises(LanguageNotSupportedError):
-            self.generator.set_language("invalid_lang")
+    def test_invalid_client_type(self):
+        """Test error handling for invalid client type."""
+        with pytest.raises(ValueError):
+            CodeGenerator(self.api_key, client_type="invalid_client")
     
     @pytest.mark.parametrize("gen_type,expected", [
         ("cgbg", True),
@@ -189,7 +189,8 @@ class TestCodeGenerationIntegration:
             )
             
             results = tester.run_tests()
-            assert results.all_passed, f"Tests failed for code:\n{code}"
+            assert results.was_successful(), f"Tests failed for code:
+{code}"
 ```
 
 ### Language-Specific Tests
@@ -259,8 +260,9 @@ class TestEdgeCases:
         )
         
         results = tester.run_tests()
-        assert not results.all_passed
-        assert results.failures[0].error_type == "runtime"
+        assert not results.was_successful()
+        assert any("runtime" in str(r.get("error", "")).lower() 
+                  for r in results.test_results if not r["pass"])
     
     def test_infinite_loop(self):
         """Test timeout handling."""
@@ -278,8 +280,9 @@ def infinite():
         )
         
         results = tester.run_tests()
-        assert not results.all_passed
-        assert results.failures[0].error_type == "timeout"
+        assert not results.was_successful()
+        assert any("timeout" in str(r.get("error", "")).lower() 
+                  for r in results.test_results if not r["pass"])
     
     def test_large_output(self):
         """Test output size limits."""
@@ -292,12 +295,13 @@ def large_output():
             code=code,
             test_cases=[{"parameters": {}, "expected": "x"}],
             function_name="large_output",
-            max_output_size=1024 * 1024  # 1MB limit
+
         )
         
         results = tester.run_tests()
-        assert not results.all_passed
-        assert "output size" in results.failures[0].error.lower()
+        assert not results.was_successful()
+        assert any("output size" in str(r.get("error", "")).lower() 
+                  for r in results.test_results if not r["pass"])
 ```
 
 ## Test Fixtures
@@ -475,14 +479,15 @@ def test_execution_performance(benchmark):
         function_name="add"
     )
     
-    result = benchmark(tester.run_single_test, test_case)
+    # Individual test benchmarking not available - use run_tests() instead
+    result = benchmark(lambda: tester.run_tests(), None)
     assert result.passed
 ```
 
 ### Load Testing
 
 ```python
-def test_parallel_execution_load():
+def test_concurrent_execution_load():
     """Test system under load."""
     import concurrent.futures
     
@@ -501,11 +506,11 @@ def test_parallel_execution_load():
     # Run with different worker counts
     for workers in [1, 4, 8, 16]:
         start = time.time()
-        results = tester.run_tests(parallel=True, max_workers=workers)
+        results = tester.run_tests()
         duration = time.time() - start
         
         print(f"Workers: {workers}, Time: {duration:.2f}s")
-        assert results.all_passed
+        assert results.was_successful()
 ```
 
 ## Test Coverage

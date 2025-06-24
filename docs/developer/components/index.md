@@ -19,7 +19,7 @@ EiplGrader consists of two primary components that work together to transform na
 Transforms natural language descriptions into executable code using Large Language Models.
 
 **Key Features:**
-- Multiple LLM provider support (OpenAI, Anthropic, Ollama)
+- Multiple LLM provider support (OpenAI, Ollama - with Anthropic and Meta planned)
 - Language-specific prompt engineering
 - Multi-variant generation
 - Code segmentation capabilities
@@ -76,7 +76,7 @@ sequenceDiagram
     User->>CodeTester: run_tests(code, test_cases)
     CodeTester->>LanguageExecutor: execute_test()
     LanguageExecutor-->>CodeTester: test_results
-    CodeTester-->>User: TestResults
+    CodeTester-->>User: CodeTestResult
 ```
 
 ## Design Patterns
@@ -153,7 +153,7 @@ class LanguageExecutor(ABC):
 
 ### Performance
 - Cache where appropriate
-- Support parallel execution
+
 - Minimize redundant operations
 
 ## Component Testing

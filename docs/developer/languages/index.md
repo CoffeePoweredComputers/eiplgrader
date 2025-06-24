@@ -150,7 +150,7 @@ Quick overview (see [full guide](adding-languages.html) for details):
 
 3. **Register Language**
    ```python
-   registry.register_language(
+   registry.register(
        "newlang",
        NewLangAdapter,
        NewLangExecutor

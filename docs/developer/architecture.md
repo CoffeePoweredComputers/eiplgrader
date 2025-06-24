@@ -132,9 +132,9 @@ class CodeGenerator:
 ```python
 class CodeTester:
     def __init__(self, code: str, test_cases: List[Dict], function_name: str, language: str)
-    def run_tests(self) -> TestResults
+    def run_tests(self) -> Union[CodeTestResult, List[CodeTestResult]]
     def _validate_test_cases(self) -> None
-    def _execute_single_test(self, test_case: Dict) -> TestResult
+    def _run_test(self, code: str) -> CodeTestResult
 ```
 
 ### Language System
@@ -185,7 +185,7 @@ class LanguageExecutor(ABC):
 
 ```python
 class LanguageRegistry:
-    def register_language(self, name: str, adapter: Type[LanguageAdapter], 
+    def register(self, name: str, adapter: Type[LanguageAdapter]) -> None
                          executor: Type[LanguageExecutor]) -> None
     def get_adapter(self, language: str) -> LanguageAdapter
     def get_executor(self, language: str) -> LanguageExecutor
@@ -240,7 +240,7 @@ sequenceDiagram
         LanguageExecutor-->>CodeTester: test_result
     end
     CodeTester->>LanguageExecutor: cleanup()
-    CodeTester-->>User: TestResults
+    CodeTester-->>User: CodeTestResult
 ```
 
 ## Type System Architecture
@@ -415,7 +415,7 @@ graph TB
 2. **Timeout Enforcement**: Configurable execution timeouts
 3. **Temporary Files**: Cleaned up after execution
 4. **No Network Access**: Generated code has no network capabilities
-5. **Docker Support**: Full containerization available
+
 
 ## Performance Considerations
 
