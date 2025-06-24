@@ -11,7 +11,7 @@ Understanding the design and architecture of EiplGrader.
 
 ## System Architecture
 
-{% mermaid %}
+```mermaid 
 graph TB
     subgraph "User Interface"
         UI[User Code/API]
@@ -43,7 +43,7 @@ graph TB
     LE --> LR
     LE --> FS
     LE --> PROC
-{% endmermaid %}
+```
 
 ## Core Design Principles
 
