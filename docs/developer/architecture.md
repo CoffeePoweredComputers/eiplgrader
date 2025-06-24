@@ -3,6 +3,7 @@ layout: default
 title: Architecture Overview
 parent: Developer Documentation
 nav_order: 1
+mermaid: true
 ---
 
 # Architecture Overview
