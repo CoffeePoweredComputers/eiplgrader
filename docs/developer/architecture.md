@@ -132,9 +132,9 @@ class CodeGenerator:
 ```python
 class CodeTester:
     def __init__(self, code: str, test_cases: List[Dict], function_name: str, language: str)
-    def run_tests(self) -> TestResults
+    def run_tests(self) -> Union[CodeTestResult, List[CodeTestResult]]
     def _validate_test_cases(self) -> None
-    def _execute_single_test(self, test_case: Dict) -> TestResult
+    def _run_test(self, code: str) -> CodeTestResult
 ```
 
 ### Language System
@@ -240,7 +240,7 @@ sequenceDiagram
         LanguageExecutor-->>CodeTester: test_result
     end
     CodeTester->>LanguageExecutor: cleanup()
-    CodeTester-->>User: TestResults
+    CodeTester-->>User: CodeTestResult
 ```
 
 ## Type System Architecture

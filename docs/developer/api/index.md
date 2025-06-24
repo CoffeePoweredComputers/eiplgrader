@@ -124,20 +124,31 @@ class GenerationResult:
 ### Test Results
 
 ```python
-class TestResults:
-    all_passed: bool         # Whether all tests passed
-    passed_count: int        # Number of passed tests
-    failed_count: int        # Number of failed tests
-    results: List[TestResult] # Individual test results
+class CodeTestResult:
+    """Simple, language-agnostic test result container."""
     
-class TestResult:
-    passed: bool             # Test pass/fail status
-    test_case: dict         # Original test case
-    expected: Any           # Expected value
-    actual: Any             # Actual value
-    error: Optional[str]    # Error message if failed
-    error_type: Optional[str] # Error category
-    execution_time: float   # Time taken in seconds
+    test_results: List[dict]  # List of individual test result dictionaries
+    successes: int           # Number of successful tests
+    failures: int           # Number of failed tests
+    errors: int             # Number of error tests
+    
+    def add_success(self, function_call, expected_output, actual_output): ...
+    def add_failure(self, function_call, expected_output, actual_output, error_msg): ...
+    def add_error(self, function_call, error_msg): ...
+    def was_successful(self) -> bool: ...
+    
+    @property
+    def testsRun(self) -> int: ...
+
+# Individual test result dictionary format:
+test_result = {
+    "function_call": str,     # Function call string
+    "expected": Any,          # Expected value
+    "actual": Any,            # Actual value  
+    "pass": bool,             # Test pass/fail status
+    "error": Optional[str],   # Error message if failed
+    "execution_time": Optional[float]  # Time taken in seconds
+}
 ```
 
 ## Error Handling

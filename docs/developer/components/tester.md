@@ -48,53 +48,59 @@ class CodeTester:
 
 ## Key Components
 
-### TestResult Class
+### CodeTestResult Class
 
 ```python
-@dataclass
-class TestResult:
-    """Result of a single test case."""
-    test_case: Dict[str, Any]
-    passed: bool
-    actual: Any
-    expected: Any
-    error: Optional[str] = None
-    execution_time: Optional[float] = None
+class CodeTestResult:
+    """Simple, language-agnostic test result container."""
+    
+    def __init__(self):
+        self.test_results = []
+        self.successes = 0
+        self.failures = 0
+        self.errors = 0
+    
+    def add_success(self, function_call, expected_output, actual_output):
+        """Add a successful test result."""
+        self.test_results.append({
+            "function_call": function_call,
+            "expected_output": expected_output,
+            "actual_output": actual_output,
+            "pass": True,
+            "error": None,
+        })
+        self.successes += 1
+    
+    def add_failure(self, function_call, expected_output, actual_output, error_msg):
+        """Add a failed test result."""
+        self.test_results.append({
+            "function_call": function_call,
+            "expected_output": expected_output,
+            "actual_output": actual_output,
+            "pass": False,
+            "error": error_msg,
+        })
+        self.failures += 1
+    
+    def add_error(self, function_call, error_msg):
+        """Add an error result."""
+        self.test_results.append({
+            "function_call": function_call,
+            "expected_output": "N/A",
+            "actual_output": "N/A", 
+            "pass": False,
+            "error": error_msg,
+        })
+        self.errors += 1
+    
+    def was_successful(self):
+        """Return True if all tests passed."""
+        return self.failures == 0 and self.errors == 0
     
     @property
-    def function_call(self) -> str:
-        """String representation of the function call."""
-        params = self.test_case.get("parameters", {})
-        args = ", ".join(f"{k}={repr(v)}" for k, v in params.items())
-        return f"{self.test_case.get('function_name', 'foo')}({args})"
-```
-
-### TestResults Class
-
-```python
-@dataclass
-class TestResults:
-    """Aggregate results of all test cases."""
-    results: List[TestResult]
-    
-    @property
-    def testsRun(self) -> int:
-        return len(self.results)
-    
-    @property
-    def successes(self) -> int:
-        return sum(1 for r in self.results if r.passed)
-    
-    def was_successful(self) -> bool:
-        return all(r["pass"] for r in self.test_results)
-    
-    @property
-    def test_results(self) -> List[Dict[str, Any]]:
-        return self.results
-    
-    @property
-    def successRate(self) -> float:
-        return self.successes / self.testsRun if self.testsRun > 0 else 0.0
+    def testsRun(self):
+        """Compatibility property for existing code."""
+        return len(self.test_results)
 ```
 
 ## Core Methods
@@ -104,12 +110,12 @@ class TestResults:
 The main method for running all test cases:
 
 ```python
-def run_tests(self) -> TestResults:
+def run_tests(self) -> Union[CodeTestResult, List[CodeTestResult]]:
     """
     Run all test cases against the code.
     
     Returns:
-        TestResults object with detailed results
+        CodeTestResult object (or list of them if code is a list) with detailed results
     """
     # Validate test cases before execution
     self._validate_test_cases()
@@ -121,19 +127,43 @@ def run_tests(self) -> TestResults:
             results.append(result)
         except Exception as e:
             # Handle unexpected errors
-            result = TestResult(
-                test_case=test_case,
-                passed=False,
-                actual=None,
-                expected=test_case.get("expected"),
-                error=str(e)
-            )
+            result = {
+                "test_case": test_case,
+                "passed": False,
+                "actual": None,
+                "expected": test_case.get("expected"),
+                "error": str(e)
+            }
             results.append(result)
     
     # Clean up resources
     self.executor.cleanup()
     
-    return TestResults(results)
+    # Create and populate CodeTestResult object
+    test_result = CodeTestResult()
+    
+    for result in results:
+        if result["passed"]:
+            test_result.add_success(
+                result.get("function_call", "test"),
+                result["expected"],
+                result["actual"]
+            )
+        else:
+            if result.get("error"):
+                test_result.add_error(
+                    result.get("function_call", "test"),
+                    result["error"]
+                )
+            else:
+                test_result.add_failure(
+                    result.get("function_call", "test"),
+                    result["expected"],
+                    result["actual"],
+                    "Output mismatch"
+                )
+    
+    return test_result
 ```
 
 ### `_run_single_test()`
@@ -141,7 +171,7 @@ def run_tests(self) -> TestResults:
 Execute a single test case:
 
 ```python
-def _run_single_test(self, test_case: Dict[str, Any]) -> TestResult:
+def _run_single_test(self, test_case: Dict[str, Any]) -> Dict[str, Any]:
     """Run a single test case."""
     start_time = time.time()
     
@@ -155,22 +185,22 @@ def _run_single_test(self, test_case: Dict[str, Any]) -> TestResult:
         execution_time = time.time() - start_time
         
         # Create test result
-        return TestResult(
-            test_case=test_case,
-            passed=execution_result.get("passed", False),
-            actual=execution_result.get("actual"),
-            expected=test_case.get("expected"),
-            error=execution_result.get("error"),
-            execution_time=execution_time
+        return {
+            "test_case": test_case,
+            "passed": execution_result.get("passed", False),
+            "actual": execution_result.get("actual"),
+            "expected": test_case.get("expected"),
+            "error": execution_result.get("error"),
+            "execution_time": execution_time
         )
         
     except TimeoutError:
-        return TestResult(
-            test_case=test_case,
-            passed=False,
-            actual=None,
-            expected=test_case.get("expected"),
-            error=f"Test timed out after {test_case.get('timeout', self.timeout)} seconds"
+        return {
+            "test_case": test_case,
+            "passed": False,
+            "actual": None,
+            "expected": test_case.get("expected"),
+            "error": f"Test timed out after {test_case.get('timeout', self.timeout)} seconds"
         )
 ```
 
@@ -362,7 +392,7 @@ def _classify_error(self, error: Exception) -> str:
 class ResultAnalyzer:
     """Analyze test results for patterns."""
     
-    def __init__(self, results: TestResults):
+    def __init__(self, results: CodeTestResult):
         self.results = results
     
     def get_statistics(self) -> Dict[str, Any]:
@@ -371,15 +401,15 @@ class ResultAnalyzer:
             "total_tests": self.results.testsRun,
             "passed": self.results.successes,
             "failed": sum(1 for r in self.results.test_results if not r["pass"]),
-            "success_rate": self.results.successRate,
+            "success_rate": self.results.successes / self.results.testsRun if self.results.testsRun > 0 else 0.0,
             "avg_execution_time": self._avg_execution_time(),
             "error_types": self._error_distribution()
         }
     
     def _avg_execution_time(self) -> float:
         """Calculate average execution time."""
-        times = [r.execution_time for r in self.results.results 
-                 if r.execution_time is not None]
+        times = [r.get("execution_time") for r in self.results.test_results 
+                 if r.get("execution_time") is not None]
         return sum(times) / len(times) if times else 0.0
     
     def _error_distribution(self) -> Dict[str, int]:
@@ -396,7 +426,7 @@ class ResultAnalyzer:
 ### Failure Pattern Detection
 
 ```python
-def analyze_failure_patterns(results: TestResults) -> List[str]:
+def analyze_failure_patterns(results: CodeTestResult) -> List[str]:
     """Detect common failure patterns."""
     patterns = []
     
@@ -453,16 +483,17 @@ class CachedCompiledTester(CodeTester):
 class BenchmarkTester(CodeTester):
     """Test runner with performance benchmarking."""
     
-    def run_tests(self) -> TestResults:
+    def run_tests(self) -> Union[CodeTestResult, List[CodeTestResult]]:
         """Run tests with benchmarking."""
         results = super().run_tests()
         
         # Add benchmark results
-        for i, result in enumerate(results.results):
-            if result.passed:
+        for i, result in enumerate(results.test_results):
+            if result["pass"]:
                 # Run performance benchmark
-                benchmark = self._benchmark_test(result.test_case)
-                result.benchmark = benchmark
+                benchmark = self._benchmark_test(result["test_case"])
+                # Note: benchmark results would need to be stored differently
+                # as test_results contains dictionaries, not objects
         
         return results
     
@@ -504,7 +535,7 @@ class SecureTester(CodeTester):
             filesystem_access="readonly"
         )
     
-    def _run_single_test(self, test_case: Dict[str, Any]) -> TestResult:
+    def _run_single_test(self, test_case: Dict[str, Any]) -> Dict[str, Any]:
         """Run test in sandbox."""
         with self.sandbox:
             return super()._run_single_test(test_case)
@@ -518,7 +549,7 @@ class SecureTester(CodeTester):
 class GitHubActionsTester(CodeTester):
     """CodeTester with GitHub Actions output format."""
     
-    def run_tests(self) -> TestResults:
+    def run_tests(self) -> Union[CodeTestResult, List[CodeTestResult]]:
         """Run tests with GitHub Actions annotations."""
         results = super().run_tests()
         
@@ -526,15 +557,16 @@ class GitHubActionsTester(CodeTester):
         for result in results.test_results:
             if not result["pass"]:
                 print(f"::error::Test failed: {result['function_call']}")
-                print(f"::error::Expected: {result['expected_output']}")
-                print(f"::error::Actual: {result['actual_output']}")
+                print(f"::error::Expected: {result['expected']}")
+                print(f"::error::Actual: {result['actual']}")
                 if result["error"]:
                     print(f"::error::Error: {result['error']}")
         
         # Set output variables
         print(f"::set-output name=tests_run::{results.testsRun}")
         print(f"::set-output name=tests_passed::{results.successes}")
-        print(f"::set-output name=success_rate::{results.successRate:.2%}")
+        success_rate = results.successes / results.testsRun if results.testsRun > 0 else 0.0
+        print(f"::set-output name=success_rate::{success_rate:.2%}")
         
         return results
 ```
@@ -582,7 +614,7 @@ class TestCodeTester(unittest.TestCase):
         self.assertEqual(sum(1 for r in results.test_results if not r["pass"]), 1)
         # Check the first failing test result
         failing_result = [r for r in results.test_results if not r["pass"]][0]
-        self.assertEqual(failing_result["actual_output"], 4)
+        self.assertEqual(failing_result["actual"], 4)
 ```
 
 ### Mock Testing

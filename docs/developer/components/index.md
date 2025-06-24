@@ -76,7 +76,7 @@ sequenceDiagram
     User->>CodeTester: run_tests(code, test_cases)
     CodeTester->>LanguageExecutor: execute_test()
     LanguageExecutor-->>CodeTester: test_results
-    CodeTester-->>User: TestResults
+    CodeTester-->>User: CodeTestResult
 ```
 
 ## Design Patterns
