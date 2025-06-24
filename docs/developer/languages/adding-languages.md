@@ -394,7 +394,7 @@ def test_newlang_end_to_end():
     )
     
     results = tester.run_tests()
-    assert results.all_passed
+    assert results.was_successful()
 ```
 
 ## Step 6: Update Documentation

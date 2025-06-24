@@ -39,12 +39,12 @@ Reference for language adapters and executors.
 ### CodeGenerator
 
 ```python
-from eiplgrader import CodeGenerator
+from eiplgrader.codegen import CodeGenerator
 
 # Initialize
 generator = CodeGenerator(
     api_key="your-api-key",
-    model="openai",
+    client_type="openai",
     language="python"
 )
 
@@ -58,14 +58,14 @@ result = generator.generate_code(
 )
 
 # Access results
-for i, code in enumerate(result.codes):
+for i, code in enumerate(result["code"]):
     print(f"Implementation {i+1}:\n{code}")
 ```
 
 ### CodeTester
 
 ```python
-from eiplgrader import CodeTester
+from eiplgrader.tester import CodeTester
 
 # Initialize
 tester = CodeTester(
@@ -76,17 +76,15 @@ tester = CodeTester(
 )
 
 # Run tests
-results = tester.run_tests(
-    timeout=5,
-    parallel=True
-)
+results = tester.run_tests()
 
 # Check results
-if results.all_passed:
+if results.was_successful():
     print("All tests passed!")
 else:
-    for failure in results.failures:
-        print(f"Failed: {failure.error}")
+    for result in results.test_results:
+        if not result["pass"]:
+            print(f"Failed: {result['error']}")
 ```
 
 ### Language Registry
@@ -191,7 +189,7 @@ OPENAI_API_KEY=sk-...
 ANTHROPIC_API_KEY=sk-ant-...
 
 # Model Selection
-EIPLGRADER_MODEL=openai  # or anthropic, ollama
+EIPLGRADER_CLIENT_TYPE=openai  # or ollama (anthropic and meta planned)
 
 # Execution Settings
 EIPLGRADER_TIMEOUT=10

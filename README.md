@@ -40,7 +40,7 @@ from eiplgrader.codegen import CodeGenerator
 from eiplgrader.tester import CodeTester
 
 # Generate code from natural language description
-code_generator = CodeGenerator(api_key, language="python")
+code_generator = CodeGenerator(api_key, client_type="openai", language="python")
 result = code_generator.generate_code(
     student_response="that adds two numbers and returns the result",
     function_name="add_numbers",
@@ -68,6 +68,7 @@ print(f"Tests passed: {test_result.successes}/{test_result.testsRun}")
 ## Features
 
 - **Multi-language Support**: Python, JavaScript, Java, C++, C, Go, Haskell
+- **LLM Providers**: OpenAI (GPT models), Ollama (local models)
 - **Type Inference**: Automatic type detection for Python and JavaScript
 - **Multiple Generation Modes**: CGBG (Code Generation), Function Redefinition, Segmentation
 - **Comprehensive Testing**: Built-in test runner with detailed results
@@ -90,6 +91,15 @@ print(f"Tests passed: {test_result.successes}/{test_result.testsRun}")
 | C          | ❌             | Required                  |
 | Go         | ❌             | Required                  |
 | Haskell    | ❌             | Required                  |
+
+## Planned Features
+
+The following features are planned for future releases:
+
+- **Additional LLM Providers**: Anthropic (Claude) and Meta model support
+- **Enhanced Segmentation**: Improved mapping between explanations and code
+- **Performance Optimizations**: Faster test execution and parallel processing
+- **Extended Language Support**: Rust, TypeScript, and more
 
 ## Citation
 

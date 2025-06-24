@@ -85,13 +85,12 @@ class TestResults:
     def successes(self) -> int:
         return sum(1 for r in self.results if r.passed)
     
-    @property
-    def failures(self) -> List[TestResult]:
-        return [r for r in self.results if not r.passed]
+    def was_successful(self) -> bool:
+        return all(r["pass"] for r in self.test_results)
     
     @property
-    def allPassed(self) -> bool:
-        return all(r.passed for r in self.results)
+    def test_results(self) -> List[Dict[str, Any]]:
+        return self.results
     
     @property
     def successRate(self) -> float:
@@ -371,7 +370,7 @@ class ResultAnalyzer:
         return {
             "total_tests": self.results.testsRun,
             "passed": self.results.successes,
-            "failed": len(self.results.failures),
+            "failed": sum(1 for r in self.results.test_results if not r["pass"]),
             "success_rate": self.results.successRate,
             "avg_execution_time": self._avg_execution_time(),
             "error_types": self._error_distribution()
@@ -386,10 +385,11 @@ class ResultAnalyzer:
     def _error_distribution(self) -> Dict[str, int]:
         """Analyze error type distribution."""
         errors = {}
-        for failure in self.results.failures:
-            if failure.error:
-                error_type = self._classify_error_type(failure.error)
-                errors[error_type] = errors.get(error_type, 0) + 1
+        for result in self.results.test_results:
+            if not result["pass"]:
+                if result["error"]:
+                    error_type = self._classify_error_type(result["error"])
+                    errors[error_type] = errors.get(error_type, 0) + 1
         return errors
 ```
 
@@ -401,20 +401,21 @@ def analyze_failure_patterns(results: TestResults) -> List[str]:
     patterns = []
     
     # Check for consistent type errors
-    type_errors = [f for f in results.failures 
-                   if "TypeError" in str(f.error)]
-    if len(type_errors) > len(results.failures) * 0.5:
+    type_errors = [r for r in results.test_results 
+                   if not r["pass"] and r["error"] and "TypeError" in str(r["error"])]
+    total_failures = sum(1 for r in results.test_results if not r["pass"])
+    if total_failures > 0 and len(type_errors) > total_failures * 0.5:
         patterns.append("Frequent type errors - check parameter types")
     
     # Check for edge case failures
-    edge_failures = [f for f in results.failures 
-                     if _is_edge_case(f.test_case)]
+    edge_failures = [r for r in results.test_results 
+                     if not r["pass"] and _is_edge_case(r)]
     if edge_failures:
         patterns.append("Edge case handling issues")
     
     # Check for timeout patterns
-    timeout_failures = [f for f in results.failures 
-                        if "timeout" in str(f.error).lower()]
+    timeout_failures = [r for r in results.test_results 
+                        if not r["pass"] and r["error"] and "timeout" in str(r["error"]).lower()]
     if timeout_failures:
         patterns.append("Performance issues - algorithm may be inefficient")
     
@@ -558,12 +559,13 @@ class GitHubActionsTester(CodeTester):
         results = super().run_tests()
         
         # Output GitHub Actions annotations
-        for failure in results.failures:
-            print(f"::error::Test failed: {failure.function_call}")
-            print(f"::error::Expected: {failure.expected}")
-            print(f"::error::Actual: {failure.actual}")
-            if failure.error:
-                print(f"::error::Error: {failure.error}")
+        for result in results.test_results:
+            if not result["pass"]:
+                print(f"::error::Test failed: {result['function_call']}")
+                print(f"::error::Expected: {result['expected_output']}")
+                print(f"::error::Actual: {result['actual_output']}")
+                if result["error"]:
+                    print(f"::error::Error: {result['error']}")
         
         # Set output variables
         print(f"::set-output name=tests_run::{results.testsRun}")
@@ -598,7 +600,7 @@ class TestCodeTester(unittest.TestCase):
         
         results = tester.run_tests()
         
-        self.assertTrue(results.allPassed)
+        self.assertTrue(results.was_successful())
         self.assertEqual(results.testsRun, 2)
         self.assertEqual(results.successes, 2)
     
@@ -612,9 +614,11 @@ class TestCodeTester(unittest.TestCase):
         tester = CodeTester(code=code, test_cases=test_cases)
         results = tester.run_tests()
         
-        self.assertFalse(results.allPassed)
-        self.assertEqual(len(results.failures), 1)
-        self.assertEqual(results.failures[0].actual, 4)
+        self.assertFalse(results.was_successful())
+        self.assertEqual(sum(1 for r in results.test_results if not r["pass"]), 1)
+        # Check the first failing test result
+        failing_result = [r for r in results.test_results if not r["pass"]][0]
+        self.assertEqual(failing_result["actual_output"], 4)
 ```
 
 ### Mock Testing

@@ -30,7 +30,7 @@ from eiplgrader.codegen import CodeGenerator
 
 # Initialize the code generator for Go
 api_key = "your-openai-api-key"
-generator = CodeGenerator(api_key, language="go")
+generator = CodeGenerator(api_key, client_type="openai", language="go")
 
 # Generate code from a student's explanation
 result = generator.generate_code(
@@ -407,9 +407,10 @@ Go provides clear compilation and runtime errors:
 ```python
 try:
     results = tester.run_tests()
-    if not results.allPassed:
-        for failure in results.failures:
-            print(f"Test failed: {failure.test}")
+    if not results.was_successful():
+        for result in results.test_results:
+            if not result["pass"]:
+                print(f"Test failed: {result['function_call']}")
             # Common Go errors:
             # - "undefined: functionName"
             # - "cannot use x (type T) as type U"

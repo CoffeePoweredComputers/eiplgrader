@@ -30,7 +30,7 @@ from eiplgrader.codegen import CodeGenerator
 
 # Initialize the code generator for C
 api_key = "your-openai-api-key"
-generator = CodeGenerator(api_key, language="c")
+generator = CodeGenerator(api_key, client_type="openai", language="c")
 
 # Generate code from a student's explanation
 result = generator.generate_code(
@@ -101,7 +101,7 @@ print(f"Tests passed: {results.successes}/{results.testsRun}")
 
 ```python
 # Initialize for C++
-generator = CodeGenerator(api_key, language="cpp")
+generator = CodeGenerator(api_key, client_type="openai", language="cpp")
 
 # Generate code
 result = generator.generate_code(
@@ -365,13 +365,14 @@ Both C and C++ provide compilation and runtime error information:
 ```python
 try:
     results = tester.run_tests()
-    if not results.allPassed:
-        for failure in results.failures:
-            print(f"Test failed: {failure.test}")
-            if "Compilation failed" in str(failure.error):
-                print("Compilation error - check syntax and types")
-            elif "Segmentation fault" in str(failure.error):
-                print("Memory access error - check array bounds")
+    if not results.was_successful():
+        for result in results.test_results:
+            if not result["pass"]:
+                print(f"Test failed: {result['function_call']}")
+                if "Compilation failed" in str(result["error"]):
+                    print("Compilation error - check syntax and types")
+                elif "Segmentation fault" in str(result["error"]):
+                    print("Memory access error - check array bounds")
 except Exception as e:
     print(f"Error: {e}")
 ```

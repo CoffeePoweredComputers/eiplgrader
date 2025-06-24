@@ -84,7 +84,11 @@ def _initialize_client(self):
     if self.client_type == "openai":
         self.client = OpenAIClient(self.api_key)
     elif self.client_type == "anthropic":
-        self.client = AnthropicClient(self.api_key)
+        # Placeholder - not yet implemented
+        raise NotImplementedError("Anthropic support planned for future release")
+    elif self.client_type == "meta":
+        # Placeholder - not yet implemented
+        raise NotImplementedError("Meta support planned for future release")
     elif self.client_type == "ollama":
         self.client = OllamaClient()
     else:
@@ -430,7 +434,7 @@ def test_end_to_end_generation():
     )
     
     test_results = tester.run_tests()
-    assert test_results.allPassed
+    assert test_results.was_successful()
 ```
 
 ## Performance Optimization

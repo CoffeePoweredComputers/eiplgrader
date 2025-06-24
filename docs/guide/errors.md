@@ -444,7 +444,7 @@ def try_variants(generator, prompt, test_cases, num_variants=5):
             tester = CodeTester(code=code, test_cases=test_cases)
             test_result = tester.run_tests()
             
-            if test_result.allPassed:
+            if test_result.was_successful():
                 return {
                     "success": True,
                     "variant": i,

@@ -101,22 +101,32 @@ Execute all test cases against the code.
 
 ```python
 class TestResults:
-    all_passed: bool              # True if all tests passed
-    passed_count: int             # Number of passed tests
-    failed_count: int             # Number of failed tests
-    total_count: int              # Total number of tests
-    results: List[TestResult]     # Individual test results
-    execution_time: float         # Total execution time
+    test_results: List[Dict[str, Any]]  # List of test result dictionaries
+    execution_time: float               # Total execution time
+    
+    def was_successful(self) -> bool:
+        """Check if all tests passed."""
+        return all(r["pass"] for r in self.test_results)
+    
+    @property
+    def testsRun(self) -> int:
+        """Total number of tests run."""
+        return len(self.test_results)
+    
+    @property
+    def successes(self) -> int:
+        """Number of passed tests."""
+        return sum(1 for r in self.test_results if r["pass"])
+    
+    @property
+    def failures(self) -> int:
+        """Number of failed tests."""
+        return sum(1 for r in self.test_results if not r["pass"])
     
     @property
     def pass_rate(self) -> float:
         """Percentage of tests passed."""
-        return (self.passed_count / self.total_count) * 100
-    
-    @property
-    def failures(self) -> List[TestResult]:
-        """List of failed test results."""
-        return [r for r in self.results if not r.passed]
+        return (self.successes / self.testsRun) * 100 if self.testsRun > 0 else 0.0
 ```
 
 ##### Example
@@ -159,16 +169,18 @@ Run a single test case.
 `TestResult` object:
 
 ```python
-class TestResult:
-    passed: bool                  # Whether test passed
-    test_case: Dict[str, Any]     # Original test case
-    expected: Any                 # Expected value
-    actual: Any                   # Actual value (if available)
-    error: Optional[str]          # Error message if failed
-    error_type: Optional[str]     # Error category
-    execution_time: float         # Execution time in seconds
-    stdout: Optional[str]         # Captured stdout
-    stderr: Optional[str]         # Captured stderr
+# Each test result is a dictionary with these keys:
+{
+    "pass": bool,                      # Whether test passed
+    "function_call": str,              # String representation of function call
+    "expected_output": Any,            # Expected value
+    "actual_output": Any,              # Actual value (if available)
+    "error": Optional[str],            # Error message if failed
+    "error_type": Optional[str],       # Error category
+    "execution_time": float,           # Execution time in seconds
+    "stdout": Optional[str],           # Captured stdout
+    "stderr": Optional[str]            # Captured stderr
+}
 ```
 
 ##### Example
@@ -177,10 +189,10 @@ class TestResult:
 test = {"parameters": {"x": 10}, "expected": 100}
 result = tester.run_single_test(test)
 
-if result.passed:
-    print(f"Test passed in {result.execution_time:.3f}s")
+if result["pass"]:
+    print(f"Test passed in {result['execution_time']:.3f}s")
 else:
-    print(f"Test failed: {result.error}")
+    print(f"Test failed: {result['error']}")
 ```
 
 #### validate_test_cases
@@ -373,8 +385,8 @@ class CustomTester(CodeTester):
     def analyze_performance(self, results: TestResults):
         """Analyze test performance."""
         slow_tests = [
-            r for r in results.results 
-            if r.execution_time > 1.0
+            r for r in results.test_results 
+            if r.get("execution_time", 0) > 1.0
         ]
         if slow_tests:
             print(f"Warning: {len(slow_tests)} slow tests detected")
@@ -439,12 +451,12 @@ def run_tests_with_progress(tester: CodeTester) -> TestResults:
 ```python
 def analyze_failures(results: TestResults):
     """Analyze test failures for patterns."""
-    failures = results.failures
+    failures = [r for r in results.test_results if not r["pass"]]
     
     # Group by error type
     error_groups = {}
     for failure in failures:
-        error_type = failure.error_type or "unknown"
+        error_type = failure.get("error_type", "unknown")
         if error_type not in error_groups:
             error_groups[error_type] = []
         error_groups[error_type].append(failure)
@@ -453,8 +465,8 @@ def analyze_failures(results: TestResults):
     for error_type, group in error_groups.items():
         print(f"\n{error_type.upper()} errors ({len(group)}):")
         for failure in group[:3]:  # Show first 3
-            print(f"  - Test: {failure.test_case}")
-            print(f"    Error: {failure.error}")
+            print(f"  - Test: {failure['function_call']}")
+            print(f"    Error: {failure.get('error', 'No error message')}")
 ```
 
 ### Performance Optimization
@@ -490,7 +502,7 @@ class CachedTester(CodeTester):
         super().__init__(*args, **kwargs)
         self._cache = {}
     
-    def run_single_test(self, test_case: Dict) -> TestResult:
+    def run_single_test(self, test_case: Dict) -> Dict:
         # Create cache key
         cache_key = f"{self.code_hash}:{hash(str(test_case))}"
         
@@ -557,12 +569,12 @@ logging.basicConfig(level=logging.DEBUG)
 results = tester.run_tests(verbose=True)
 
 # Access detailed execution info
-for result in results.results:
-    if not result.passed:
-        print(f"Failed test: {result.test_case}")
-        print(f"Stdout: {result.stdout}")
-        print(f"Stderr: {result.stderr}")
-        print(f"Error: {result.error}")
+for result in results.test_results:
+    if not result["pass"]:
+        print(f"Failed test: {result['function_call']}")
+        print(f"Stdout: {result.get('stdout', '')}")
+        print(f"Stderr: {result.get('stderr', '')}")
+        print(f"Error: {result.get('error', 'No error message')}")
 ```
 
 #### Test Isolation
@@ -577,10 +589,10 @@ def debug_single_test(tester: CodeTester, test_index: int):
     
     result = tester.run_single_test(test_case)
     
-    print(f"Result: {'PASS' if result.passed else 'FAIL'}")
-    print(f"Expected: {result.expected}")
-    print(f"Actual: {result.actual}")
-    print(f"Execution time: {result.execution_time:.3f}s")
+    print(f"Result: {'PASS' if result['pass'] else 'FAIL'}")
+    print(f"Expected: {result.get('expected_output', 'N/A')}")
+    print(f"Actual: {result.get('actual_output', 'N/A')}")
+    print(f"Execution time: {result.get('execution_time', 0):.3f}s")
     
     return result
 ```

@@ -19,7 +19,7 @@ EiplGrader consists of two primary components that work together to transform na
 Transforms natural language descriptions into executable code using Large Language Models.
 
 **Key Features:**
-- Multiple LLM provider support (OpenAI, Anthropic, Ollama)
+- Multiple LLM provider support (OpenAI, Ollama - with Anthropic and Meta planned)
 - Language-specific prompt engineering
 - Multi-variant generation
 - Code segmentation capabilities

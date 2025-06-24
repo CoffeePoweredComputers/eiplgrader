@@ -18,7 +18,7 @@ Generate multiple implementations of the same function to find the best one.
 ```python
 from eiplgrader.codegen import CodeGenerator
 
-generator = CodeGenerator(api_key, language="python")
+generator = CodeGenerator(api_key, client_type="openai", language="python")
 
 # Generate 5 different implementations
 result = generator.generate_code(
@@ -141,18 +141,19 @@ def provide_detailed_feedback(code, test_results, segmentation):
     feedback = []
     
     # Analyze which segments might be problematic
-    if not test_results.allPassed:
+    if not test_results.was_successful():
         # Map errors to code segments
-        for failure in test_results.failures:
-            if "empty" in str(failure.test).lower():
-                # Find segment related to empty list handling
-                for seg in segmentation:
-                    if "empty" in seg["segment"].lower():
-                        feedback.append({
-                            "issue": "Empty list handling failed",
-                            "segment": seg["segment"],
-                            "lines": seg["lines"]
-                        })
+        for result in test_results.test_results:
+            if not result["pass"]:
+                if "empty" in str(result["function_call"]).lower():
+                    # Find segment related to empty list handling
+                    for seg in segmentation:
+                        if "empty" in seg["segment"].lower():
+                            feedback.append({
+                                "issue": "Empty list handling failed",
+                                "segment": seg["segment"],
+                                "lines": seg["lines"]
+                            })
     
     return feedback
 
