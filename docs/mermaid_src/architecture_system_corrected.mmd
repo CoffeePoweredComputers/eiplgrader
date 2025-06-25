@@ -1,0 +1,70 @@
+graph TB
+    subgraph "User Interface"
+        UI[User Code/API]
+    end
+    
+    subgraph "Core Components"
+        CG[CodeGenerator]
+        CT[CodeTester]
+    end
+    
+    subgraph "Registry"
+        LR[LanguageRegistry]
+        LC[LanguageConfig]
+    end
+    
+    subgraph "Adapters"
+        PA[PythonAdapter]
+        JSA[JavaScriptAdapter]
+        JA[JavaAdapter]
+        GA[GoAdapter]
+        CPA[CppAdapter]
+        CA[CAdapter]
+        HA[HaskellAdapter]
+        LAB[LanguageAdapter]
+    end
+    
+    subgraph "Executors"
+        PE[PythonExecutor]
+        JSE[JavaScriptExecutor]
+        JE[JavaExecutor]
+        GE[GoExecutor]
+        CPE[CppExecutor]
+        CE[CExecutor]
+        HE[HaskellExecutor]
+        ILE[InterpretedLanguageExecutor]
+        CLE[CompiledLanguageExecutor]
+        LEB[LanguageExecutor]
+    end
+    
+    subgraph "External Services"
+        LLM[LLM API<br/>OpenAI/Anthropic/etc]
+        FS[File System]
+        PROC[Process Runner]
+    end
+    
+    UI --> CG
+    UI --> CT
+    CG --> LLM
+    CG --> LR
+    CT --> LR
+    LR --> LAB
+    LR --> LEB
+    PA --> LAB
+    JSA --> LAB
+    JA --> LAB
+    GA --> LAB
+    CPA --> LAB
+    CA --> LAB
+    HA --> LAB
+    PE --> ILE
+    JSE --> ILE
+    JE --> CLE
+    GE --> CLE
+    CPE --> CLE
+    CE --> CLE
+    HE --> CLE
+    ILE --> LEB
+    CLE --> LEB
+    LEB --> FS
+    LEB --> PROC

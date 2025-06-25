@@ -1,21 +1,19 @@
 graph TB
-    TV[Test Value<br/>e.g., 42]
-    TI[Type Inferrer]
-    TS[Type String<br/>e.g., "int"]
-    TC[Test Case<br/>with Types]
+    BE[BaseError]
+    GE[GenerationError]
+    TE[TestingError]
+    CE[ConfigurationError]
     
-    TV --> TI
-    TI --> TS
-    TS --> TC
+    SE[StructuralError]
+    RE[RuntimeError]
+    CME[CompilationError]
+    TOE[TimeoutError]
     
-    subgraph "Inference Rules"
-        R1[isinstance int → "int"]
-        R2[isinstance float → "double"]
-        R3[isinstance str → "string"]
-        R4[isinstance list → "List[T]"]
-    end
+    BE --> GE
+    BE --> TE
+    BE --> CE
     
-    TI --> R1
-    TI --> R2
-    TI --> R3
-    TI --> R4
+    TE --> SE
+    TE --> RE
+    TE --> CME
+    TE --> TOE

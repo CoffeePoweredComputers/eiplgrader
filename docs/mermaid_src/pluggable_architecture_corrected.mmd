@@ -1,0 +1,46 @@
+graph LR
+    subgraph "Language Adapters"
+        PA[PythonAdapter]
+        JSA[JavaScriptAdapter]
+        JA[JavaAdapter]
+        GA[GoAdapter]
+        CPA[CppAdapter]
+        CA[CAdapter]
+        HA[HaskellAdapter]
+    end
+    
+    subgraph "Language Executors"
+        PE[PythonExecutor]
+        JSE[JavaScriptExecutor]
+        JE[JavaExecutor]
+        GE[GoExecutor]
+        CPE[CppExecutor]
+        CE[CExecutor]
+        HE[HaskellExecutor]
+    end
+    
+    subgraph "Base Classes"
+        LAB[LanguageAdapter]
+        LEB[LanguageExecutor]
+        ILE[InterpretedLanguageExecutor]
+        CLE[CompiledLanguageExecutor]
+    end
+    
+    PA --> LAB
+    JSA --> LAB
+    JA --> LAB
+    GA --> LAB
+    CPA --> LAB
+    CA --> LAB
+    HA --> LAB
+    
+    PE --> ILE
+    JSE --> ILE
+    JE --> CLE
+    GE --> CLE
+    CPE --> CLE
+    CE --> CLE
+    HE --> CLE
+    
+    ILE --> LEB
+    CLE --> LEB

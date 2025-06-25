@@ -1,23 +1,22 @@
-sequenceDiagram
-    participant User
-    participant CodeTester
-    participant LanguageExecutor
-    participant FileSystem
-    participant Process
+graph TB
+    TC[Test Case]
+    TV[Type Validator]
+    VR[Validation Result]
     
-    User->>CodeTester: run_tests()
-    loop For each test case
-        CodeTester->>LanguageExecutor: execute_test(code, test_case)
-        LanguageExecutor->>LanguageExecutor: prepare_code()
-        LanguageExecutor->>FileSystem: write_temp_file()
-        alt Compiled Language
-            LanguageExecutor->>Process: compile()
-            Process-->>LanguageExecutor: binary
-        end
-        LanguageExecutor->>Process: execute()
-        Process-->>LanguageExecutor: output
-        LanguageExecutor->>LanguageExecutor: normalize_output()
-        LanguageExecutor-->>CodeTester: test_result
+    TC --> TV
+    TV --> VR
+    
+    subgraph "Validation Checks"
+        C1[parameter_types present?]
+        C2[expected_type present?]
+        C3[All params have types?]
+        C4[Types valid for language?]
     end
-    CodeTester->>LanguageExecutor: cleanup()
-    CodeTester-->>User: CodeTestResult
+    
+    TV --> C1
+    TV --> C2
+    TV --> C3
+    TV --> C4
+    
+    VR --> |Pass| Execute
+    VR --> |Fail| Error[Type Error]

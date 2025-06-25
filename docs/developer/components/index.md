@@ -58,26 +58,7 @@ results = tester.run_tests()
 
 ## Component Interaction
 
-```mermaid
-sequenceDiagram
-    participant User
-    participant CodeGenerator
-    participant LanguageAdapter
-    participant LLM
-    participant CodeTester
-    participant LanguageExecutor
-    
-    User->>CodeGenerator: generate_code(prompt)
-    CodeGenerator->>LanguageAdapter: create_prompt()
-    CodeGenerator->>LLM: request_generation()
-    LLM-->>CodeGenerator: generated_code
-    CodeGenerator-->>User: {code: [...]}
-    
-    User->>CodeTester: run_tests(code, test_cases)
-    CodeTester->>LanguageExecutor: execute_test()
-    LanguageExecutor-->>CodeTester: test_results
-    CodeTester-->>User: CodeTestResult
-```
+![Component Interaction Sequence](/assets/diagrams/components_corrected.svg)
 
 ## Design Patterns
 

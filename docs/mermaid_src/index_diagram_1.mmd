@@ -1,18 +1,30 @@
-sequenceDiagram
-    participant User
-    participant CodeGenerator
-    participant LanguageAdapter
-    participant LLM
-    participant CodeTester
-    participant LanguageExecutor
+graph TB
+    subgraph "Language Support"
+        LA[Language Adapter]
+        LE[Language Executor]
+        LR[Language Registry]
+    end
     
-    User->>CodeGenerator: generate_code(prompt)
-    CodeGenerator->>LanguageAdapter: create_prompt()
-    CodeGenerator->>LLM: request_generation()
-    LLM-->>CodeGenerator: generated_code
-    CodeGenerator-->>User: {code: [...]}
+    subgraph "Base Classes"
+        LAB[LanguageAdapter Base]
+        LEB[LanguageExecutor Base]
+        ILE[InterpretedExecutor]
+        CLE[CompiledExecutor]
+    end
     
-    User->>CodeTester: run_tests(code, test_cases)
-    CodeTester->>LanguageExecutor: execute_test()
-    LanguageExecutor-->>CodeTester: test_results
-    CodeTester-->>User: CodeTestResult
+    subgraph "Implementations"
+        PA[Python Adapter/Executor]
+        JA[Java Adapter/Executor]
+        GA[Go Adapter/Executor]
+    end
+    
+    LAB --> LA
+    LEB --> LE
+    ILE --> LEB
+    CLE --> LEB
+    
+    PA --> LA & LE
+    JA --> LA & LE
+    GA --> LA & LE
+    
+    LA & LE --> LR

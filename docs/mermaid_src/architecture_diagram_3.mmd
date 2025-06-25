@@ -1,16 +1,21 @@
-sequenceDiagram
-    participant User
-    participant CodeGenerator
-    participant LanguageAdapter
-    participant LLM API
+graph TB
+    TV[Test Value<br/>e.g., 42]
+    TI[Type Inferrer]
+    TS[Type String<br/>e.g., "int"]
+    TC[Test Case<br/>with Types]
     
-    User->>CodeGenerator: generate_code(response, language)
-    CodeGenerator->>LanguageAdapter: generate_prompt(response)
-    LanguageAdapter-->>CodeGenerator: prompt
-    CodeGenerator->>LLM API: send_request(prompt)
-    LLM API-->>CodeGenerator: llm_response
-    CodeGenerator->>LanguageAdapter: extract_code(llm_response)
-    LanguageAdapter-->>CodeGenerator: code_blocks
-    CodeGenerator->>LanguageAdapter: normalize_code(code)
-    LanguageAdapter-->>CodeGenerator: normalized_code
-    CodeGenerator-->>User: code: [...], segmentation: ..
+    TV --> TI
+    TI --> TS
+    TS --> TC
+    
+    subgraph "Inference Rules"
+        R1[isinstance int → "int"]
+        R2[isinstance float → "double"]
+        R3[isinstance str → "string"]
+        R4[isinstance list → "List[T]"]
+    end
+    
+    TI --> R1
+    TI --> R2
+    TI --> R3
+    TI --> R4

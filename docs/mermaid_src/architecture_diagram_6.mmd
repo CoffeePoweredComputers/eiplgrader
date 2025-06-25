@@ -1,22 +1,25 @@
 graph TB
-    TC[Test Case]
-    TV[Type Validator]
-    VR[Validation Result]
-    
-    TC --> TV
-    TV --> VR
-    
-    subgraph "Validation Checks"
-        C1[parameter_types present?]
-        C2[expected_type present?]
-        C3[All params have types?]
-        C4[Types valid for language?]
+    subgraph "Security Layers"
+        UC[User Code]
+        TH[Test Harness]
+        TMP[Temp Directory]
+        PROC[Subprocess]
+        OS[OS Process Isolation]
     end
     
-    TV --> C1
-    TV --> C2
-    TV --> C3
-    TV --> C4
+    UC --> TH
+    TH --> TMP
+    TMP --> PROC
+    PROC --> OS
     
-    VR --> |Pass| Execute
-    VR --> |Fail| Error[Type Error]
+    subgraph "Security Features"
+        TO[Timeout Limits]
+        MEM[Memory Limits]
+        FS[Filesystem Isolation]
+        NET[Network Isolation]
+    end
+    
+    PROC --> TO
+    PROC --> MEM
+    OS --> FS
+    OS --> NET

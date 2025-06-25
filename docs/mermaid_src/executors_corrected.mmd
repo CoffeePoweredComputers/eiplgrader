@@ -1,0 +1,71 @@
+classDiagram
+    class LanguageExecutor {
+        <<abstract>>
+        +prepare_code(code, test_case)
+        +execute_test(code, test_case)
+        +cleanup()
+        +validate_types_provided(test_case)
+        +infer_type(value)
+        +normalize_output(raw_output, expected_type)
+        +enhance_error_message(error_msg, stderr)
+        +generate_function_call_repr(test_case)
+    }
+    
+    class InterpretedLanguageExecutor {
+        +validate_or_infer_types(test_case)
+        +execute_test(code, test_case)
+        +cleanup()
+    }
+    
+    class CompiledLanguageExecutor {
+        +compile(code_path)
+        +execute_test(code, test_case)
+        +cleanup()
+    }
+    
+    class PythonExecutor {
+        +prepare_code(code, test_case)
+        +execute_test(code, test_case)
+    }
+    
+    class JavaScriptExecutor {
+        +prepare_code(code, test_case)
+        +execute_test(code, test_case)
+        +enhance_error_message(error_msg, stderr)
+    }
+    
+    class JavaExecutor {
+        +prepare_code(code, test_case)
+        +execute_test(code, test_case)
+        +compile(code_path)
+    }
+    
+    class GoExecutor {
+        +prepare_code(code, test_case)
+        +normalize_output(raw_output, expected_type)
+    }
+    
+    class CppExecutor {
+        +prepare_code(code, test_case)
+    }
+    
+    class CExecutor {
+        +prepare_code(code, test_case)
+    }
+    
+    class HaskellExecutor {
+        +prepare_code(code, test_case)
+        +compile(code_path)
+        +normalize_output(raw_output, expected_type)
+        +extract_function_name(code)
+    }
+    
+    LanguageExecutor <|-- InterpretedLanguageExecutor
+    LanguageExecutor <|-- CompiledLanguageExecutor
+    InterpretedLanguageExecutor <|-- PythonExecutor
+    InterpretedLanguageExecutor <|-- JavaScriptExecutor
+    CompiledLanguageExecutor <|-- JavaExecutor
+    CompiledLanguageExecutor <|-- GoExecutor
+    CompiledLanguageExecutor <|-- CppExecutor
+    CompiledLanguageExecutor <|-- CExecutor
+    CompiledLanguageExecutor <|-- HaskellExecutor

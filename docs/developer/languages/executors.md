@@ -21,42 +21,7 @@ Language executors are responsible for:
 
 ## Executor Hierarchy
 
-```mermaid
-classDiagram
-    class LanguageExecutor {
-        <<abstract>>
-        +prepare_code(code, test_case)
-        +execute_test(code, test_case)
-        +cleanup()
-    }
-    
-    class InterpretedLanguageExecutor {
-        +validate_or_infer_types(test_case)
-        +infer_type(value)
-    }
-    
-    class CompiledLanguageExecutor {
-        +validate_types_provided(test_case)
-        +get_type_mapping()
-        +format_value(value, type_str)
-    }
-    
-    class PythonExecutor {
-        +prepare_code()
-        +execute_test()
-    }
-    
-    class JavaExecutor {
-        +prepare_code()
-        +execute_test()
-        +compile_code()
-    }
-    
-    LanguageExecutor <|-- InterpretedLanguageExecutor
-    LanguageExecutor <|-- CompiledLanguageExecutor
-    InterpretedLanguageExecutor <|-- PythonExecutor
-    CompiledLanguageExecutor <|-- JavaExecutor
-```
+![Language Executor Hierarchy](/assets/diagrams/executors_diagram_1_corrected.svg)
 
 ## Base Executor Classes
 

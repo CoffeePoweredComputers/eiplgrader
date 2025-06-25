@@ -12,39 +12,7 @@ Understanding the design and architecture of EiplGrader.
 
 ## System Architecture
 
-```mermaid 
-graph TB
-    subgraph "User Interface"
-        UI[User Code/API]
-    end
-    
-    subgraph "Core Components"
-        CG[CodeGenerator]
-        CT[CodeTester]
-    end
-    
-    subgraph "Language System"
-        LA[Language Adapters]
-        LE[Language Executors]
-        LR[Language Registry]
-    end
-    
-    subgraph "External Services"
-        LLM[LLM API<br/>OpenAI/Anthropic/etc]
-        FS[File System]
-        PROC[Process Runner]
-    end
-    
-    UI --> CG
-    UI --> CT
-    CG --> LLM
-    CG --> LA
-    CT --> LE
-    LA --> LR
-    LE --> LR
-    LE --> FS
-    LE --> PROC
-```
+![System Architecture](/assets/diagrams/architecture_diagram_1_corrected.svg)
 
 ## Core Design Principles
 
@@ -57,40 +25,7 @@ The architecture strictly separates:
 
 ### 2. Pluggable Architecture
 
-```mermaid
-graph LR
-    subgraph "Language Adapters"
-        PA[PythonAdapter]
-        JA[JavaAdapter]
-        CA[CAdapter]
-        OA[...Adapter]
-    end
-    
-    subgraph "Language Executors"
-        PE[PythonExecutor]
-        JE[JavaExecutor]
-        CE[CExecutor]
-        OE[...Executor]
-    end
-    
-    subgraph "Base Classes"
-        LAB[LanguageAdapter]
-        LEB[LanguageExecutor]
-        ILE[InterpretedLanguageExecutor]
-        CLE[CompiledLanguageExecutor]
-    end
-    
-    PA --> LAB
-    JA --> LAB
-    CA --> LAB
-    
-    PE --> ILE
-    JE --> CLE
-    CE --> CLE
-    
-    ILE --> LEB
-    CLE --> LEB
-```
+![Pluggable Architecture](/assets/diagrams/architecture_diagram_2_corrected.svg)
 
 ### 3. Type System Flexibility
 
