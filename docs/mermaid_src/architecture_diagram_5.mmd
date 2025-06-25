@@ -1,0 +1,21 @@
+graph TB
+    TV[Test Value<br/>e.g., 42]
+    TI[Type Inferrer]
+    TS[Type String<br/>e.g., "int"]
+    TC[Test Case<br/>with Types]
+    
+    TV --> TI
+    TI --> TS
+    TS --> TC
+    
+    subgraph "Inference Rules"
+        R1[isinstance int → "int"]
+        R2[isinstance float → "double"]
+        R3[isinstance str → "string"]
+        R4[isinstance list → "List[T]"]
+    end
+    
+    TI --> R1
+    TI --> R2
+    TI --> R3
+    TI --> R4

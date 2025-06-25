@@ -1,0 +1,32 @@
+graph LR
+    subgraph "Language Adapters"
+        PA[PythonAdapter]
+        JA[JavaAdapter]
+        CA[CAdapter]
+        OA[...Adapter]
+    end
+    
+    subgraph "Language Executors"
+        PE[PythonExecutor]
+        JE[JavaExecutor]
+        CE[CExecutor]
+        OE[...Executor]
+    end
+    
+    subgraph "Base Classes"
+        LAB[LanguageAdapter]
+        LEB[LanguageExecutor]
+        ILE[InterpretedLanguageExecutor]
+        CLE[CompiledLanguageExecutor]
+    end
+    
+    PA --> LAB
+    JA --> LAB
+    CA --> LAB
+    
+    PE --> ILE
+    JE --> CLE
+    CE --> CLE
+    
+    ILE --> LEB
+    CLE --> LEB

@@ -1,0 +1,16 @@
+sequenceDiagram
+    participant User
+    participant CodeGenerator
+    participant LanguageAdapter
+    participant LLM API
+    
+    User->>CodeGenerator: generate_code(response, language)
+    CodeGenerator->>LanguageAdapter: generate_prompt(response)
+    LanguageAdapter-->>CodeGenerator: prompt
+    CodeGenerator->>LLM API: send_request(prompt)
+    LLM API-->>CodeGenerator: llm_response
+    CodeGenerator->>LanguageAdapter: extract_code(llm_response)
+    LanguageAdapter-->>CodeGenerator: code_blocks
+    CodeGenerator->>LanguageAdapter: normalize_code(code)
+    LanguageAdapter-->>CodeGenerator: normalized_code
+    CodeGenerator-->>User: code: [...], segmentation: ..

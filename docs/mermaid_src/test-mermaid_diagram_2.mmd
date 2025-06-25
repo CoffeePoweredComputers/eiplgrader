@@ -1,0 +1,22 @@
+graph TB
+    subgraph "User Layer"
+        UI[User Interface]
+    end
+    
+    subgraph "Core Layer"
+        CG[CodeGenerator]
+        CT[CodeTester]
+    end
+    
+    subgraph "Language Layer"
+        LR[LanguageRegistry]
+        LA[Language Adapters]
+        LE[Language Executors]
+    end
+    
+    UI --> CG
+    UI --> CT
+    CG --> LR
+    CT --> LR
+    LR --> LA
+    LR --> LE

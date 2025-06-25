@@ -1,0 +1,17 @@
+graph TB
+    subgraph "Current"
+        S1[Single Process]
+        S2[Sequential Tests]
+    end
+    
+    subgraph "Future"
+        M1[Multi-Process]
+        M2[Parallel Tests]
+        M3[Distributed Workers]
+        M4[Result Cache]
+    end
+    
+    S1 --> M1
+    S2 --> M2
+    M1 --> M3
+    M2 --> M4

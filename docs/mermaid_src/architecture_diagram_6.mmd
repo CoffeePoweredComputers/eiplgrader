@@ -1,0 +1,22 @@
+graph TB
+    TC[Test Case]
+    TV[Type Validator]
+    VR[Validation Result]
+    
+    TC --> TV
+    TV --> VR
+    
+    subgraph "Validation Checks"
+        C1[parameter_types present?]
+        C2[expected_type present?]
+        C3[All params have types?]
+        C4[Types valid for language?]
+    end
+    
+    TV --> C1
+    TV --> C2
+    TV --> C3
+    TV --> C4
+    
+    VR --> |Pass| Execute
+    VR --> |Fail| Error[Type Error]

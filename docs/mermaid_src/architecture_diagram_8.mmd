@@ -1,0 +1,25 @@
+graph TB
+    subgraph "Security Layers"
+        UC[User Code]
+        TH[Test Harness]
+        TMP[Temp Directory]
+        PROC[Subprocess]
+        OS[OS Process Isolation]
+    end
+    
+    UC --> TH
+    TH --> TMP
+    TMP --> PROC
+    PROC --> OS
+    
+    subgraph "Security Features"
+        TO[Timeout Limits]
+        MEM[Memory Limits]
+        FS[Filesystem Isolation]
+        NET[Network Isolation]
+    end
+    
+    PROC --> TO
+    PROC --> MEM
+    OS --> FS
+    OS --> NET

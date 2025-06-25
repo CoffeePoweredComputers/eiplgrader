@@ -1,0 +1,19 @@
+graph TB
+    BE[BaseError]
+    GE[GenerationError]
+    TE[TestingError]
+    CE[ConfigurationError]
+    
+    SE[StructuralError]
+    RE[RuntimeError]
+    CME[CompilationError]
+    TOE[TimeoutError]
+    
+    BE --> GE
+    BE --> TE
+    BE --> CE
+    
+    TE --> SE
+    TE --> RE
+    TE --> CME
+    TE --> TOE
