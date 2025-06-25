@@ -11,6 +11,7 @@ logo: "/assets/images/eiplgrader.png"
 email: dhsmith2@illinois.edu
 description: >- # Ignore newlines until "baseurl:"
   An AI-powered autograder for "Explain in Plain Language" questions in computer science education. Providing immediate, accurate feedback on natural language descriptions of algorithms and concepts.
+baseurl: "/eiplgrader"
 exclude: ["Gemfile", "Gemfile.lock", "LICENSE", "README.md"]
 
 # Build settings

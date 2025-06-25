@@ -12,7 +12,7 @@ Understanding the design and architecture of EiplGrader.
 
 ## System Architecture
 
-![System Architecture](/assets/diagrams/architecture_diagram_1_corrected.svg)
+![System Architecture](/assets/diagrams/architecture_diagram_1.svg)
 
 ## Core Design Principles
 
