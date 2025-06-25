@@ -1,10 +1,8 @@
-<!-- Custom head content for mermaid diagrams -->
-<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<!-- Mermaid diagrams support -->
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
 <script>
   document.addEventListener('DOMContentLoaded', function() {
-    // Initialize mermaid with dark theme configuration
     mermaid.initialize({
-      startOnLoad: false,
       theme: 'dark',
       themeVariables: {
         darkMode: true,
@@ -18,32 +16,13 @@
         secondaryColor: '#64748b',
         tertiaryColor: '#475569'
       },
-      securityLevel: 'loose'
+      securityLevel: 'loose',
+      startOnLoad: true
     });
-
-    // Find all code blocks with language-mermaid and convert them to mermaid diagrams
-    const mermaidBlocks = document.querySelectorAll('code.language-mermaid');
-    mermaidBlocks.forEach(function(block, index) {
-      // Create a new div for the mermaid diagram
-      const mermaidDiv = document.createElement('div');
-      mermaidDiv.className = 'mermaid';
-      mermaidDiv.id = 'mermaid-diagram-' + index;
-      mermaidDiv.textContent = block.textContent.trim();
-      
-      // Replace the code block with the mermaid div
-      const preElement = block.parentElement;
-      preElement.parentNode.replaceChild(mermaidDiv, preElement);
-    });
-
-    // Process all mermaid diagrams after DOM manipulation
-    if (mermaidBlocks.length > 0) {
-      mermaid.run();
-    }
   });
 </script>
 
 <style>
-  /* Custom styles for mermaid diagrams to match dark theme */
   .mermaid {
     text-align: center;
     margin: 1.5em 0;
@@ -53,15 +32,8 @@
     padding: 1em;
   }
   
-  /* Ensure diagrams are responsive */
   .mermaid svg {
     max-width: 100%;
     height: auto;
-  }
-  
-  /* Style mermaid text elements for better visibility */
-  .mermaid .node text,
-  .mermaid .edge text {
-    fill: #f8fafc !important;
   }
 </style>
