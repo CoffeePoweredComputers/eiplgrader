@@ -12,7 +12,7 @@ Understanding the design and architecture of EiplGrader.
 
 ## System Architecture
 
-![System Architecture](/assets/diagrams/architecture_diagram_1.svg)
+![System Architecture]({{ site.baseurl }}/assets/diagrams/architecture_diagram_1.svg)
 
 ## Core Design Principles
 
@@ -25,7 +25,7 @@ The architecture strictly separates:
 
 ### 2. Pluggable Architecture
 
-![Pluggable Architecture](/assets/diagrams/architecture_diagram_2_corrected.svg)
+![Pluggable Architecture]({{ site.baseurl }}/assets/diagrams/architecture_diagram_2_corrected.svg)
 
 ### 3. Type System Flexibility
 
@@ -132,21 +132,21 @@ class LanguageRegistry:
 
 ### Code Generation Flow
 
-![Code Generation Flow](/assets/diagrams/architecture_diagram_4.svg)
+![Code Generation Flow]({{ site.baseurl }}/assets/diagrams/architecture_diagram_4.svg)
 
 ### Code Testing Flow
 
-![Code Testing Flow](/assets/diagrams/architecture_diagram_5.svg)
+![Code Testing Flow]({{ site.baseurl }}/assets/diagrams/architecture_diagram_5.svg)
 
 ## Type System Architecture
 
 ### Type Inference Pipeline (Dynamic Languages)
 
-![Type Inference Pipeline](/assets/diagrams/architecture_diagram_6.svg)
+![Type Inference Pipeline]({{ site.baseurl }}/assets/diagrams/architecture_diagram_6.svg)
 
 ### Type Validation Pipeline (Static Languages)
 
-![Type Validation Pipeline](/assets/diagrams/architecture_diagram_7.svg)
+![Type Validation Pipeline]({{ site.baseurl }}/assets/diagrams/architecture_diagram_7.svg)
 
 ## Execution Models
 
@@ -199,7 +199,7 @@ class CompiledLanguageExecutor:
 
 ### Error Hierarchy
 
-![Error Hierarchy](/assets/diagrams/architecture_diagram_8.svg)
+![Error Hierarchy]({{ site.baseurl }}/assets/diagrams/architecture_diagram_8.svg)
 
 ### Error Propagation
 
@@ -211,7 +211,7 @@ class CompiledLanguageExecutor:
 
 ### Code Execution Isolation
 
-![Security Considerations](/assets/diagrams/architecture_diagram_9.svg)
+![Security Considerations]({{ site.baseurl }}/assets/diagrams/architecture_diagram_9.svg)
 
 ### Security Best Practices
 
@@ -271,7 +271,7 @@ with CodeTester(code, test_cases) as tester:
 
 ### Scalability Patterns
 
-![Scalability Patterns](/assets/diagrams/architecture_system.svg)
+![Scalability Patterns]({{ site.baseurl }}/assets/diagrams/architecture_system.svg)
 
 ## Next Steps
 

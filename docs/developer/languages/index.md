@@ -20,7 +20,7 @@ The language system provides a flexible architecture for supporting multiple pro
 
 ## System Architecture
 
-![Language System Overview](/assets/diagrams/index_diagram_1.svg)
+![Language System Overview]({{ site.baseurl }}/assets/diagrams/index_diagram_1.svg)
 
 ## Documentation Sections
 

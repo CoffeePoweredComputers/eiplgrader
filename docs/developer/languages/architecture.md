@@ -20,7 +20,7 @@ The language system provides a pluggable architecture for supporting multiple pr
 
 ## Architecture Diagram
 
-![Language System Architecture](/assets/diagrams/pluggable_architecture.svg)
+![Language System Architecture]({{ site.baseurl }}/assets/diagrams/pluggable_architecture.svg)
 
 ## Base Classes
 

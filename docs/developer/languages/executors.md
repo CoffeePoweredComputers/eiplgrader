@@ -21,7 +21,7 @@ Language executors are responsible for:
 
 ## Executor Hierarchy
 
-![Language Executor Hierarchy](/assets/diagrams/executors_diagram_1_corrected.svg)
+![Language Executor Hierarchy]({{ site.baseurl }}/assets/diagrams/executors_diagram_1_corrected.svg)
 
 ## Base Executor Classes
 

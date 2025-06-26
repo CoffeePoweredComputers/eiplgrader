@@ -58,7 +58,7 @@ results = tester.run_tests()
 
 ## Component Interaction
 
-![Component Interaction Sequence](/assets/diagrams/components_corrected.svg)
+![Component Interaction Sequence]({{ site.baseurl }}/assets/diagrams/components_corrected.svg)
 
 ## Design Patterns
 
