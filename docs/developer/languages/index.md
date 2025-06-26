@@ -20,38 +20,7 @@ The language system provides a flexible architecture for supporting multiple pro
 
 ## System Architecture
 
-```mermaid
-graph TB
-    subgraph "Language Support"
-        LA[Language Adapter]
-        LE[Language Executor]
-        LR[Language Registry]
-    end
-    
-    subgraph "Base Classes"
-        LAB[LanguageAdapter Base]
-        LEB[LanguageExecutor Base]
-        ILE[InterpretedExecutor]
-        CLE[CompiledExecutor]
-    end
-    
-    subgraph "Implementations"
-        PA[Python Adapter/Executor]
-        JA[Java Adapter/Executor]
-        GA[Go Adapter/Executor]
-    end
-    
-    LAB --> LA
-    LEB --> LE
-    ILE --> LEB
-    CLE --> LEB
-    
-    PA --> LA & LE
-    JA --> LA & LE
-    GA --> LA & LE
-    
-    LA & LE --> LR
-```
+![Language System Overview](/assets/diagrams/index_diagram_1.svg)
 
 ## Documentation Sections
 

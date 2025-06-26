@@ -132,107 +132,21 @@ class LanguageRegistry:
 
 ### Code Generation Flow
 
-```mermaid
-sequenceDiagram
-    participant User
-    participant CodeGenerator
-    participant LanguageAdapter
-    participant LLM API
-    
-    User->>CodeGenerator: generate_code(response, language)
-    CodeGenerator->>LanguageAdapter: generate_prompt(response)
-    LanguageAdapter-->>CodeGenerator: prompt
-    CodeGenerator->>LLM API: send_request(prompt)
-    LLM API-->>CodeGenerator: llm_response
-    CodeGenerator->>LanguageAdapter: extract_code(llm_response)
-    LanguageAdapter-->>CodeGenerator: code_blocks
-    CodeGenerator->>LanguageAdapter: normalize_code(code)
-    LanguageAdapter-->>CodeGenerator: normalized_code
-    CodeGenerator-->>User: code: [...], segmentation: ..
-```
+![Code Generation Flow](/assets/diagrams/architecture_diagram_4.svg)
 
 ### Code Testing Flow
 
-```mermaid
-sequenceDiagram
-    participant User
-    participant CodeTester
-    participant LanguageExecutor
-    participant FileSystem
-    participant Process
-    
-    User->>CodeTester: run_tests()
-    loop For each test case
-        CodeTester->>LanguageExecutor: execute_test(code, test_case)
-        LanguageExecutor->>LanguageExecutor: prepare_code()
-        LanguageExecutor->>FileSystem: write_temp_file()
-        alt Compiled Language
-            LanguageExecutor->>Process: compile()
-            Process-->>LanguageExecutor: binary
-        end
-        LanguageExecutor->>Process: execute()
-        Process-->>LanguageExecutor: output
-        LanguageExecutor->>LanguageExecutor: normalize_output()
-        LanguageExecutor-->>CodeTester: test_result
-    end
-    CodeTester->>LanguageExecutor: cleanup()
-    CodeTester-->>User: CodeTestResult
-```
+![Code Testing Flow](/assets/diagrams/architecture_diagram_5.svg)
 
 ## Type System Architecture
 
 ### Type Inference Pipeline (Dynamic Languages)
 
-```mermaid
-graph TB
-    TV[Test Value<br/>e.g., 42]
-    TI[Type Inferrer]
-    TS[Type String<br/>e.g., "int"]
-    TC[Test Case<br/>with Types]
-    
-    TV --> TI
-    TI --> TS
-    TS --> TC
-    
-    subgraph "Inference Rules"
-        R1[isinstance int → "int"]
-        R2[isinstance float → "double"]
-        R3[isinstance str → "string"]
-        R4[isinstance list → "List[T]"]
-    end
-    
-    TI --> R1
-    TI --> R2
-    TI --> R3
-    TI --> R4
-```
+![Type Inference Pipeline](/assets/diagrams/architecture_diagram_6.svg)
 
 ### Type Validation Pipeline (Static Languages)
 
-```mermaid
-graph TB
-    TC[Test Case]
-    TV[Type Validator]
-    VR[Validation Result]
-    
-    TC --> TV
-    TV --> VR
-    
-    subgraph "Validation Checks"
-        C1[parameter_types present?]
-        C2[expected_type present?]
-        C3[All params have types?]
-        C4[Types valid for language?]
-    end
-    
-    TV --> C1
-    TV --> C2
-    TV --> C3
-    TV --> C4
-    
-    VR --> |Pass| Execute
-    VR --> |Fail| Error[Type Error]
-```
+![Type Validation Pipeline](/assets/diagrams/architecture_diagram_7.svg)
 
 ## Execution Models
 
@@ -285,27 +199,7 @@ class CompiledLanguageExecutor:
 
 ### Error Hierarchy
 
-```mermaid
-graph TB
-    BE[BaseError]
-    GE[GenerationError]
-    TE[TestingError]
-    CE[ConfigurationError]
-    
-    SE[StructuralError]
-    RE[RuntimeError]
-    CME[CompilationError]
-    TOE[TimeoutError]
-    
-    BE --> GE
-    BE --> TE
-    BE --> CE
-    
-    TE --> SE
-    TE --> RE
-    TE --> CME
-    TE --> TOE
-```
+![Error Hierarchy](/assets/diagrams/architecture_diagram_8.svg)
 
 ### Error Propagation
 
@@ -317,33 +211,7 @@ graph TB
 
 ### Code Execution Isolation
 
-```mermaid
-graph TB
-    subgraph "Security Layers"
-        UC[User Code]
-        TH[Test Harness]
-        TMP[Temp Directory]
-        PROC[Subprocess]
-        OS[OS Process Isolation]
-    end
-    
-    UC --> TH
-    TH --> TMP
-    TMP --> PROC
-    PROC --> OS
-    
-    subgraph "Security Features"
-        TO[Timeout Limits]
-        MEM[Memory Limits]
-        FS[Filesystem Isolation]
-        NET[Network Isolation]
-    end
-    
-    PROC --> TO
-    PROC --> MEM
-    OS --> FS
-    OS --> NET
-```
+![Security Considerations](/assets/diagrams/architecture_diagram_9.svg)
 
 ### Security Best Practices
 
@@ -403,25 +271,7 @@ with CodeTester(code, test_cases) as tester:
 
 ### Scalability Patterns
 
-```mermaid
-graph TB
-    subgraph "Current"
-        S1[Single Process]
-        S2[Sequential Tests]
-    end
-    
-    subgraph "Future"
-        M1[Multi-Process]
-        M2[Parallel Tests]
-        M3[Distributed Workers]
-        M4[Result Cache]
-    end
-    
-    S1 --> M1
-    S2 --> M2
-    M1 --> M3
-    M2 --> M4
-```
+![Scalability Patterns](/assets/diagrams/architecture_system.svg)
 
 ## Next Steps
 

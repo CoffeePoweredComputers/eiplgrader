@@ -20,50 +20,7 @@ The language system provides a pluggable architecture for supporting multiple pr
 
 ## Architecture Diagram
 
-```mermaid
-graph TB
-    subgraph "User Interface"
-        CG[CodeGenerator]
-        CT[CodeTester]
-    end
-    
-    subgraph "Registry"
-        LR[LanguageRegistry]
-        LC[LanguageConfig]
-    end
-    
-    subgraph "Adapters"
-        LA[LanguageAdapter]
-        PA[PythonAdapter]
-        JA[JavaAdapter]
-        GA[GoAdapter]
-    end
-    
-    subgraph "Executors"
-        LE[LanguageExecutor]
-        ILE[InterpretedLanguageExecutor]
-        CLE[CompiledLanguageExecutor]
-        PE[PythonExecutor]
-        JE[JavaExecutor]
-        GE[GoExecutor]
-    end
-    
-    CG --> LR
-    CT --> LR
-    LR --> LA
-    LR --> LE
-    
-    PA --> LA
-    JA --> LA
-    GA --> LA
-    
-    PE --> ILE
-    JE --> CLE
-    GE --> CLE
-    
-    ILE --> LE
-    CLE --> LE
-```
+![Language System Architecture](/assets/diagrams/pluggable_architecture.svg)
 
 ## Base Classes
 
