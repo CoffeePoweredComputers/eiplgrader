@@ -1,0 +1,36 @@
+{
+  "multistructural": {
+    "description": "that counts words in a sentence. My plan is to first remove extra spaces and convert to lowercase for consistency, then split the sentence into individual words using spaces as separators, then count how many words we got, and return that count.",
+    "segmentation": [
+      {
+        "code": "def count_words(sentence):",
+        "explanation_portion": "that counts words in a sentence"
+      },
+      {
+        "code": "    sentence = sentence.strip().lower()",
+        "explanation_portion": "first remove extra spaces and convert to lowercase for consistency"
+      },
+      {
+        "code": "    words = sentence.split()",
+        "explanation_portion": "then split the sentence into individual words using spaces as separators"
+      },
+      {
+        "code": "    word_count = len(words)",
+        "explanation_portion": "then count how many words we got"
+      },
+      {
+        "code": "    return word_count",
+        "explanation_portion": "and return that count"
+      }
+    ]
+  },
+  "relational": {
+    "description": "Counts the number of words in a sentence",
+    "segmentation": [
+      {
+        "code": "def count_words(sentence):\n    sentence = sentence.strip().lower()\n    words = sentence.split()\n    word_count = len(words)\n    return word_count",
+        "explanation_portion": "Counts the number of words in a sentence"
+      }
+    ]
+  }
+}

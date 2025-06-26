@@ -1,0 +1,32 @@
+{
+  "multistructural": {
+    "description": "that takes a list of numbers and returns their sum. First I'll set up a total variable, then loop through all numbers adding each to the total, and finally return the result.",
+    "segmentation": [
+      {
+        "code": "def sum_numbers(numbers):",
+        "explanation_portion": "that takes a list of numbers"
+      },
+      {
+        "code": "    total = 0",
+        "explanation_portion": "First I'll set up a total variable"
+      },
+      {
+        "code": "    for number in numbers:\n        total += number",
+        "explanation_portion": "then loop through all numbers adding each to the total"
+      },
+      {
+        "code": "    return total",
+        "explanation_portion": "and finally return the result"
+      }
+    ]
+  },
+  "relational": {
+    "description": "Returns the sum of a list of numbers",
+    "segmentation": [
+      {
+        "code": "def sum_numbers(numbers):\n    total = 0\n    for number in numbers:\n        total += number\n    return total",
+        "explanation_portion": "Returns the sum of a list of numbers"
+      }
+    ]
+  }
+}

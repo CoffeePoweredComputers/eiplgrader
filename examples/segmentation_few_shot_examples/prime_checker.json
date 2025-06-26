@@ -1,0 +1,36 @@
+{
+  "multistructural": {
+    "description": "that checks if a number is prime. My approach is: first I handle the special cases where the number is less than 2 (not prime), then I check if the number is 2 (which is prime), then for other numbers I loop from 2 to the square root of the number checking if any number divides evenly (if so, it's not prime), and if no divisors are found then it's prime.",
+    "segmentation": [
+      {
+        "code": "def is_prime_detailed(n):",
+        "explanation_portion": "that checks if a number is prime"
+      },
+      {
+        "code": "    if n < 2:\n        return False",
+        "explanation_portion": "first I handle the special cases where the number is less than 2 (not prime)"
+      },
+      {
+        "code": "    if n == 2:\n        return True",
+        "explanation_portion": "then I check if the number is 2 (which is prime)"
+      },
+      {
+        "code": "    i = 2\n    while i * i <= n:\n        if n % i == 0:\n            return False\n        i += 1",
+        "explanation_portion": "then for other numbers I loop from 2 to the square root of the number checking if any number divides evenly (if so, it's not prime)"
+      },
+      {
+        "code": "    return True",
+        "explanation_portion": "and if no divisors are found then it's prime"
+      }
+    ]
+  },
+  "relational": {
+    "description": "Checks if a number is prime",
+    "segmentation": [
+      {
+        "code": "def is_prime_detailed(n):\n    if n < 2:\n        return False\n    if n == 2:\n        return True\n    i = 2\n    while i * i <= n:\n        if n % i == 0:\n            return False\n        i += 1\n    return True",
+        "explanation_portion": "Checks if a number is prime"
+      }
+    ]
+  }
+}

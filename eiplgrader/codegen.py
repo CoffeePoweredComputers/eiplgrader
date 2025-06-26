@@ -402,15 +402,24 @@ class OpenAIModelRequest(ModelRequest):
     ) -> List[Dict[str, str]]:
         """Format messages for segmentation request."""
 
-        task_description = (
-            "Task: Create a one-to-one mapping between each "
-            "segment of a given explanation and the group of lines in the "
-            "given code which that phrase is associated with. Not all of "
-            "the description needs to be used. Not all of the code needs to "
-            "be used. It's very important to only use the words in the "
-            "user's provided explanation. One segment can map to multiple "
-            f"lines.\n\nHere is the code:\n\n{code}"
-        )
+        task_description = f"""
+        # Task: 
+        Your tasks is to create a one-to-one mapping between each segment of a
+        students given explanation and the group of lines in the given piece of
+        code which that explanation is associated with. 
+
+        # Instructions
+        There are two types of segmentation approaches:
+        * Look at the explaination and if the explanation is describing implementation or subgoals split it into parts. 
+        * If it is describing the overall functionality of the entire pice of code do not split it into parts. 
+        * Each segment should be as small as possible but only used once in the mapping since one segment of explaination can only map to a single line or chunk of lines of code.
+        * Not all of the description needs to be used. Not all of the code needs to be used. 
+
+        # Constraints
+        * It's very important to only use the words in the user's provided explanation. 
+        * One segment can map to multiple lines. 
+        \n\nHere is the code:\n\n{code} """
+
         segmentation_messages = [
             {
                 "role": "system",

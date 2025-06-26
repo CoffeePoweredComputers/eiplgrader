@@ -1,0 +1,32 @@
+{
+  "multistructural": {
+    "description": "that finds the maximum value in a list. I start by setting the first element as the current maximum, then I go through each remaining element comparing it to the current max, and if I find a larger element I update the maximum, finally I return the maximum value found.",
+    "segmentation": [
+      {
+        "code": "def find_maximum(lst):",
+        "explanation_portion": "that finds the maximum value in a list"
+      },
+      {
+        "code": "    current_max = lst[0]",
+        "explanation_portion": "I start by setting the first element as the current maximum"
+      },
+      {
+        "code": "    for element in lst:\n        if element > current_max:\n            current_max = element",
+        "explanation_portion": "then I go through each remaining element comparing it to the current max, and if I find a larger element I update the maximum"
+      },
+      {
+        "code": "    return current_max",
+        "explanation_portion": "finally I return the maximum value found"
+      }
+    ]
+  },
+  "relational": {
+    "description": "Finds the maximum value in a list",
+    "segmentation": [
+      {
+        "code": "def find_maximum(lst):\n    current_max = lst[0]\n    for element in lst:\n        if element > current_max:\n            current_max = element\n    return current_max",
+        "explanation_portion": "Finds the maximum value in a list"
+      }
+    ]
+  }
+}
