@@ -1,35 +1,73 @@
-FROM python:3.13-slim
+# Multi-stage build for minimal final image size
+FROM python:3.13-alpine AS builder
 
-# Install supported language toolchains for sandboxed execution
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    # C/C++ compilers
-    gcc g++ \
-    # Go
-    golang \
-    # Haskell
+# Install build dependencies
+RUN apk add --no-cache \
+    gcc \
+    g++ \
+    musl-dev \
+    libffi-dev \
+    openssl-dev
+
+# Create wheels for Python dependencies
+WORKDIR /build
+COPY requirements-docker.txt .
+RUN pip wheel --no-cache-dir --no-deps --wheel-dir /wheels -r requirements-docker.txt
+
+# Final stage - minimal runtime image
+FROM python:3.13-alpine
+
+# Install runtime dependencies and language toolchains
+RUN apk add --no-cache \
+    # C/C++ runtime
+    gcc \
+    g++ \
+    musl-dev \
+    # Java runtime
+    openjdk17-jre \
+    # Node.js for JavaScript
+    nodejs \
+    # Go compiler
+    go \
+    # Haskell compiler
     ghc \
-    # Java
-    default-jdk \
-    # JavaScript (Node.js)
-    nodejs npm \
-    # Tools for sandboxing
-    curl \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    # Required for some Python packages
+    libffi \
+    openssl \
+    # Minimal shell utilities
+    bash
 
-# Create non-root user for security
-RUN useradd -m -u 1000 sandboxed
-USER sandboxed
+# Copy wheels from builder
+COPY --from=builder /wheels /wheels
 
-# Set working directory
-WORKDIR /home/sandboxed/app
+# Install Python dependencies from wheels
+RUN pip install --no-cache-dir --no-index --find-links=/wheels /wheels/* && \
+    rm -rf /wheels
 
-# Install eiplgrader
-RUN pip install --user eiplgrader
+# Create non-root user
+RUN adduser -D -u 1000 grader
 
-# Set PATH to include user-installed packages
-ENV PATH=/home/sandboxed/.local/bin:$PATH
+# Create working directory
+WORKDIR /app
+
+# Copy application code
+COPY eiplgrader/ ./eiplgrader/
+COPY docker_entrypoint.py .
+
+# Set ownership
+RUN chown -R grader:grader /app
+
+# Create temporary directory for code execution
+RUN mkdir -p /tmp/grader && \
+    chown grader:grader /tmp/grader
+
+# Switch to non-root user
+USER grader
+
+# Set environment variables
 ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV TMPDIR=/tmp/grader
 
-# Default command to run eiplgrader
-CMD ["python", "-c", "import eiplgrader; print('eiplgrader ready for sandboxed execution')"]
+# Entry point
+ENTRYPOINT ["python", "docker_entrypoint.py"]

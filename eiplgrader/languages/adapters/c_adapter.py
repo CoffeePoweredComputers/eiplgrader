@@ -55,7 +55,9 @@ CODE_BLOCK_PATTERNS = [
 
 # Comment patterns
 SINGLE_LINE_COMMENT_PATTERN = r"//.*"
-SINGLE_INLINE_COMMENT_PATTERN = r"\s*//.*"
+SINGLE_INLINE_COMMENT_PATTERN = (
+    r"\s*//.*"  # C-specific: removes entire comment-only lines (including indentation)
+)
 MULTI_LINE_COMMENT_PATTERN = r"/\*.*?\*/"
 
 # Whitespace normalization pattern
@@ -131,7 +133,7 @@ class CAdapter(LanguageAdapter):
         # Remove single-line comments
         code = re.sub(SINGLE_LINE_COMMENT_PATTERN, "", code)
 
-        # Remove lines that come inline after a comment like
+        # Remove lines that are entirely comments (with possible leading whitespace)
         code = re.sub(SINGLE_INLINE_COMMENT_PATTERN, "", code)
 
         # Remove multi-line comments

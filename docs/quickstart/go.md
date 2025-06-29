@@ -13,7 +13,7 @@ Get up and running with EiplGrader for Go in minutes.
 
 - Go 1.16+
 - Python 3.7+ (for running EiplGrader)
-- OpenAI API key (or compatible LLM API)
+- API key for your chosen provider (OpenAI, Meta/Llama, or Ollama local models)
 
 ## Installation
 
@@ -26,15 +26,25 @@ pip install eiplgrader
 ### 1. Generate Go Code
 
 ```python
+import os
 from eiplgrader.codegen import CodeGenerator
 
 # Initialize the code generator for Go
-api_key = "your-openai-api-key"
-generator = CodeGenerator(api_key, client_type="openai", language="go")
+# Choose your provider: "openai", "meta", "ollama"
+client_type = "openai"  # or "meta" for Llama
+api_key = os.getenv("OPENAI_API_KEY")  # or META_API_KEY for Meta
 
-# Generate code from a student's explanation
+generator = CodeGenerator(api_key, client_type=client_type, language="go")
+
+# Generate code from# Generate code from a student's explanation
 result = generator.generate_code(
     student_response="that filters even numbers from a slice of integers",
+    function_name="filterEven",
+    gen_type="cgbg"
+)
+result = generator.generate_code(
+    student_response="that filters even numbers from a slice of integers",
+    model="gpt-4o",  # or "Llama-4-Maverick-17B-128E-Instruct-FP8" for Meta
     function_name="filterEven",
     gen_type="cgbg"
 )
@@ -120,14 +130,14 @@ test_case = {
 
 ### Go Type Mappings
 
-| Generic Type | Go Type | Example |
-|-------------|---------|---------|
-| `int` | `int` | `42` |
-| `double` | `float64` | `3.14` |
-| `string` | `string` | `"hello"` |
-| `bool` | `bool` | `true` |
-| `List[int]` | `[]int` | `[]int{1, 2, 3}` |
-| `List[string]` | `[]string` | `[]string{"a", "b"}` |
+| Go Type | Example |
+|---------|---------|
+| `int` | `42` |
+| `float64` | `3.14` |
+| `string` | `"hello"` |
+| `bool` | `true` |
+| `[]int` | `[]int{1, 2, 3}` |
+| `[]string` | `[]string{"a", "b"}` |
 
 ### Automatic Import Management
 
@@ -140,82 +150,6 @@ import "encoding/json"  // For complex type output
 import "os"        // For error handling
 ```
 
-## Common Go Patterns
-
-### Slice Operations
-```python
-result = generator.generate_code(
-    student_response="that returns unique elements from a slice",
-    function_name="unique"
-)
-
-test_cases = [
-    {
-        "parameters": {"items": [1, 2, 2, 3, 3, 3, 4]},
-        "parameter_types": {"items": "[]int"},
-        "expected": [1, 2, 3, 4],
-        "expected_type": "[]int"
-    }
-]
-```
-
-### String Manipulation
-```python
-result = generator.generate_code(
-    student_response="that capitalizes the first letter of each word",
-    function_name="titleCase"
-)
-
-test_cases = [
-    {
-        "parameters": {"text": "hello world"},
-        "parameter_types": {"text": "string"},
-        "expected": "Hello World",
-        "expected_type": "string"
-    }
-]
-```
-
-### Map Operations
-```python
-result = generator.generate_code(
-    student_response="that counts word frequency in a string",
-    function_name="wordFrequency"
-)
-
-test_cases = [
-    {
-        "parameters": {"text": "hello world hello"},
-        "parameter_types": {"text": "string"},
-        "expected": {"hello": 2, "world": 1},
-        "expected_type": "map[string]int"
-    }
-]
-```
-
-### Working with Structs
-```python
-# Note: Struct handling is limited to basic types
-result = generator.generate_code(
-    student_response="that calculates the total price from a list of prices and quantities",
-    function_name="calculateTotal"
-)
-
-test_cases = [
-    {
-        "parameters": {
-            "prices": [10.0, 5.0, 15.0],
-            "quantities": [2, 3, 1]
-        },
-        "parameter_types": {
-            "prices": "[]float64",
-            "quantities": "[]int"
-        },
-        "expected": 50.0,
-        "expected_type": "float64"
-    }
-]
-```
 
 ## Multiple Return Values
 
@@ -224,6 +158,7 @@ Go supports multiple return values, but test cases check the first return value:
 ```python
 result = generator.generate_code(
     student_response="that divides two numbers and returns quotient and remainder",
+    model="gpt-4o",  # or your chosen model
     function_name="divmod"
 )
 
@@ -246,6 +181,7 @@ Go's error handling is unique, but the test harness focuses on the primary retur
 # Generate code that might return an error
 result = generator.generate_code(
     student_response="that parses an integer from a string",
+    model="gpt-4o",  # or your chosen model
     function_name="parseInteger"
 )
 
@@ -281,6 +217,7 @@ test_case = {
 ```python
 result = generator.generate_code(
     student_response="that converts a slice of strings to integers",
+    model="gpt-4o",  # or your chosen model
     function_name="stringsToInts"
 )
 
@@ -298,6 +235,7 @@ test_cases = [
 ```python
 result = generator.generate_code(
     student_response="that counts unicode characters in a string",
+    model="gpt-4o",  # or your chosen model
     function_name="countRunes"
 )
 

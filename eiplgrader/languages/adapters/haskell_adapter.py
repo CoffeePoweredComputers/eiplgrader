@@ -51,8 +51,8 @@ CODE_BLOCK_PATTERNS = [
 ]
 
 # Comment patterns
-SINGLE_LINE_COMMENT_DELIMITER = "--"
-BLOCK_COMMENT_PATTERN = r"{-.*?-}"
+SINGLE_LINE_COMMENT_PATTERN = r"--.*"
+MULTI_LINE_COMMENT_PATTERN = r"{-.*?-}"
 
 # Whitespace normalization pattern
 EXTRA_BLANK_LINES = r"\n\s*\n"
@@ -126,7 +126,7 @@ class HaskellAdapter(LanguageAdapter):
         """Normalize Haskell code by removing comments and standardizing format."""
 
         # Remove {- -} style block comments
-        code = re.sub(BLOCK_COMMENT_PATTERN, "", code, flags=re.DOTALL)
+        code = re.sub(MULTI_LINE_COMMENT_PATTERN, "", code, flags=re.DOTALL)
 
         # Replace all instances of two or more blank lines with 1
         code = re.sub(EXTRA_BLANK_LINES, "\n", code)

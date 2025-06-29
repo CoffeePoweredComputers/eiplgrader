@@ -40,12 +40,12 @@ Detailed information about each supported language.
 - Type system requirements
 - Performance characteristics
 
-
+### 🐳 [Docker Deployment](docker.html)
 Run EiplGrader securely in containerized environments.
-- Security benefits
-
-- Batch processing
-- Kubernetes deployment
+- Security hardening and isolation
+- Production deployment patterns
+- Batch processing strategies
+- Kubernetes and orchestration
 
 ### ⚠️ [Error Handling](errors.html)
 Understand and resolve common errors.
@@ -63,11 +63,11 @@ Understand and resolve common errors.
 
 ### For Advanced Users
 1. Dive into [Advanced Features](advanced-features.html)
-
+2. Implement [Docker Deployment](docker.html) for scale
 3. Master [Error Handling](errors.html) patterns
 
 ### For System Administrators
-
+1. Set up [Docker Deployment](docker.html)
 2. Review security in [Error Handling](errors.html)
 3. Understand scaling options
 

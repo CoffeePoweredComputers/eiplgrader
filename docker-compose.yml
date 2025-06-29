@@ -1,0 +1,75 @@
+version: '3.8'
+
+services:
+  # Main eiplgrader service
+  grader:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: eiplgrader:latest
+    container_name: eiplgrader-test
+    environment:
+      # These will be populated from .env file or environment
+      - API_KEY
+      - STUDENT_RESPONSE
+      - TEST_CASES
+      - LANGUAGE
+      - FUNCTION_NAME
+      - MODEL
+      - CLIENT_TYPE
+      - GEN_TYPE=${GEN_TYPE:-cgbg}
+      - NUM_GENERATIONS=${NUM_GENERATIONS:-1}
+      - TEMPERATURE=${TEMPERATURE:-0.0}
+      - SEGMENTATION=${SEGMENTATION:-no}
+      - SEGMENTATION_FILE=${SEGMENTATION_FILE:-}
+      - INPLACE_MODE=${INPLACE_MODE:-0}
+      - PARAMS=${PARAMS:-}
+      - ASSUMPTIONS=${ASSUMPTIONS:-}
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+    # Security settings
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=100m
+    network_mode: none
+    user: grader
+
+  # Example Django integration service
+  django-example:
+    image: python:3.13-alpine
+    container_name: django-grader-example
+    volumes:
+      - ./docs/DOCKER_DJANGO_INTEGRATION_PLAN.md:/app/integration.md:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - DJANGO_SETTINGS_MODULE=example.settings
+      - EIPLGRADER_API_KEY=${API_KEY}
+    command: |
+      sh -c "echo 'Django integration example - see /app/integration.md for details'"
+    depends_on:
+      - grader
+
+  # Redis for async task queue (Django Celery example)
+  redis:
+    image: redis:7-alpine
+    container_name: grader-redis
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+# Example environment file (.env):
+# API_KEY=your-api-key
+# STUDENT_RESPONSE="that adds two numbers and returns the result"
+# TEST_CASES='[{"parameters": {"a": 1, "b": 2}, "expected": 3}]'
+# LANGUAGE=python
+# FUNCTION_NAME=add_numbers
+# MODEL=gpt-4
+# CLIENT_TYPE=openai

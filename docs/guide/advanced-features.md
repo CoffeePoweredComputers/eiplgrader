@@ -18,7 +18,7 @@ Generate multiple implementations of the same function to find the best one.
 ```python
 from eiplgrader.codegen import CodeGenerator
 
-generator = CodeGenerator(api_key, client_type="openai", language="python")
+generator = CodeGenerator(api_key, client_type="openai", language="python")  # or "meta" for Llama
 
 # Generate 5 different implementations
 result = generator.generate_code(
@@ -316,7 +316,7 @@ Choose different LLM models for generation.
 
 ```python
 # Use different models
-models = ["gpt-4o", "gpt-4o-turbo", "gpt-3.5-turbo"]
+models = ["gpt-4o", "gpt-4", "gpt-3.5-turbo"]  # or Llama models for Meta
 
 for model in models:
     result = generator.generate_code(
@@ -534,5 +534,5 @@ print(f"Total Score: {grade_report['total_score']}/100")
 
 - Review [Test Case Format](test-cases.md) for complex test scenarios
 - Explore [Language Support](languages.md) for language-specific advanced features
-
-- See [Developer Documentation](../developer/) for extending EiplGrader
+- Deploy with [Docker](docker.md) for production use
+- Check [Error Handling](errors.md) for debugging tips

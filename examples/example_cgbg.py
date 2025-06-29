@@ -5,8 +5,8 @@ EiplGrader CGBG (Code Generation Based Grading) Examples
 This file demonstrates Code Generation Based Grading (CGBG) - generating code 
 from natural language descriptions across multiple programming languages.
 
-Setup: Set your OPENAI_API_KEY environment variable or create a .env file with:
-OPENAI_API_KEY=your_api_key_here
+Setup: Set your API key environment variable or create a .env file.
+See .env.example for all supported providers and their API keys.
 """
 
 # Set the package to be the package in the parent directory
@@ -20,10 +20,11 @@ import dotenv
 
 # Load environment variables
 dotenv.load_dotenv()
-api_key = os.getenv("OPENAI_API_KEY")
+#api_key = os.getenv("OPENAI_API_KEY")
+api_key = os.getenv("META_API_KEY")
 
 if not api_key:
-    print("ERROR: Please set OPENAI_API_KEY environment variable")
+    print("ERROR: Please set META_API_KEY environment variable")
     exit(1)
 
 print("="*80)
@@ -39,10 +40,11 @@ print("="*80)
 print("\n1. Basic Python CGBG - Simple Math Function")
 print("-" * 50)
 
-code_generator = CodeGenerator(api_key, language="python")
+code_generator = CodeGenerator(api_key, language="python", client_type="meta")
 
 result = code_generator.generate_code(
     student_response="that adds two numbers and returns the result",
+    model="Llama-4-Maverick-17B-128E-Instruct-FP8",
     function_name="add_numbers",
     gen_type="cgbg",  # Explicitly specify CGBG mode
     temperature=0.0   # Deterministic output
@@ -76,6 +78,7 @@ print("-" * 50)
 
 result = code_generator.generate_code(
     student_response="that takes a list of numbers and returns the sum of all even numbers",
+    model="Llama-4-Maverick-17B-128E-Instruct-FP8",
     function_name="sum_even_numbers",
     temperature=0.0
 )
@@ -106,10 +109,11 @@ print(f"Tests passed: {test_result.successes}/{test_result.testsRun}")
 print("\n\n3. JavaScript CGBG - String Manipulation")
 print("-" * 50)
 
-js_generator = CodeGenerator(api_key, language="javascript")
+js_generator = CodeGenerator(api_key, language="javascript", client_type="meta")
 
 result = js_generator.generate_code(
     student_response="that counts the number of vowels in a string (a, e, i, o, u)",
+    model="Llama-4-Maverick-17B-128E-Instruct-FP8",
     function_name="countVowels",
     temperature=0.0
 )
@@ -141,10 +145,11 @@ print("\n\n4. Java CGBG - Array Operations (REQUIRES TYPE ANNOTATIONS)")
 print("-" * 50)
 print("Note: Java is statically typed and requires explicit type annotations")
 
-java_generator = CodeGenerator(api_key, language="java")
+java_generator = CodeGenerator(api_key, language="java", client_type="meta")
 
 result = java_generator.generate_code(
     student_response="that finds the second largest number in an array of integers",
+    model="Llama-4-Maverick-17B-128E-Instruct-FP8",
     function_name="findSecondLargest",
     temperature=0.0
 )
@@ -174,10 +179,11 @@ print("\n\n5. C CGBG - Algorithm Implementation (REQUIRES TYPE ANNOTATIONS)")
 print("-" * 50)
 print("Note: C is statically typed and requires explicit type annotations")
 
-c_generator = CodeGenerator(api_key, language="c")
+c_generator = CodeGenerator(api_key, language="c", client_type="meta")
 
 result = c_generator.generate_code(
     student_response="that implements bubble sort to sort an array of integers in ascending order",
+    model="Llama-4-Maverick-17B-128E-Instruct-FP8",
     function_name="bubbleSort",
     temperature=0.0
 )
@@ -229,10 +235,11 @@ print("\n\n6. C++ CGBG - STL Vector Operations (REQUIRES TYPE ANNOTATIONS)")
 print("-" * 50)
 print("Note: C++ is statically typed and requires explicit type annotations")
 
-cpp_generator = CodeGenerator(api_key, language="cpp")
+cpp_generator = CodeGenerator(api_key, language="cpp", client_type="meta")
 
 result = cpp_generator.generate_code(
     student_response="that takes a vector of integers and returns a new vector containing only the unique elements in sorted order using STL algorithms",
+    model="Llama-4-Maverick-17B-128E-Instruct-FP8",
     function_name="getUniqueElements",
     temperature=0.0
 )
@@ -262,10 +269,11 @@ print("7. Go CGBG - String Processing (REQUIRES TYPE ANNOTATIONS)")
 print("-" * 50)
 print("Note: Go is statically typed and requires explicit type annotations")
 
-go_generator = CodeGenerator(api_key, language="go")
+go_generator = CodeGenerator(api_key, language="go", client_type="meta")
 
 result = go_generator.generate_code(
     student_response="that checks if a string is a palindrome (reads the same forwards and backwards)",
+    model="Llama-4-Maverick-17B-128E-Instruct-FP8",
     function_name="isPalindrome",
     temperature=0.0
 )
@@ -309,10 +317,11 @@ print("\n\n8. Haskell CGBG - Functional Programming (REQUIRES TYPE ANNOTATIONS)"
 print("-" * 50)
 print("Note: Haskell is statically typed and requires explicit Haskell type annotations")
 
-haskell_generator = CodeGenerator(api_key, language="haskell")
+haskell_generator = CodeGenerator(api_key, language="haskell", client_type="meta")
 
 result = haskell_generator.generate_code(
     student_response="that takes a list of integers and returns the list with all elements that are prime doubled",
+    model="Llama-4-Maverick-17B-128E-Instruct-FP8",
     function_name="doubleAll",
     temperature=0.0
 )
@@ -344,6 +353,7 @@ print("-" * 50)
 
 result = code_generator.generate_code(
     student_response="that calculates the factorial of a non-negative integer",
+    model="Llama-4-Maverick-17B-128E-Instruct-FP8",
     function_name="factorial",
     num_to_gen=3,  # Generate 3 different implementations
     temperature=0.0

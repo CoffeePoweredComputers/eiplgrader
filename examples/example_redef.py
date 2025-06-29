@@ -6,8 +6,8 @@ This file demonstrates Function Redefinition mode - generating code from
 function signatures and assumptions about parameters. This is useful when
 students are asked to implement a specific function signature.
 
-Setup: Set your OPENAI_API_KEY environment variable or create a .env file with:
-OPENAI_API_KEY=your_api_key_here
+Setup: Set your API key environment variable or create a .env file.
+See .env.example for all supported providers and their API keys.
 """
 
 # Set the package to be the package in the parent directory
@@ -21,10 +21,31 @@ import dotenv
 
 # Load environment variables
 dotenv.load_dotenv()
-api_key = os.getenv("OPENAI_API_KEY")
 
-if not api_key:
-    print("ERROR: Please set OPENAI_API_KEY environment variable")
+# Choose your provider and get the appropriate API key
+# Options: "openai", "meta", "ollama"
+client_type = "openai"  # Change this to your preferred provider
+model = "gpt-4o"  # Default model for OpenAI
+
+# Get the appropriate API key based on the provider
+if client_type == "openai":
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        print("ERROR: Please set OPENAI_API_KEY environment variable")
+        print("See .env.example for setup instructions")
+        exit(1)
+elif client_type == "meta":
+    api_key = os.getenv("META_API_KEY")
+    model = "Llama-4-Maverick-17B-128E-Instruct-FP8"  # Default model for Meta
+    if not api_key:
+        print("ERROR: Please set META_API_KEY environment variable")
+        print("See .env.example for setup instructions")
+        exit(1)
+elif client_type == "ollama":
+    api_key = "not-needed"  # Ollama doesn't need an API key
+    model = "codellama:instruct"  # Default model for Ollama
+else:
+    print(f"ERROR: Unsupported client_type: {client_type}")
     exit(1)
 
 print("="*80)
@@ -37,11 +58,12 @@ print("="*80)
 print("\n1. Basic Python Function Redefinition")
 print("-" * 50)
 
-code_generator = CodeGenerator(api_key, language="python")
+code_generator = CodeGenerator(api_key, client_type=client_type, language="python")
 
 # In redef mode, student_response is the function name to redefine
 result = code_generator.generate_code(
     gen_type="redef",
+    model=model,
     student_response="calculate_area",
     params="length: int, width: int",
     assumptions="This function takes two integers which are positive."
@@ -73,10 +95,11 @@ print(f"Tests passed: {test_result.successes}/{test_result.testsRun}")
 print("\n\n2. JavaScript Function Redefinition")
 print("-" * 50)
 
-js_generator = CodeGenerator(api_key, language="javascript")
+js_generator = CodeGenerator(api_key, client_type=client_type, language="javascript")
 
 result = js_generator.generate_code(
     student_response="validateEmail",  # Function name
+    model=model,
     gen_type="redef",
     params="x: string",  
     assumptions="This takes a string containing only alphanumeric characters"
@@ -108,10 +131,11 @@ print(f"Tests passed: {test_result.successes}/{test_result.testsRun}")
 print("\n\n3. Java Function Redefinition with Complex Signature")
 print("-" * 50)
 
-java_generator = CodeGenerator(api_key, language="java")
+java_generator = CodeGenerator(api_key, client_type=client_type, language="java")
 
 result = java_generator.generate_code(
     student_response="mergeArrays",  # Function name
+    model=model,
     gen_type="redef",
     params="arr1: int[], arr2: int[]",  
     assumptions="Takes two sorted integer arrays and returns an array."
@@ -143,7 +167,7 @@ print(f"Tests passed: {test_result.successes}/{test_result.testsRun}")
 print("\n\n4. C Function Redefinition")
 print("-" * 50)
 
-c_generator = CodeGenerator(api_key, language="c")
+c_generator = CodeGenerator(api_key, client_type=client_type, language="c")
 
 test_cases = [
         {"parameters": {"str": "hello world", "c": "o"}, "parameter_types": {"str": "char*", "c": "char"}, "expected": 2, "expected_type": "int"},
@@ -153,6 +177,7 @@ test_cases = [
 
 result = c_generator.generate_code(
     student_response="count_characters",  # Function name
+    model=model,
     gen_type="redef",
     params="char* str, char c",  
     assumptions="Takes a string and a character"
@@ -180,6 +205,7 @@ print("-" * 50)
 
 result = code_generator.generate_code(
     student_response="is_prime",  # Function name
+    model=model,
     gen_type="redef",
     params="n: int",  
     assumptions="Takes an integer n that is positive in value",
@@ -224,7 +250,7 @@ for i, code in enumerate(generated_codes):
 print("\n\n6. Go Function Redefinition")
 print("-" * 50)
 
-go_generator = CodeGenerator(api_key, language="go")
+go_generator = CodeGenerator(api_key, client_type=client_type, language="go")
 
 test_cases = [
         {"parameters": {"arr1": [1, 2, 3], "arr2": [2, 3, 4]}, "parameter_types": {"arr1": "[]int", "arr2": "[]int"}, "expected": [2, 3], "expected_type": "[]int"},
@@ -235,6 +261,7 @@ test_cases = [
 
 result = go_generator.generate_code(
     student_response="findCommonElements",  # Function name
+    model=model,
     gen_type="redef",
     params="arr1 []int, arr2 []int",  
     assumptions="Each of the arrays contains integers. One or both may be empty"

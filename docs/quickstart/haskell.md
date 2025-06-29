@@ -13,7 +13,7 @@ Get up and running with EiplGrader for Haskell in minutes.
 
 - GHC (Glasgow Haskell Compiler) 8.0+
 - Python 3.7+ (for running EiplGrader)
-- OpenAI API key (or compatible LLM API)
+- API key for your chosen provider (OpenAI, Meta/Llama, or Ollama local models)
 
 ## Installation
 
@@ -26,15 +26,25 @@ pip install eiplgrader
 ### 1. Generate Haskell Code
 
 ```python
+import os
 from eiplgrader.codegen import CodeGenerator
 
 # Initialize the code generator for Haskell
-api_key = "your-openai-api-key"
-generator = CodeGenerator(api_key, client_type="openai", language="haskell")
+# Choose your provider: "openai", "meta", "ollama"
+client_type = "openai"  # or "meta" for Llama
+api_key = os.getenv("OPENAI_API_KEY")  # or META_API_KEY for Meta
 
-# Generate code from a student's explanation
+generator = CodeGenerator(api_key, client_type=client_type, language="haskell")
+
+# Generate code from# Generate code from a student's explanation
 result = generator.generate_code(
     student_response="that doubles each element in a list",
+    function_name="doubleList",
+    gen_type="cgbg"
+)
+result = generator.generate_code(
+    student_response="that doubles each element in a list",
+    model="gpt-4o",  # or "Llama-4-Maverick-17B-128E-Instruct-FP8" for Meta
     function_name="doubleList",
     gen_type="cgbg"
 )
@@ -98,6 +108,7 @@ Haskell is purely functional, so all functions are pure by default:
 # Generate pure functions
 result = generator.generate_code(
     student_response="that calculates factorial using recursion",
+    model="gpt-4o",  # or your chosen model
     function_name="factorial"
 )
 
@@ -130,14 +141,14 @@ test_case = {
 
 ### Haskell Type Mappings
 
-| Generic Type | Haskell Type | Example |
-|-------------|--------------|---------|
-| `int` | `Int` | `42` |
-| `double` | `Double` | `3.14` |
-| `string` | `String` | `"hello"` |
-| `bool` | `Bool` | `True` |
-| `List[int]` | `[Int]` | `[1, 2, 3]` |
-| `List[string]` | `[String]` | `["a", "b"]` |
+| Haskell Type | Example |
+|--------------|---------|
+| `Int` | `42` |
+| `Double` | `3.14` |
+| `String` | `"hello"` |
+| `Bool` | `True` |
+| `[Int]` | `[1, 2, 3]` |
+| `[String]` | `["a", "b"]` |
 
 ### Type Signatures
 
@@ -157,87 +168,6 @@ greet :: String -> String
 greet name = "Hello, " ++ name
 ```
 
-## Common Haskell Patterns
-
-### List Comprehensions
-```python
-result = generator.generate_code(
-    student_response="that generates all even squares up to n",
-    function_name="evenSquares"
-)
-
-test_cases = [
-    {
-        "parameters": {"n": 20},
-        "parameter_types": {"n": "Int"},
-        "expected": [4, 16],
-        "expected_type": "[Int]"
-    }
-]
-```
-
-### Higher-Order Functions
-```python
-result = generator.generate_code(
-    student_response="that filters a list keeping only positive numbers",
-    function_name="keepPositive"
-)
-
-test_cases = [
-    {
-        "parameters": {"nums": [-2, -1, 0, 1, 2, 3]},
-        "parameter_types": {"nums": "[Int]"},
-        "expected": [1, 2, 3],
-        "expected_type": "[Int]"
-    }
-]
-```
-
-### Pattern Matching
-```python
-result = generator.generate_code(
-    student_response="that returns the head of a list or a default value if empty",
-    function_name="safeHead"
-)
-
-test_cases = [
-    {
-        "parameters": {"xs": [1, 2, 3], "default": 0},
-        "parameter_types": {"xs": "[Int]", "default": "Int"},
-        "expected": 1,
-        "expected_type": "Int"
-    },
-    {
-        "parameters": {"xs": [], "default": 0},
-        "parameter_types": {"xs": "[Int]", "default": "Int"},
-        "expected": 0,
-        "expected_type": "Int"
-    }
-]
-```
-
-### Recursion
-```python
-result = generator.generate_code(
-    student_response="that calculates the nth Fibonacci number",
-    function_name="fibonacci"
-)
-
-test_cases = [
-    {
-        "parameters": {"n": 0},
-        "parameter_types": {"n": "Int"},
-        "expected": 0,
-        "expected_type": "Int"
-    },
-    {
-        "parameters": {"n": 10},
-        "parameter_types": {"n": "Int"},
-        "expected": 55,
-        "expected_type": "Int"
-    }
-]
-```
 
 ## Working with Different Types
 
@@ -245,6 +175,7 @@ test_cases = [
 ```python
 result = generator.generate_code(
     student_response="that reverses each word in a sentence",
+    model="gpt-4o",  # or your chosen model
     function_name="reverseWords"
 )
 
@@ -263,6 +194,7 @@ test_cases = [
 # Note: Tuple handling is limited in test cases
 result = generator.generate_code(
     student_response="that returns the minimum and maximum of a list",
+    model="gpt-4o",  # or your chosen model
     function_name="minMax"
 )
 
@@ -282,6 +214,7 @@ test_cases = [
 # Basic types work best with the test harness
 result = generator.generate_code(
     student_response="that counts occurrences of each element",
+    model="gpt-4o",  # or your chosen model
     function_name="countElements"
 )
 
@@ -303,6 +236,7 @@ Haskell's lazy evaluation allows working with infinite lists:
 ```python
 result = generator.generate_code(
     student_response="that takes the first n prime numbers",
+    model="gpt-4o",  # or your chosen model
     function_name="firstPrimes"
 )
 

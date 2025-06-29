@@ -61,8 +61,17 @@ class CodeTestResult:
         return self.failures == 0 and self.errors == 0
 
     @property
+    def tests_run(self):
+        """Number of tests that were run (snake_case property)."""
+        return len(self.test_results)
+
+    @property
     def testsRun(self):
-        """Compatibility property for existing code."""
+        """Compatibility property for existing code (camelCase - kept for backwards compatibility).
+
+        Note: This property uses camelCase naming for historical reasons and backwards compatibility
+        with existing examples and external code. New code should prefer the snake_case 'tests_run' property.
+        """
         return len(self.test_results)
 
     def __str__(self):

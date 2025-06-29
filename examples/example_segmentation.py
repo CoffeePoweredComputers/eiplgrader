@@ -6,8 +6,8 @@ This file demonstrates Segmentation functionality - mapping student explanations
 to specific parts of generated code. This is useful for understanding how
 students conceptualize problem-solving steps.
 
-Setup: Set your OPENAI_API_KEY environment variable or create a .env file with:
-OPENAI_API_KEY=your_api_key_here
+Setup: Set your API key environment variable or create a .env file.
+See .env.example for all supported providers and their API keys.
 
 Note: Segmentation requires a few-shot learning file for best results.
 """
@@ -24,10 +24,31 @@ import json
 
 # Load environment variables
 dotenv.load_dotenv()
-api_key = os.getenv("OPENAI_API_KEY")
 
-if not api_key:
-    print("ERROR: Please set OPENAI_API_KEY environment variable")
+# Choose your provider and get the appropriate API key
+# Options: "openai", "meta", "ollama"
+client_type = "meta"  # Default to Meta for this example
+model = "Llama-4-Maverick-17B-128E-Instruct-FP8"  # Default model
+
+# Get the appropriate API key based on the provider
+if client_type == "openai":
+    api_key = os.getenv("OPENAI_API_KEY")
+    model = "gpt-4o"
+    if not api_key:
+        print("ERROR: Please set OPENAI_API_KEY environment variable")
+        print("See .env.example for setup instructions")
+        exit(1)
+elif client_type == "meta":
+    api_key = os.getenv("META_API_KEY")
+    if not api_key:
+        print("ERROR: Please set META_API_KEY environment variable")
+        print("See .env.example for setup instructions")
+        exit(1)
+elif client_type == "ollama":
+    api_key = "not-needed"  # Ollama doesn't need an API key
+    model = "codellama:instruct"
+else:
+    print(f"ERROR: Unsupported client_type: {client_type}")
     exit(1)
 
 print("="*80)
@@ -43,12 +64,13 @@ few_shot_dir = "segmentation_few_shot_examples"
 print("\n\n1.a. Basic Segmentation - List Sum Function -- Multistructural")
 print("-" * 50)
 
-code_generator = CodeGenerator(api_key, language="python")
+code_generator = CodeGenerator(api_key, client_type=client_type, language="python")
 
 # Note: Segmentation only works with CGBG (gen_type="cgbg")
 response="that takes a list of numbers and returns their sum. First I'll set up a total variable, then loop through all numbers adding each to the total, and finally return the result."
 result = code_generator.generate_code(
     student_response=response,
+    model=model,
     function_name="sum_numbers",
     gen_type="cgbg",  # Segmentation only works with CGBG
     segmentation_few_shot_file=f"{few_shot_dir}/sum_numbers.json",
@@ -93,12 +115,13 @@ print(f"\nTests passed: {test_result.successes}/{test_result.testsRun}")
 print("\n\n1.a. Basic Segmentation - List Sum Function -- Relational")
 print("-" * 50)
 
-code_generator = CodeGenerator(api_key, language="python")
+code_generator = CodeGenerator(api_key, client_type=client_type, language="python")
 
 # Note: Segmentation only works with CGBG (gen_type="cgbg")
 response="Returns the sum of a list of numbers"
 result = code_generator.generate_code(
     student_response=response,
+    model=model,
     function_name="sum_numbers",
     gen_type="cgbg",  # Segmentation only works with CGBG
     segmentation_few_shot_file=f"{few_shot_dir}/sum_numbers.json",
@@ -147,6 +170,7 @@ print("-" * 50)
 response="""that checks if a number is prime. My approach is: first I handle the special cases where the number is less than 2 (not prime), then I check if the number is 2 (which is prime), then for other numbers I loop from 2 to the square root of the number checking if any number divides evenly (if so, it's not prime), and if no divisors are found then it's prime."""
 result = code_generator.generate_code(
     student_response=response,
+    model=model,
     function_name="is_prime_detailed",
     gen_type="cgbg",
     segmentation_few_shot_file=f"{few_shot_dir}/prime_checker.json",
@@ -195,6 +219,7 @@ print("-" * 50)
 response="""that finds the maximum value in a list. I start by setting the first element as the current maximum, then I go through each remaining element comparing it to the current max, and if I find a larger element I update the maximum, finally I return the maximum value found."""
 result = code_generator.generate_code(
     student_response="""that finds the maximum value in a list. I start by setting the first element as the current maximum, then I go through each remaining element comparing it to the current max, and if I find a larger element I update the maximum, finally I return the maximum value found.""",
+    model=model,
     function_name="find_maximum",
     gen_type="cgbg",
     segmentation_few_shot_file=f"{few_shot_dir}/find_maximum.json",
@@ -245,6 +270,7 @@ print("-" * 50)
 response="""that counts words in a sentence. My plan is to first remove extra spaces and convert to lowercase for consistency, then split the sentence into individual words using spaces as separators, then count how many words we got, and return that count."""
 result = code_generator.generate_code(
     student_response=response,
+    model=model,
     function_name="count_words",
     gen_type="cgbg",
     segmentation_few_shot_file=f"{few_shot_dir}/count_words.json"
@@ -288,6 +314,7 @@ print("-" * 50)
 response="""I start with the full array, then I make multiple passes through the array, in each pass I compare adjacent elements and swap them if they're in wrong order, after each pass the largest element bubbles to the end, I continue until no more swaps are needed, then return the sorted array."""
 result = code_generator.generate_code(
     student_response=response,
+    model=model,
     function_name="bubble_sort",
     gen_type="cgbg",
     segmentation_few_shot_file=f"{few_shot_dir}/bubble_sort.json"
@@ -326,6 +353,7 @@ print("-" * 50)
 response="The function implements the bubble sort algorithm"
 result = code_generator.generate_code(
     student_response=response,
+    model=model,
     function_name="bubble_sort",
     gen_type="cgbg",
     segmentation_few_shot_file=f"{few_shot_dir}/bubble_sort.json"
