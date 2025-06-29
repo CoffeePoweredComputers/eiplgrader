@@ -1,28 +1,14 @@
-# Multi-stage build for minimal final image size
-FROM python:3.13-alpine AS builder
+# Single-stage build for reliability
+FROM python:3.13-alpine
 
-# Install build dependencies
+# Install build and runtime dependencies and language toolchains
 RUN apk add --no-cache \
+    # Build dependencies
     gcc \
     g++ \
     musl-dev \
     libffi-dev \
-    openssl-dev
-
-# Create wheels for Python dependencies
-WORKDIR /build
-COPY requirements-docker.txt .
-RUN pip wheel --no-cache-dir --no-deps --wheel-dir /wheels -r requirements-docker.txt
-
-# Final stage - minimal runtime image
-FROM python:3.13-alpine
-
-# Install runtime dependencies and language toolchains
-RUN apk add --no-cache \
-    # C/C++ runtime
-    gcc \
-    g++ \
-    musl-dev \
+    openssl-dev \
     # Java runtime
     openjdk17-jre \
     # Node.js for JavaScript
@@ -37,12 +23,10 @@ RUN apk add --no-cache \
     # Minimal shell utilities
     bash
 
-# Copy wheels from builder
-COPY --from=builder /wheels /wheels
-
-# Install Python dependencies from wheels
-RUN pip install --no-cache-dir --no-index --find-links=/wheels /wheels/* && \
-    rm -rf /wheels
+# Install Python dependencies directly
+COPY requirements-docker.txt .
+RUN pip install --no-cache-dir -r requirements-docker.txt && \
+    rm requirements-docker.txt
 
 # Create non-root user
 RUN adduser -D -u 1000 grader
