@@ -29,14 +29,14 @@ Errors related to setup and configuration.
 
 **Error:**
 ```
-OpenAI API key not found or invalid
+API key not found or invalid
 ```
 
 **Solutions:**
 ```python
 # Set via environment variable
 import os
-os.environ['OPENAI_API_KEY'] = 'your-key-here'
+os.environ['OPENAI_API_KEY'] = 'your-key-here'  # or META_API_KEY for Llama
 
 # Or pass directly
 generator = CodeGenerator(api_key='your-key-here')
@@ -86,7 +86,7 @@ result = generator.generate_code(
 
 **Error:**
 ```
-Model 'gpt-5' not found. Available models: ['gpt-4o', 'gpt-3.5-turbo']
+Model 'invalid-model' not found. Check available models for your provider.
 ```
 
 **Solution:**
@@ -94,7 +94,7 @@ Model 'gpt-5' not found. Available models: ['gpt-4o', 'gpt-3.5-turbo']
 # Use available model
 result = generator.generate_code(
     student_response="description",
-    model="gpt-4o"  # Use available model
+    model="gpt-4o"  # Use a valid model for your provider
 )
 ```
 

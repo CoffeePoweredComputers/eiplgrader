@@ -13,7 +13,7 @@ Get up and running with EiplGrader for C and C++ in minutes.
 
 - GCC/G++ compiler
 - Python 3.7+ (for running EiplGrader)
-- OpenAI API key (or compatible LLM API)
+- API key for your chosen provider (OpenAI, Meta/Llama, or Ollama local models)
 
 ## Installation
 
@@ -26,15 +26,20 @@ pip install eiplgrader
 ### 1. Generate C Code
 
 ```python
+import os
 from eiplgrader.codegen import CodeGenerator
 
 # Initialize the code generator for C
-api_key = "your-openai-api-key"
-generator = CodeGenerator(api_key, client_type="openai", language="c")
+# Choose your provider: "openai", "meta", "ollama"
+client_type = "openai"  # or "meta" for Llama
+api_key = os.getenv("OPENAI_API_KEY")  # or META_API_KEY for Meta
 
-# Generate code from a student's explanation
+generator = CodeGenerator(api_key, client_type=client_type, language="c")
+
+# Generate code from# Generate code from a student's explanation
 result = generator.generate_code(
     student_response="that counts the number of vowels in a string",
+    model="gpt-4o",  # or "Llama-4-Maverick-17B-128E-Instruct-FP8" for Meta
     function_name="countVowels",
     gen_type="cgbg"
 )
@@ -101,11 +106,12 @@ print(f"Tests passed: {results.successes}/{results.testsRun}")
 
 ```python
 # Initialize for C++
-generator = CodeGenerator(api_key, client_type="openai", language="cpp")
+generator = CodeGenerator(api_key, client_type=client_type, language="cpp")
 
 # Generate code
 result = generator.generate_code(
     student_response="that removes duplicates from a vector of integers",
+    model="gpt-4o",  # or "Llama-4-Maverick-17B-128E-Instruct-FP8" for Meta
     function_name="removeDuplicates",
     gen_type="cgbg"
 )
@@ -159,23 +165,23 @@ tester = CodeTester(
 
 ### C Type System
 
-| Generic Type | C Type | Example |
-|-------------|--------|---------|
-| `int` | `int` | `42` |
-| `double` | `double` | `3.14` |
-| `string` | `char*` | `"hello"` |
-| `bool` | `int` | `1` or `0` |
-| `List[int]` | `int*` | Array pointer |
+| C Type | Example |
+|--------|---------|
+| `int` | `42` |
+| `double` | `3.14` |
+| `char*` | `"hello"` |
+| `int` | `1` or `0` (for bool) |
+| `int*` | Array pointer |
 
 ### C++ Type System
 
-| Generic Type | C++ Type | Example |
-|-------------|----------|---------|
-| `int` | `int` | `42` |
-| `double` | `double` | `3.14` |
-| `string` | `std::string` | `"hello"` |
-| `bool` | `bool` | `true` |
-| `List[int]` | `std::vector<int>` | `{1, 2, 3}` |
+| C++ Type | Example |
+|----------|---------|
+| `int` | `42` |
+| `double` | `3.14` |
+| `std::string` | `"hello"` |
+| `bool` | `true` |
+| `std::vector<int>` | `{1, 2, 3}` |
 
 ### Required Headers
 
@@ -196,87 +202,6 @@ The test harness automatically includes necessary headers:
 - `<set>`
 - `<map>`
 
-## Common Patterns
-
-### C: Array Operations with Size
-
-```python
-# C arrays need explicit size parameters
-result = generator.generate_code(
-    student_response="that finds the sum of an integer array",
-    function_name="arraySum"
-)
-
-test_cases = [
-    {
-        "parameters": {"arr": [1, 2, 3, 4, 5], "size": 5},
-        "parameter_types": {"arr": "int*", "size": "int"},
-        "expected": 15,
-        "expected_type": "int"
-    }
-]
-```
-
-### C: String Manipulation
-
-```python
-result = generator.generate_code(
-    student_response="that reverses a string in place",
-    function_name="reverseString"
-)
-
-test_cases = [
-    {
-        "parameters": {"str": "hello"},
-        "parameter_types": {"str": "char*"},
-        "expected": "olleh",
-        "expected_type": "char*",
-        "inplace": "1"  # Modifies string in place
-    }
-]
-```
-
-### C++: STL Containers
-
-```python
-result = generator.generate_code(
-    student_response="that merges two sorted vectors",
-    function_name="mergeSorted"
-)
-
-test_cases = [
-    {
-        "parameters": {
-            "vec1": [1, 3, 5],
-            "vec2": [2, 4, 6]
-        },
-        "parameter_types": {
-            "vec1": "std::vector<int>",
-            "vec2": "std::vector<int>"
-        },
-        "expected": [1, 2, 3, 4, 5, 6],
-        "expected_type": "std::vector<int>"
-    }
-]
-```
-
-### C++: String Operations
-
-```python
-result = generator.generate_code(
-    student_response="that splits a string by spaces",
-    function_name="splitString"
-)
-
-test_cases = [
-    {
-        "parameters": {"str": "hello world test"},
-        "parameter_types": {"str": "std::string"},
-        "expected": ["hello", "world", "test"],
-        "expected_type": "std::vector<std::string>"
-    }
-]
-```
 
 ## Memory Management Considerations
 
@@ -287,6 +212,7 @@ test_cases = [
 # The test harness handles basic cases but avoid complex allocations
 result = generator.generate_code(
     student_response="that creates an array of fibonacci numbers",
+    model="gpt-4o",  # or your chosen model
     function_name="fibonacci"
 )
 

@@ -12,7 +12,7 @@ Get up and running with EiplGrader for JavaScript/Node.js in minutes.
 ## Prerequisites
 
 - Node.js 14+
-- OpenAI API key (or compatible LLM API)
+- API key for your chosen provider (OpenAI, Meta/Llama, or Ollama local models)
 - Python 3.7+ (for running EiplGrader)
 
 ## Installation
@@ -26,15 +26,20 @@ pip install eiplgrader
 ### 1. Generate JavaScript Code
 
 ```python
+import os
 from eiplgrader.codegen import CodeGenerator
 
 # Initialize the code generator for JavaScript
-api_key = "your-openai-api-key"
-generator = CodeGenerator(api_key, client_type="openai", language="javascript")
+# Choose your provider: "openai", "meta", "ollama"
+client_type = "openai"  # or "meta" for Llama
+api_key = os.getenv("OPENAI_API_KEY")  # or META_API_KEY for Meta
+
+generator = CodeGenerator(api_key, client_type=client_type, language="javascript")
 
 # Generate code from a student's explanation
 result = generator.generate_code(
     student_response="that takes an array of strings and returns them sorted by length",
+    model="gpt-4o",  # or "Llama-4-Maverick-17B-128E-Instruct-FP8" for Meta
     function_name="sortByLength",
     gen_type="cgbg"
 )
@@ -93,6 +98,7 @@ JavaScript functions are automatically wrapped to handle async/promises:
 # Generate an async function
 result = generator.generate_code(
     student_response="that fetches data and processes it asynchronously",
+    model="gpt-4o",  # or your chosen model
     function_name="processData"
 )
 
@@ -150,76 +156,6 @@ test_case = {
 }
 ```
 
-## Common JavaScript Patterns
-
-### Array Methods
-```python
-result = generator.generate_code(
-    student_response="that filters out null and undefined values from an array",
-    function_name="removeNullish"
-)
-
-test_cases = [
-    {
-        "parameters": {"arr": [1, null, 2, undefined, 3, 0, ""]},
-        "expected": [1, 2, 3, 0, ""]
-    }
-]
-```
-
-### Object Manipulation
-```python
-result = generator.generate_code(
-    student_response="that merges two objects with the second overriding the first",
-    function_name="mergeObjects"
-)
-
-test_cases = [
-    {
-        "parameters": {
-            "obj1": {"a": 1, "b": 2},
-            "obj2": {"b": 3, "c": 4}
-        },
-        "expected": {"a": 1, "b": 3, "c": 4}
-    }
-]
-```
-
-### String Template Operations
-```python
-result = generator.generate_code(
-    student_response="that creates a greeting message using template literals",
-    function_name="createGreeting"
-)
-
-test_cases = [
-    {
-        "parameters": {"name": "Alice", "age": 25},
-        "expected": "Hello Alice, you are 25 years old!"
-    }
-]
-```
-
-### Map/Reduce Operations
-```python
-result = generator.generate_code(
-    student_response="that calculates the total price of items with tax",
-    function_name="calculateTotal"
-)
-
-test_cases = [
-    {
-        "parameters": {
-            "items": [
-                {"price": 10.00, "quantity": 2},
-                {"price": 5.00, "quantity": 3}
-            ],
-            "taxRate": 0.08
-        },
-        "expected": 37.80
-    }
-]
-```
 
 ## Advanced Example: Multiple Implementations
 
@@ -227,6 +163,7 @@ test_cases = [
 # Generate multiple implementations
 result = generator.generate_code(
     student_response="that debounces a function call",
+    model="gpt-4o",  # or your chosen model
     function_name="debounce",
     num_to_gen=3  # Different debounce implementations
 )

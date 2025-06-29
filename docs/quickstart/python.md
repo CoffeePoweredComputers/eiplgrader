@@ -12,7 +12,7 @@ Get up and running with EiplGrader for Python in minutes.
 ## Prerequisites
 
 - Python 3.7+
-- OpenAI API key (or compatible LLM API)
+- API key for your chosen provider (OpenAI, Meta/Llama, or Ollama local models)
 
 ## Installation
 
@@ -25,15 +25,20 @@ pip install eiplgrader
 ### 1. Generate Code from Natural Language
 
 ```python
+import os
 from eiplgrader.codegen import CodeGenerator
 
 # Initialize the code generator
-api_key = "your-openai-api-key"
-generator = CodeGenerator(api_key, client_type="openai", language="python")
+# Choose your provider: "openai", "meta", "ollama"
+client_type = "openai"  # or "meta" for Llama
+api_key = os.getenv("OPENAI_API_KEY")  # or META_API_KEY for Meta
+
+generator = CodeGenerator(api_key, client_type=client_type, language="python")
 
 # Generate code from a student's explanation
 result = generator.generate_code(
     student_response="that takes a list of numbers and returns only the even ones",
+    model="gpt-4o",  # or "Llama-4-Maverick-17B-128E-Instruct-FP8" for Meta
     function_name="filter_even",
     gen_type="cgbg"
 )
@@ -134,6 +139,7 @@ test_case = {
 # Generate multiple implementations
 result = generator.generate_code(
     student_response="that calculates the factorial of a number",
+    model="gpt-4o",  # or your chosen model
     function_name="factorial",
     num_to_gen=3  # Generate 3 different implementations
 )
@@ -158,52 +164,6 @@ for i, code in enumerate(result["code"]):
     print(f"Tests passed: {results.successes}/{results.testsRun}")
 ```
 
-## Common Patterns
-
-### String Processing
-```python
-result = generator.generate_code(
-    student_response="that reverses each word in a sentence but keeps word order",
-    function_name="reverse_words"
-)
-
-test_cases = [
-    {
-        "parameters": {"sentence": "Hello World"},
-        "expected": "olleH dlroW"
-    }
-]
-```
-
-### List Manipulation
-```python
-result = generator.generate_code(
-    student_response="that finds the second largest number in a list",
-    function_name="second_largest"
-)
-
-test_cases = [
-    {
-        "parameters": {"numbers": [10, 20, 4, 45, 99]},
-        "expected": 45
-    }
-]
-```
-
-### Dictionary Operations
-```python
-result = generator.generate_code(
-    student_response="that counts the frequency of each character in a string",
-    function_name="char_frequency"
-)
-
-test_cases = [
-    {
-        "parameters": {"text": "hello"},
-        "expected": {"h": 1, "e": 1, "l": 2, "o": 1}
-    }
-]
-```
 
 ## Error Handling
 

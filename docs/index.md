@@ -1,7 +1,6 @@
 ---
-layout: default
-title: Home
-nav_order: 1
+layout: home
+nav_exclude: true
 description: "EiplGrader - Automatic grading for 'Explain in Plain Language' questions"
 permalink: /
 ---
@@ -26,20 +25,34 @@ pip install eiplgrader
 
 ### Set Your API Key
 
+Choose your provider and set the appropriate API key:
+
 ```bash
+# For OpenAI
 export OPENAI_API_KEY="your-api-key-here"
+
+# For Meta/Llama
+export META_API_KEY="your-api-key-here"
+
+# Or use a .env file (see .env.example)
 ```
 
 ### Basic Example
 
 ```python
+import os
 from eiplgrader.codegen import CodeGenerator
 from eiplgrader.tester import CodeTester
 
 # Generate code from natural language
-code_generator = CodeGenerator(api_key, language="python")
+# Choose your provider: "openai", "meta", "ollama"
+client_type = "openai"  # or "meta" for Llama
+api_key = os.getenv("OPENAI_API_KEY")  # or META_API_KEY
+
+code_generator = CodeGenerator(api_key, client_type=client_type, language="python")
 result = code_generator.generate_code(
     student_response="that adds two numbers and returns the result",
+    model="gpt-4o",  # or "Llama-4-Maverick-17B-128E-Instruct-FP8" for Meta
     function_name="add_numbers",
     gen_type="cgbg"
 )
@@ -87,17 +100,8 @@ Learn how to use all features effectively:
 - [Advanced Features](guide/advanced-features.md) - Multiple variants, segmentation, in-place operations
 - [Test Case Format](guide/test-cases.md) - Comprehensive test case documentation
 - [Language Support](guide/languages.md) - Detailed language capabilities and requirements
-
+- [Docker Deployment](guide/docker.md) - Production deployment with containers
 - [Error Handling](guide/errors.md) - Understanding and resolving errors
-
-### [Developer Documentation](developer/)
-Extend and contribute to EiplGrader:
-- [Architecture Overview](developer/architecture.md) - System design and components
-- [Core Components](developer/components/) - Deep dive into CodeGenerator and CodeTester
-- [Language System](developer/languages/) - Adding new languages and executors
-- [API Reference](developer/api/) - Complete method documentation
-- [Testing](developer/testing.md) - Test suite and quality assurance
-- [Contributing](developer/contributing.md) - How to contribute
 
 
 ## 🔧 Installation Options
@@ -107,12 +111,47 @@ Extend and contribute to EiplGrader:
 pip install eiplgrader
 ```
 
+### Docker Installation (Recommended for Production)
+```bash
+# Pull the pre-built image (coming soon)
+docker pull eiplgrader:latest
+
+# Or build locally
+git clone https://github.com/hamiltonfour/eiplgrader.git
+cd eiplgrader
+docker build -t eiplgrader:latest .
+```
+
 ### Development Installation
 ```bash
 git clone https://github.com/hamiltonfour/eiplgrader.git
 cd eiplgrader
 pip install -e ".[dev]"
 ```
+
+## 🐳 Docker Quick Start
+
+Run EiplGrader in a secure, sandboxed container - perfect for high-scale deployments:
+
+```bash
+docker run --rm \
+  -e API_KEY="your-api-key" \
+  -e STUDENT_RESPONSE="that adds two numbers and returns the result" \
+  -e TEST_CASES='[{"parameters": {"a": 1, "b": 2}, "expected": 3}]' \
+  -e LANGUAGE="python" \
+  -e FUNCTION_NAME="add_numbers" \
+  -e MODEL="gpt-4" \
+  -e CLIENT_TYPE="openai" \
+  eiplgrader:latest
+```
+
+The Docker container includes:
+- **Complete language support**: Python, JavaScript, Java, C/C++, Go, and Haskell
+- **Security hardening**: Non-root user, read-only filesystem, network isolation
+- **Resource limits**: Configurable memory and CPU constraints
+- **Fast startup**: Alpine-based image (~300MB) with <2 second startup
+
+[Learn more about Docker deployment →](guide/docker.md)
 
 
 
@@ -130,11 +169,10 @@ pip install -e ".[dev]"
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see our [Contributing Guide](developer/contributing.md) for details on:
-- Setting up a development environment
-- Running tests and linting
-- Submitting pull requests
-- Adding new languages or features
+We welcome contributions! See our [GitHub repository](https://github.com/hamiltonfour/eiplgrader) for:
+- Issue tracking and feature requests
+- Pull request guidelines
+- Development setup instructions
 
 ## 📖 Citation
 

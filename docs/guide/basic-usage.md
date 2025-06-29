@@ -17,7 +17,7 @@ EiplGrader follows a simple two-step process:
 
 ```python
 # Step 1: Generate
-generator = CodeGenerator(api_key, client_type="openai", language="python")
+generator = CodeGenerator(api_key, client_type="openai", language="python")  # or "meta" for Llama
 result = generator.generate_code(student_response, function_name)
 
 # Step 2: Test
@@ -37,7 +37,7 @@ from eiplgrader.codegen import CodeGenerator
 # Initialize with your API key
 generator = CodeGenerator(
     api_key="your-api-key",
-    client_type="openai"  # Currently supported: "openai", "ollama"
+    client_type="openai"  # Supported: "openai", "meta", "ollama"
     # Planned for future releases: "anthropic", "meta"
 )
 ```
@@ -299,7 +299,7 @@ generator.generate_code(
     gen_type="cgbg",             # Generation type
     num_to_gen=1,                # Number of variants
     temperature=1.0,             # LLM temperature
-    model="gpt-4o"               # Model to use
+    model="gpt-4o"               # Model to use (or "Llama-4-Maverick-17B-128E-Instruct-FP8" for Meta)
 )
 ```
 

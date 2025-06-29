@@ -72,7 +72,10 @@ All quickstart guides follow the same pattern:
 
 2. **Set up API key**
    ```bash
-   export OPENAI_API_KEY="your-key-here"
+   # Choose your provider
+   export OPENAI_API_KEY="your-key-here"    # For OpenAI
+   export META_API_KEY="your-key-here"      # For Meta/Llama
+   # Or use a .env file (see .env.example)
    ```
 
 3. **Generate code** from natural language

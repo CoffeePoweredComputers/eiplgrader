@@ -13,7 +13,7 @@ Get up and running with EiplGrader for Java in minutes.
 
 - Java JDK 8+
 - Python 3.7+ (for running EiplGrader)
-- OpenAI API key (or compatible LLM API)
+- API key for your chosen provider (OpenAI, Meta/Llama, or Ollama local models)
 
 ## Installation
 
@@ -26,15 +26,20 @@ pip install eiplgrader
 ### 1. Generate Java Code
 
 ```python
+import os
 from eiplgrader.codegen import CodeGenerator
 
 # Initialize the code generator for Java
-api_key = "your-openai-api-key"
-generator = CodeGenerator(api_key, client_type="openai", language="java")
+# Choose your provider: "openai", "meta", "ollama"
+client_type = "openai"  # or "meta" for Llama
+api_key = os.getenv("OPENAI_API_KEY")  # or META_API_KEY for Meta
+
+generator = CodeGenerator(api_key, client_type=client_type, language="java")
 
 # Generate code from a student's explanation
 result = generator.generate_code(
     student_response="that calculates the average of an array of integers",
+    model="gpt-4o",  # or "Llama-4-Maverick-17B-128E-Instruct-FP8" for Meta
     function_name="calculateAverage",
     gen_type="cgbg"
 )
@@ -119,14 +124,14 @@ test_case = {
 
 ### Java Type Mappings
 
-| Generic Type | Java Type | Example |
-|-------------|-----------|---------|
-| `int` | `int` | `42` |
-| `double` | `double` | `3.14` |
-| `string` | `String` | `"hello"` (Note: capital S) |
-| `bool` | `boolean` | `true` |
-| `List[int]` | `int[]` | `[1, 2, 3]` |
-| `List[string]` | `String[]` | `["a", "b"]` |
+| Java Type | Example |
+|-----------|---------|
+| `int` | `42` |
+| `double` | `3.14` |
+| `String` | `"hello"` (Note: capital S) |
+| `boolean` | `true` |
+| `int[]` | `[1, 2, 3]` |
+| `String[]` | `["a", "b"]` |
 
 ### Solution Class Wrapping
 
@@ -136,6 +141,7 @@ Generated code is automatically wrapped in a Solution class:
 # Your generated function:
 result = generator.generate_code(
     student_response="that reverses a string",
+    model="gpt-4o",  # or your chosen model
     function_name="reverseString"
 )
 
@@ -147,90 +153,6 @@ result = generator.generate_code(
 # }
 ```
 
-## Common Java Patterns
-
-### Array Manipulation
-```python
-result = generator.generate_code(
-    student_response="that finds the maximum value in an integer array",
-    function_name="findMax"
-)
-
-test_cases = [
-    {
-        "parameters": {"arr": [3, 7, 2, 9, 1]},
-        "parameter_types": {"arr": "int[]"},
-        "expected": 9,
-        "expected_type": "int"
-    }
-]
-```
-
-### String Operations
-```python
-result = generator.generate_code(
-    student_response="that checks if a string is a palindrome",
-    function_name="isPalindrome"
-)
-
-test_cases = [
-    {
-        "parameters": {"str": "racecar"},
-        "parameter_types": {"str": "String"},
-        "expected": True,
-        "expected_type": "boolean"
-    },
-    {
-        "parameters": {"str": "hello"},
-        "parameter_types": {"str": "String"},
-        "expected": False,
-        "expected_type": "boolean"
-    }
-]
-```
-
-### Collections and Lists
-```python
-result = generator.generate_code(
-    student_response="that removes duplicates from an integer array",
-    function_name="removeDuplicates"
-)
-
-test_cases = [
-    {
-        "parameters": {"arr": [1, 2, 2, 3, 3, 3, 4]},
-        "parameter_types": {"arr": "int[]"},
-        "expected": [1, 2, 3, 4],
-        "expected_type": "int[]"
-    }
-]
-```
-
-### Object-Oriented Example
-```python
-# Generate a method that works with custom objects
-result = generator.generate_code(
-    student_response="that formats person information into a string",
-    function_name="formatPerson"
-)
-
-test_cases = [
-    {
-        "parameters": {
-            "name": "John Doe",
-            "age": 30,
-            "email": "john@example.com"
-        },
-        "parameter_types": {
-            "name": "String",
-            "age": "int",
-            "email": "String"
-        },
-        "expected": "John Doe (30) - john@example.com",
-        "expected_type": "String"
-    }
-]
-```
 
 ## In-Place Modifications
 
@@ -253,6 +175,7 @@ test_case = {
 ```python
 result = generator.generate_code(
     student_response="that creates a summary from different data types",
+    model="gpt-4o",  # or your chosen model
     function_name="createSummary"
 )
 
@@ -280,6 +203,8 @@ test_cases = [
 ```python
 result = generator.generate_code(
     student_response="that calculates the sum of a 2D matrix",
+    function_name=",
+    model="gpt-4o",  # or your chosen model
     function_name="matrixSum"
 )
 

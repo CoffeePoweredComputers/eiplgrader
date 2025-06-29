@@ -27,7 +27,7 @@ You are given the following assumptions about the arguments:
 {assumptions}.
 """
 
-DEFAULT_RETURN_FORMAT = """
+DEFAULT_RETURN_FORMAT_PYTHON = """
 Include only the function and no additional test cases, code, or comments.
 Respond with the code for the function {function_name} in the following format
 which has the code wrapped in markdown of a python code block:
@@ -71,7 +71,7 @@ class PythonAdapter(LanguageAdapter):
                 function_name=function_name, student_response=student_response
             )
 
-            prompt += DEFAULT_RETURN_FORMAT.format(function_name=function_name)
+            prompt += DEFAULT_RETURN_FORMAT_PYTHON.format(function_name=function_name)
 
             return prompt
 
@@ -85,7 +85,7 @@ class PythonAdapter(LanguageAdapter):
                 assumptions=kwargs.get("assumptions", ""),
             )
 
-            prompt += DEFAULT_RETURN_FORMAT.format(function_name=function_name)
+            prompt += DEFAULT_RETURN_FORMAT_PYTHON.format(function_name=function_name)
             return prompt
 
         else:

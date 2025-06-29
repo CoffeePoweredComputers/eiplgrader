@@ -19,8 +19,8 @@ include:
   - assets/
 
 # Build settings
-# theme: just-the-docs
-remote_theme: pmarsceill/just-the-docs@v0.3.3
+theme: just-the-docs
+# remote_theme: pmarsceill/just-the-docs@v0.3.3
 search_enabled: true
 heading_anchors: true
 color_scheme: "dark"

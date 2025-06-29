@@ -28,10 +28,19 @@ EiplGrader automatically grades programming assignments where students explain a
 pip install eiplgrader
 ```
 
-Set your LLM API key:
+Set up your API keys:
+
+**Option 1: Environment Variables**
 ```bash
-export META_API_KEY="your-api-key-here" #LLAMA SUPPORT COMING SOON
-export OPENAI_API_KEY="your-api-key-here"
+export OPENAI_API_KEY="your-api-key-here"    # For OpenAI models
+export META_API_KEY="your-api-key-here"      # For Meta/Llama models
+# export ANTHROPIC_API_KEY="your-api-key-here" # Coming soon
+```
+
+**Option 2: Using .env file**
+```bash
+cp .env.example .env
+# Edit .env and add your API keys
 ```
 
 ### Example: Code Generation Based Grading (CGBG)
@@ -39,11 +48,17 @@ export OPENAI_API_KEY="your-api-key-here"
 ```python
 from eiplgrader.codegen import CodeGenerator
 from eiplgrader.tester import CodeTester
+import os
+
+# Choose your provider and get the appropriate API key
+client_type = "openai"  # or "meta" for Llama, "ollama" for local models
+api_key = os.getenv("OPENAI_API_KEY")  # or META_API_KEY for Llama
 
 # Generate code from natural language description
-code_generator = CodeGenerator(api_key, client_type="openai", language="python")
+code_generator = CodeGenerator(api_key, client_type=client_type, language="python")
 result = code_generator.generate_code(
     student_response="that adds two numbers and returns the result",
+    model="gpt-4o",  # or "Llama-4-Maverick-17B-128E-Instruct-FP8" for Llama
     function_name="add_numbers",
     gen_type="cgbg"
 )
@@ -69,7 +84,7 @@ print(f"Tests passed: {test_result.successes}/{test_result.testsRun}")
 ## Features
 
 - **Multi-language Support**: Python, JavaScript, Java, C++, C, Go, Haskell
-- **LLM Providers**: OpenAI (GPT models), Ollama (local models)
+- **LLM Providers**: OpenAI (GPT models), Meta (Llama models), Ollama (local models)
 - **Type Inference**: Automatic type detection for Python and JavaScript
 - **Multiple Generation Modes**: CGBG (Code Generation), Function Redefinition, Segmentation
 - **Comprehensive Testing**: Built-in test runner with detailed results
@@ -93,11 +108,20 @@ print(f"Tests passed: {test_result.successes}/{test_result.testsRun}")
 | Go         | ❌             | Required                  |
 | Haskell    | ❌             | Required                  |
 
+## Supported LLM Providers
+
+| Provider | Models | Status | Environment Variable |
+|----------|--------|--------|--------------------|
+| OpenAI | GPT-4o, GPT-4, GPT-4.5, GPT-4.1 | ✅ Fully Supported | `OPENAI_API_KEY` |
+| Meta | Llama-4-Maverick-17B-128E-Instruct-FP8, Llama-4-Scout-17B-16E-Instruct-FP8, Llama-3.3-70B-Instruct, Llama-3.3-8B-Instruct | ✅ Fully Supported | `META_API_KEY` |
+| Ollama | codellama:instruct, stable-code:instruct | ✅ Fully Supported | N/A (local) |
+| Anthropic | Claude models | 🚧 Coming Soon | `ANTHROPIC_API_KEY` |
+
 ## Planned Features
 
 The following features are planned for future releases:
 
-- **Additional LLM Providers**: Anthropic (Claude) and Meta model support
+- **Additional LLM Providers**: Anthropic (Claude) support
 - **Enhanced Segmentation**: Improved mapping between explanations and code
 - **Performance Optimizations**: Faster test execution and parallel processing
 - **Extended Language Support**: Rust, TypeScript, and more
