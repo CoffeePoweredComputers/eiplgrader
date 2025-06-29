@@ -1,15 +1,14 @@
 version: '3.8'
 
 services:
-  # Main eiplgrader service
-  grader:
+  # Python-only base image (~100MB)
+  grader-python:
     build:
       context: .
-      dockerfile: Dockerfile
-    image: eiplgrader:latest
-    container_name: eiplgrader-test
-    environment:
-      # These will be populated from .env file or environment
+      dockerfile: Dockerfile.base
+    image: eiplgrader:python
+    container_name: eiplgrader-python
+    environment: &common-env
       - API_KEY
       - STUDENT_RESPONSE
       - TEST_CASES
@@ -25,15 +24,89 @@ services:
       - INPLACE_MODE=${INPLACE_MODE:-0}
       - PARAMS=${PARAMS:-}
       - ASSUMPTIONS=${ASSUMPTIONS:-}
-    # Resource limits
-    deploy:
+    deploy: &common-deploy
       resources:
         limits:
           cpus: '0.5'
           memory: 512M
-    # Security settings
-    security_opt:
+    security_opt: &common-security
       - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=100m
+    network_mode: none
+    user: grader
+    
+  # Language-specific services
+  grader-java:
+    build:
+      context: .
+      dockerfile: Dockerfile.java
+    image: eiplgrader:java
+    container_name: eiplgrader-java
+    environment: *common-env
+    deploy: *common-deploy
+    security_opt: *common-security
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=100m
+    network_mode: none
+    user: grader
+    
+  grader-go:
+    build:
+      context: .
+      dockerfile: Dockerfile.go
+    image: eiplgrader:go
+    container_name: eiplgrader-go
+    environment: *common-env
+    deploy: *common-deploy
+    security_opt: *common-security
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=100m
+    network_mode: none
+    user: grader
+    
+  grader-cpp:
+    build:
+      context: .
+      dockerfile: Dockerfile.cpp
+    image: eiplgrader:cpp
+    container_name: eiplgrader-cpp
+    environment: *common-env
+    deploy: *common-deploy
+    security_opt: *common-security
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=100m
+    network_mode: none
+    user: grader
+    
+  grader-javascript:
+    build:
+      context: .
+      dockerfile: Dockerfile.javascript
+    image: eiplgrader:javascript
+    container_name: eiplgrader-javascript
+    environment: *common-env
+    deploy: *common-deploy
+    security_opt: *common-security
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=100m
+    network_mode: none
+    user: grader
+    
+  grader-haskell:
+    build:
+      context: .
+      dockerfile: Dockerfile.haskell
+    image: eiplgrader:haskell
+    container_name: eiplgrader-haskell
+    environment: *common-env
+    deploy: *common-deploy
+    security_opt: *common-security
     read_only: true
     tmpfs:
       - /tmp:rw,noexec,nosuid,size=100m
@@ -53,7 +126,7 @@ services:
     command: |
       sh -c "echo 'Django integration example - see /app/integration.md for details'"
     depends_on:
-      - grader
+      - grader-python
 
   # Redis for async task queue (Django Celery example)
   redis:

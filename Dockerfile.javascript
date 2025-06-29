@@ -1,13 +1,13 @@
-# Default Dockerfile - Python only (use Dockerfile.python for explicit Python builds)
-# For other languages, use: Dockerfile.javascript, Dockerfile.java, etc.
+# JavaScript-only image (~150MB)
 FROM python:3.13-alpine
 
-# Install minimal Python dependencies
+# Install Python and Node.js dependencies
 RUN apk add --no-cache \
     gcc \
     musl-dev \
     libffi-dev \
     openssl-dev \
+    nodejs \
     bash
 
 # Install Python dependencies

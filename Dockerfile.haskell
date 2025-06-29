@@ -1,13 +1,13 @@
-# Default Dockerfile - Python only (use Dockerfile.python for explicit Python builds)
-# For other languages, use: Dockerfile.javascript, Dockerfile.java, etc.
+# Haskell-only image (~400MB)
 FROM python:3.13-alpine
 
-# Install minimal Python dependencies
+# Install Python and Haskell dependencies
 RUN apk add --no-cache \
     gcc \
     musl-dev \
     libffi-dev \
     openssl-dev \
+    ghc \
     bash
 
 # Install Python dependencies

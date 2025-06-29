@@ -1,13 +1,13 @@
-# Default Dockerfile - Python only (use Dockerfile.python for explicit Python builds)
-# For other languages, use: Dockerfile.javascript, Dockerfile.java, etc.
+# Java-only image (~300MB)
 FROM python:3.13-alpine
 
-# Install minimal Python dependencies
+# Install Python and Java dependencies
 RUN apk add --no-cache \
     gcc \
     musl-dev \
     libffi-dev \
     openssl-dev \
+    openjdk17-jre-headless \
     bash
 
 # Install Python dependencies

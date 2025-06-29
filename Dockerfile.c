@@ -1,8 +1,7 @@
-# Default Dockerfile - Python only (use Dockerfile.python for explicit Python builds)
-# For other languages, use: Dockerfile.javascript, Dockerfile.java, etc.
+# C-only image (~200MB)
 FROM python:3.13-alpine
 
-# Install minimal Python dependencies
+# Install Python and C dependencies
 RUN apk add --no-cache \
     gcc \
     musl-dev \
