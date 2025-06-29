@@ -20,7 +20,13 @@ include:
 
 # Build settings
 theme: just-the-docs
-# remote_theme: pmarsceill/just-the-docs@v0.3.3
+
+plugins:
+  - jekyll-feed
+  - jekyll-seo-tag
+  - jekyll-sitemap
+
+# Just the Docs configuration
 search_enabled: true
 heading_anchors: true
 color_scheme: "dark"
@@ -47,8 +53,8 @@ last_edit_time_format: "%b %e %Y at %I:%M %p"
 # Footer "Edit this page on GitHub" link text
 gh_edit_link: true
 gh_edit_link_text: "Edit this page on GitHub"
-gh_edit_repository: "https://github.com/hamiltonfour/eiplgrader"
-gh_edit_branch: "main"
+gh_edit_repository: "https://github.com/CoffeePoweredComputers/eiplgrader"
+gh_edit_branch: "master"
 gh_edit_view_mode: "tree"
 
 # Google Analytics
