@@ -92,7 +92,7 @@ DEPENDENCIES
   bigdecimal
   csv
   erb
-  http_parser.rb (~> 0.6.0)
+  http_parser.rb (~> 0.8.0)
   jekyll (~> 4.3)
   jekyll-feed (~> 0.12)
   jekyll-seo-tag
