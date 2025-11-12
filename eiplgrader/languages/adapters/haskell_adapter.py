@@ -3,6 +3,9 @@
 import re
 from typing import List
 from ..base import LanguageAdapter, LanguageConfig
+import tree_sitter_haskell as ts
+from tree_sitter import Language
+
 
 
 DEFAULT_STUDENT_PERSONA_HASKELL = """
@@ -122,13 +125,6 @@ class HaskellAdapter(LanguageAdapter):
         # If no code blocks found, return entire response
         return [llm_response.strip()] if llm_response.strip() else []
 
-    def normalize_code(self, code: str) -> str:
-        """Normalize Haskell code by removing comments and standardizing format."""
-
-        # Remove {- -} style block comments
-        code = re.sub(MULTI_LINE_COMMENT_PATTERN, "", code, flags=re.DOTALL)
-
-        # Replace all instances of two or more blank lines with 1
-        code = re.sub(EXTRA_BLANK_LINES, "\n", code)
-
-        return code
+    def _get_lang(self) -> Language:
+        """Return tree-sitter-haskell language object"""
+        return Language(ts.language())

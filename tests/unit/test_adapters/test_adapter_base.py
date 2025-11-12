@@ -497,6 +497,9 @@ class TestAdapterCodeExtractionPatterns:
         elif adapter_class == HaskellAdapter:
             code = "test = do\n    {- comment -}\n    return 42"
             comment_text = "{- comment -}"
+        elif adapter_class == GoAdapter:
+            code = "func test() returnType {\n // comment\n return 42;\n}"
+            comment_text = "// comment"
         else:
             # For other languages (JavaScript, Java, C, C++, Go) use // comments
             code = "function test() {\n    // comment\n    return 42;\n}"

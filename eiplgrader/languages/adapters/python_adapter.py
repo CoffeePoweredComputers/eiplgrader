@@ -2,6 +2,10 @@
 
 import re
 from typing import List
+
+from tree_sitter import Language
+import tree_sitter_python as ts
+
 from ..base import LanguageAdapter, LanguageConfig
 import ast
 
@@ -110,12 +114,30 @@ class PythonAdapter(LanguageAdapter):
         return [llm_response.strip()] if llm_response.strip() else []
 
     def normalize_code(self, code: str) -> str:
+
         """Normalize Python code by removing comments and standardizing format."""
-        parsed_python = ast.parse(code)
+
+        try:
+            parsed_python = ast.parse(code)
+        except SyntaxError as e:
+            raise SyntaxError(f"LLM generated code has syntax errors, unable to parse: {e}") from e
+
+        # Remove module-level docstring
+        if (parsed_python.body and
+                isinstance(parsed_python.body[0], ast.Expr) and
+                isinstance(parsed_python.body[0].value, (ast.Constant, ast.Str))):
+            parsed_python.body.remove(parsed_python.body[0])
+
+        # Remove docstrings from functions and classes
         for node in ast.walk(parsed_python):
-            if isinstance(node, ast.Expr) and isinstance(node.value, ast.Str):
-                # Remove string literals that are comments
-                if re.match(r"^\s*#", node.value.s):
-                    parsed_python.body.remove(node)
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                if (node.body and
+                        isinstance(node.body[0], ast.Expr) and
+                        isinstance(node.body[0].value, (ast.Constant, ast.Str))):
+                    node.body.remove(node.body[0])
+
         code_without_comments = ast.unparse(parsed_python)
         return code_without_comments
+
+    def _get_lang(self) -> Language:
+        return Language(ts.language())
