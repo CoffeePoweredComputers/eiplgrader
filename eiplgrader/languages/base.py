@@ -57,7 +57,7 @@ class LanguageAdapter(ABC):
         )
         comment_capture = Query(
             lang,
-            '''(comment) @comment'''
+            self._get_comment_pattern()
         )
 
         source = bytes(code, "utf8")
@@ -69,6 +69,12 @@ class LanguageAdapter(ABC):
 
         # Create a list of the character index ranges of comments, in order
         captures = QueryCursor(comment_capture).captures(tree.root_node)
+
+        if "comment" not in captures:
+            text = "\n".join([line.rstrip() for line in code.split("\n")])
+            text = text.rstrip()
+            return text
+        
         ranges = [(comment.start_byte, comment.end_byte) for comment in captures["comment"]]
         ranges.sort(key=lambda r: r[0])
 
@@ -84,6 +90,8 @@ class LanguageAdapter(ABC):
         # Reduce multiple blank lines to one blank line
         text = source.decode("utf-8")
         text = re.sub(r"\n\s*\n", "\n", text)
+        text = "\n".join([line.rstrip() for line in text.split("\n")])
+        text = text.rstrip()
         return text
 
 
@@ -91,3 +99,7 @@ class LanguageAdapter(ABC):
     def _get_lang(self) -> Language:
         """Gets the tree-sitter language object for an adapter"""
         raise NotImplementedError
+    
+    def _get_comment_pattern(self) -> str:
+        """Returns S-expressions for finding comments with tree-sitter"""
+        return '''(comment) @comment'''

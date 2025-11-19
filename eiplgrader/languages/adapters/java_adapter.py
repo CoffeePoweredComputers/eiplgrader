@@ -128,49 +128,13 @@ class JavaAdapter(LanguageAdapter):
         # If no code blocks found, return entire response
         return [llm_response.strip()] if llm_response.strip() else []
 
-    def normalize_code(self, code: str) -> str:
-        """Normalize code by removing comments and standardizing format."""
-        lang = self._get_lang()
-        parser = Parser(lang)
-
-        error_capture = Query(
-            lang,
-            '''(ERROR) @error
-            (MISSING) @error'''
-        )
-        comment_capture = Query(
-            lang,
-            '''(line_comment) @comment
-            (block_comment) @comment'''
-        )
-
-        source = bytes(code, "utf8")
-        tree = parser.parse(source)
-
-        errors = QueryCursor(error_capture).captures(tree.root_node)
-        if "error" in errors and len(errors["error"]) > 0:
-            raise SyntaxError("LLM generated code has syntax errors, unable to parse")
-
-        # Create a list of the character index ranges of comments, in order
-        captures = QueryCursor(comment_capture).captures(tree.root_node)
-        ranges = [(comment.start_byte, comment.end_byte) for comment in captures["comment"]]
-        ranges.sort(key=lambda r: r[0])
-
-        # Grab each segment of text which is not a comment and stitch them back together
-        sections = []
-        current_pos = 0
-        for start, end in ranges:
-            sections.append(source[current_pos:start])
-            current_pos = end
-        sections.append(source[current_pos:])
-        source = b''.join(sections)
-
-        # Reduce multiple blank lines to one blank line
-        text = source.decode("utf-8")
-        text = re.sub(r"\n\s*\n", "\n", text)
-        return text
 
     def _get_lang(self) -> Language:
         """Return tree-sitter-java language object"""
         return Language(ts.language())
+    
+    def _get_comment_pattern(self):
+        """Return Java-specific line/block comment patterns"""
+        return '''(line_comment) @comment
+            (block_comment) @comment'''
 

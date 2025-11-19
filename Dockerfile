@@ -14,6 +14,7 @@ RUN apk add --no-cache \
 COPY requirements-docker.txt .
 RUN pip install --no-cache-dir -r requirements-docker.txt && \
     rm requirements-docker.txt
+RUN pip install --no-cache-dir tree-sitter-python
 
 # Create non-root user
 RUN adduser -D -u 1000 grader
