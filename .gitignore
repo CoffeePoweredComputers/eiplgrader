@@ -5,9 +5,18 @@ poetry.lock
 dist/
 _site/
 coverage.xml
+htmlcov/
 lint_report.txt
 .coverage
 benchmark_results.json
+
+# Virtual environments
+venv/
+.venv/
+
+# Tool caches
+.serena/
+firebase-debug.log
 
 # API keys and environment files
 .env
