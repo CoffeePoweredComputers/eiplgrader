@@ -117,6 +117,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs: [test, build]
+    permissions:
+      id-token: write  # Required for PyPI trusted publishing (OIDC)
     # Only publish when:
     # 1. It's a tag push (v*)
     # 2. The tag was created on the master branch
@@ -158,5 +160,7 @@ jobs:
         if: steps.check_tag_branch.outputs.on_master == 'true'
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
+          # Uses PYPI_API_TOKEN secret if set; falls back to trusted
+          # publishing (OIDC) if the secret is absent.
           password: ${{ secrets.PYPI_API_TOKEN }}
-          skip_existing: true
+          skip-existing: true
