@@ -3,6 +3,8 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import List, Optional
+from tree_sitter import Language, Parser, Query, QueryCursor
+import re
 
 
 @dataclass
@@ -42,7 +44,62 @@ class LanguageAdapter(ABC):
         """Extract code blocks from LLM response."""
         raise NotImplementedError
 
-    @abstractmethod
+
     def normalize_code(self, code: str) -> str:
         """Normalize code by removing comments and standardizing format."""
+        lang = self._get_lang()
+        parser = Parser(lang)
+
+        error_capture = Query(
+            lang,
+            '''(ERROR) @error
+            (MISSING) @error'''
+        )
+        comment_capture = Query(
+            lang,
+            self._get_comment_pattern()
+        )
+
+        source = bytes(code, "utf8")
+        tree = parser.parse(source)
+
+        errors = QueryCursor(error_capture).captures(tree.root_node)
+        if "error" in errors and len(errors["error"]) > 0:
+            raise SyntaxError("LLM generated code has syntax errors, unable to parse")
+
+        # Create a list of the character index ranges of comments, in order
+        captures = QueryCursor(comment_capture).captures(tree.root_node)
+
+        if "comment" not in captures:
+            text = "\n".join([line.rstrip() for line in code.split("\n")])
+            text = text.rstrip()
+            return text
+        
+        ranges = [(comment.start_byte, comment.end_byte) for comment in captures["comment"]]
+        ranges.sort(key=lambda r: r[0])
+
+        # Grab each segment of text which is not a comment and stitch them back together
+        sections = []
+        current_pos = 0
+        for start, end in ranges:
+            sections.append(source[current_pos:start])
+            current_pos = end
+        sections.append(source[current_pos:])
+        source = b''.join(sections)
+
+        # Reduce multiple blank lines to one blank line
+        text = source.decode("utf-8")
+        text = re.sub(r"\n\s*\n", "\n", text)
+        text = "\n".join([line.rstrip() for line in text.split("\n")])
+        text = text.rstrip()
+        return text
+
+
+    @abstractmethod
+    def _get_lang(self) -> Language:
+        """Gets the tree-sitter language object for an adapter"""
         raise NotImplementedError
+    
+    def _get_comment_pattern(self) -> str:
+        """Returns S-expressions for finding comments with tree-sitter"""
+        return '''(comment) @comment'''

@@ -232,6 +232,24 @@ def func2():
         assert self.adapter.normalize_code("   ") == ""
         assert self.adapter.normalize_code("# Only comments") == ""
 
+    def test_normalize_multiline(self):
+        """Test removal of docstring style python comments"""
+        code = """
+        ''' mutliline comment '''
+        def myfunc():
+            ''' docstring comment '''
+            # regular comment
+            print(hello) # line comment
+            return 0
+        # comment outside of scope
+        ''' another multiline '''
+        """
+        expected = """
+        def myfunc():
+            print(hello)
+            return 0"""
+        assert(self.adapter.normalize_code(code) == expected)
+
 
 class TestJavaScriptAdapter:
     """Test JavaScript language adapter."""
@@ -497,6 +515,9 @@ class TestAdapterCodeExtractionPatterns:
         elif adapter_class == HaskellAdapter:
             code = "test = do\n    {- comment -}\n    return 42"
             comment_text = "{- comment -}"
+        elif adapter_class == GoAdapter:
+            code = "func test() returnType {\n // comment\n return 42;\n}"
+            comment_text = "// comment"
         else:
             # For other languages (JavaScript, Java, C, C++, Go) use // comments
             code = "function test() {\n    // comment\n    return 42;\n}"
@@ -540,12 +561,6 @@ class TestAdapterErrorHandling:
         code = "   \n  # Just a comment\n   "
         normalized = adapter.normalize_code(code)
         assert normalized == ""
-
-        # Test code with multiple consecutive spaces
-        code = "def    func(  x  ,  y  ):\n    return    x   +   y"
-        normalized = adapter.normalize_code(code)
-        # AST unparsing standardizes spacing but preserves indentation
-        assert normalized == "def func(x, y):\n    return x + y"
 
     def test_generate_prompt_with_special_characters(self):
         """Test prompt generation with special characters."""

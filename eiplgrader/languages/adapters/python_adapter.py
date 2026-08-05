@@ -2,8 +2,15 @@
 
 import re
 from typing import List
+
+from tree_sitter import Language
+import tree_sitter_python as ts
+
 from ..base import LanguageAdapter, LanguageConfig
-import ast
+
+import tree_sitter_python as ts
+from tree_sitter import Language, Parser, Query, QueryCursor
+import re
 
 
 DEFAULT_STUDENT_PERSONA_PYTHON = """
@@ -109,13 +116,10 @@ class PythonAdapter(LanguageAdapter):
         # If no code blocks found, return entire response
         return [llm_response.strip()] if llm_response.strip() else []
 
-    def normalize_code(self, code: str) -> str:
-        """Normalize Python code by removing comments and standardizing format."""
-        parsed_python = ast.parse(code)
-        for node in ast.walk(parsed_python):
-            if isinstance(node, ast.Expr) and isinstance(node.value, ast.Str):
-                # Remove string literals that are comments
-                if re.match(r"^\s*#", node.value.s):
-                    parsed_python.body.remove(node)
-        code_without_comments = ast.unparse(parsed_python)
-        return code_without_comments
+    def _get_lang(self) -> Language:
+        return Language(ts.language())
+    
+    def _get_comment_pattern(self):
+        """Return python-specific pattern for unassigned string literals as comments"""
+        return '''(comment) @comment
+            (expression_statement (string)) @comment'''

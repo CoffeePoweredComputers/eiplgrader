@@ -3,6 +3,9 @@
 import re
 from typing import List
 from ..base import LanguageAdapter, LanguageConfig
+import tree_sitter_java as ts
+from tree_sitter import Language, Parser, Query, QueryCursor
+import re
 
 
 DEFAULT_STUDENT_PERSONA_JAVA = """
@@ -125,15 +128,13 @@ class JavaAdapter(LanguageAdapter):
         # If no code blocks found, return entire response
         return [llm_response.strip()] if llm_response.strip() else []
 
-    def normalize_code(self, code: str) -> str:
-        """Normalize Java code by removing comments and standardizing format."""
-        # Remove single-line comments
-        code = re.sub(SINGLE_LINE_COMMENT_PATTERN, "", code)
 
-        # Remove multi-line comments
-        code = re.sub(MULTI_LINE_COMMENT_PATTERN, "", code, flags=re.DOTALL)
+    def _get_lang(self) -> Language:
+        """Return tree-sitter-java language object"""
+        return Language(ts.language())
+    
+    def _get_comment_pattern(self):
+        """Return Java-specific line/block comment patterns"""
+        return '''(line_comment) @comment
+            (block_comment) @comment'''
 
-        # Replace all instances of two or more blank lines with 1
-        code = re.sub(EXTRA_BLANK_LINES, "\n", code)
-
-        return code
