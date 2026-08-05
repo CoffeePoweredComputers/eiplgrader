@@ -1,5 +1,5 @@
 # Light image - Python + JavaScript (~200MB)
-FROM python:3.13-alpine
+FROM python:3.14-alpine
 
 # Install essential dependencies for Python and JavaScript
 RUN apk add --no-cache \

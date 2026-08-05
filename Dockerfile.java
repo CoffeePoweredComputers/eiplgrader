@@ -1,5 +1,5 @@
 # Java-only image (~300MB)
-FROM python:3.13-alpine
+FROM python:3.14-alpine
 
 # Install Python and Java dependencies
 RUN apk add --no-cache \

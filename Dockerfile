@@ -1,6 +1,6 @@
 # Default Dockerfile - Python only (use Dockerfile.python for explicit Python builds)
 # For other languages, use: Dockerfile.javascript, Dockerfile.java, etc.
-FROM python:3.13-alpine
+FROM python:3.14-alpine
 
 # Install minimal Python dependencies
 RUN apk add --no-cache \

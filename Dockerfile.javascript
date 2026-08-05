@@ -1,5 +1,5 @@
 # JavaScript-only image (~150MB)
-FROM python:3.13-alpine
+FROM python:3.14-alpine
 
 # Install Python and Node.js dependencies
 RUN apk add --no-cache \

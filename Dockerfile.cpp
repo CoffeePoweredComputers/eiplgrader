@@ -1,5 +1,5 @@
 # C/C++-only image (~200MB)
-FROM python:3.13-alpine
+FROM python:3.14-alpine
 
 # Install Python and C/C++ dependencies
 RUN apk add --no-cache \

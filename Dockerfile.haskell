@@ -1,5 +1,5 @@
 # Haskell-only image (~400MB)
-FROM python:3.13-alpine
+FROM python:3.14-alpine
 
 # Install Python and Haskell dependencies
 RUN apk add --no-cache \
